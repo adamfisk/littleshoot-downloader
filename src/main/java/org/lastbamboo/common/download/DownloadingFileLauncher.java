@@ -1,4 +1,4 @@
-package org.lastbamboo.download;
+package org.lastbamboo.common.download;
 
 import java.io.File;
 import java.io.IOException;

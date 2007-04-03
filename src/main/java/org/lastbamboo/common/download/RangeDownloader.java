@@ -1,4 +1,4 @@
-package org.lastbamboo.download;
+package org.lastbamboo.common.download;
 
 import org.apache.commons.lang.math.LongRange;
 

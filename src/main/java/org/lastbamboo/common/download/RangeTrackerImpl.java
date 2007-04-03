@@ -1,4 +1,4 @@
-package org.lastbamboo.download;
+package org.lastbamboo.common.download;
 
 import java.util.Collections;
 import java.util.Comparator;

@@ -7,6 +7,8 @@ import junit.framework.TestCase;
 import org.apache.commons.lang.math.LongRange;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lastbamboo.common.download.RangeTracker;
+import org.lastbamboo.common.download.RangeTrackerImpl;
 
 /**
  * Tests the range tracker class.

@@ -12,7 +12,8 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lastbamboo.download.Downloader;
+import org.lastbamboo.common.download.Downloader;
+import org.lastbamboo.common.download.MultiSourceDownloader;
 
 /**
  * Tests downloading from a single source.

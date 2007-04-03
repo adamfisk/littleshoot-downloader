@@ -1,4 +1,4 @@
-package org.lastbamboo.download;
+package org.lastbamboo.common.download;
 
 /**
  * Exception thrown when SHA-1s do not match.
