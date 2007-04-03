@@ -27,8 +27,6 @@ public class RangeTrackerImpl implements RangeTracker
 
     private final int m_numChunks;
 
-    
-
     /**
      * Creates a new range tracker for a file of the specified size.
      * @param name 
@@ -37,33 +35,33 @@ public class RangeTrackerImpl implements RangeTracker
      */
     public RangeTrackerImpl(final String name, final long fileSize)
         {
-        LOG.debug("Creating queue for file size: "+fileSize);
-        LOG.debug("Fractional size: "+fileSize/CHUNK_SIZE);
-        int numChunks = (int) Math.ceil(fileSize/CHUNK_SIZE);
-        if (numChunks == 0)
-            {
-            numChunks = 1;
-            }
-        this.m_numChunks = numChunks;
-        LOG.debug("Creating a queue with "+numChunks+" chunks...");
+        LOG.debug("Creating queue for file size: " + fileSize);
+        
+        // We need enough chunks to handle the full file size.
+        m_numChunks = (int) Math.ceil(fileSize/(double) CHUNK_SIZE);
+        
+        LOG.debug("Creating a queue with " + m_numChunks + " chunks...");
         
         final Comparator<LongRange> rangeComparator = new LongRangeComparator();
-        this.m_ranges = new PriorityBlockingQueue<LongRange>(numChunks, 
-            rangeComparator);
+        
+        m_ranges = new PriorityBlockingQueue<LongRange>(m_numChunks, 
+                                                        rangeComparator);
         
         long index = 0;
         while (index < fileSize)
             {
-            long max = index + CHUNK_SIZE;
-            if (max >= fileSize)
-                {
-                max = (fileSize - 1);
-                }
+            // If we are at the last chunk, our last chunk ends at the file
+            // size.  Since the range is inclusive at both ends, we always
+            // subtract 1 to get the maximum byte.
+            final long max = Math.min(fileSize - 1, index + CHUNK_SIZE - 1);
+            
             final LongRange curRange = new LongRange(index, max);
             
-            LOG.debug("Adding range: "+curRange);
-            this.m_ranges.add(curRange);
-            this.m_rangeSet.add(curRange);
+            LOG.debug("Adding range: " + curRange);
+            
+            m_ranges.add(curRange);
+            m_rangeSet.add(curRange);
+            
             index = max + 1;
             }
         }

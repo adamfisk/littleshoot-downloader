@@ -273,30 +273,82 @@ public class SingleSourceDownloader implements RangeDownloader,
         return (int)(this.m_contentLength*1000/downloadMs*1024);
         }
 
-    public void handleInputStream(final InputStream is) throws IOException
+    /**
+     * {@inheritDoc}
+     */
+    public void handleInputStream
+            (final InputStream is) throws IOException
         {
         copy(is);
         }
     
-    private int copy(final InputStream is) throws IOException
+    /**
+     * Copies the data from a given input stream into the part of the file for
+     * which we are responsible.  The input stream is queued up to the part of
+     * the file for which we are responsible.
+     * 
+     * @param is
+     *      The input stream from which to read data to put into the file.
+     *      
+     * @throws IOException
+     *      If there are any I/O problems.
+     */
+    private void copy
+            (final InputStream is) throws IOException
         {
         final byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-        int count = 0;
-        long curPosition = this.m_contentRange.getMinimumLong();
-        int n = 0;
-        while (-1 != (n = is.read(buffer))) 
+        
+        final long min = m_contentRange.getMinimumLong();
+        final long max = m_contentRange.getMaximumLong();
+        
+        // The number of bytes we expect to read from the stream.  This is
+        // simply the number of bytes in the range for which we are responsible.
+        final int expectedBytes = (int) ((max - min) + 1);
+        
+        // The position in the file to which we are writing.
+        long filePosition = min;
+        
+        // The total number of bytes we have read (and written to the file).
+        // We track this so that we may know if have read enough data to handle
+        // our range.
+        int totalBytesRead = 0;
+        
+        // The number of bytes we have left to read to satisfy our range.
+        int remaining = expectedBytes - totalBytesRead;
+        
+        // We either try and read whatever we have left to satisfy our range, or
+        // we read as much as can fit in our buffer.
+        int bytesToRead = Math.min(remaining, buffer.length);
+        
+        // The number of bytes read in one pass of our read loop.
+        int bytesRead = 0;
+        
+        while (-1 != (bytesRead = is.read(buffer, 0, bytesToRead))) 
             {
             synchronized (this.m_randomAccessFile)
                 {
-                this.m_randomAccessFile.seek(curPosition);
-                this.m_randomAccessFile.write(buffer, 0, n);
+                this.m_randomAccessFile.seek(filePosition);
+                this.m_randomAccessFile.write(buffer, 0, bytesRead);
                 }
             
-            curPosition += n;
-            count += n;
+            filePosition += bytesRead;
+            totalBytesRead += bytesRead;
+            remaining -= bytesRead;
+            bytesToRead = Math.min(remaining, buffer.length);
             }
-        LOG.trace("Wrote "+count+" bytes.");
-        return count;
+        
+        LOG.trace("Wrote " + totalBytesRead + " bytes to file.");
+        
+        if (totalBytesRead == expectedBytes)
+            {
+            // We read the amount we expected to read.  Everything is okay.
+            }
+        else
+            {
+            // We were not able to read enough data.  This is an error, since we
+            // are unable to handle the range for which we are responsible.
+            throw new IOException("Not enough data in response body");
+            }
         }
 
     public void onContentLength(final long contentLength)
