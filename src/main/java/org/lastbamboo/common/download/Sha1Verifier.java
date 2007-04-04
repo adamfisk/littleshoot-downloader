@@ -6,7 +6,7 @@ import java.net.URI;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lastbamboo.util.Sha1Hasher;
+import org.lastbamboo.common.util.Sha1Hasher;
 
 
 /**

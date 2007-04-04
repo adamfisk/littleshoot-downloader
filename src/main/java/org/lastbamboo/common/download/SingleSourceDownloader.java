@@ -24,9 +24,9 @@ import org.lastbamboo.common.http.client.CommonsHttpClient;
 import org.lastbamboo.common.http.client.CommonsHttpClientImpl;
 import org.lastbamboo.common.http.client.HttpClientRunner;
 import org.lastbamboo.common.http.client.HttpListener;
-import org.lastbamboo.util.InputStreamHandler;
-import org.lastbamboo.util.RuntimeHttpException;
-import org.lastbamboo.util.RuntimeIoException;
+import org.lastbamboo.common.util.InputStreamHandler;
+import org.lastbamboo.common.util.RuntimeHttpException;
+import org.lastbamboo.common.util.RuntimeIoException;
 
 /**
  * Downloads data from a single source.
