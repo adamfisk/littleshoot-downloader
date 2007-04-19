@@ -54,7 +54,7 @@ public class SingleSourceDownloader implements RangeDownloader,
 
     private final RangeDownloadListener m_rangeDownloadListener;
 
-    private long m_connectedTime = -1L;
+    private long m_startedTime = -1L;
 
     private long m_contentLength = -1L;
 
@@ -143,7 +143,7 @@ public class SingleSourceDownloader implements RangeDownloader,
     public void download(final LongRange range)
         {
         this.m_completedTime = -1;
-        this.m_connectedTime = -1;
+        this.m_startedTime = -1;
         this.m_contentLength = -1;
         this.m_assignedRange = range;
         final GetMethod method = new GetMethod(this.m_uri.toString());
@@ -258,19 +258,19 @@ public class SingleSourceDownloader implements RangeDownloader,
     public Optional<Integer> getKbs ()
         {
         if (this.m_contentLength == -1 ||
-            this.m_connectedTime == -1 ||
+            this.m_startedTime == -1 ||
             this.m_completedTime == -1)
             {
             LOG.debug ("Trying to get kbs without enough" +
                           " data.  Content Length: "+this.m_contentLength +
-                          " Connect Time: "+this.m_connectedTime+" Completed " +
+                          " Connect Time: "+this.m_startedTime+" Completed " +
                           "Time: " + this.m_completedTime);
             
             return new NoneImpl<Integer> ();
             }
         else
             {
-            if (m_completedTime == m_connectedTime)
+            if (m_completedTime == m_startedTime)
                 {
                 // We warn here, since it is odd that the connection and
                 // completion happened at the same time.
@@ -285,9 +285,9 @@ public class SingleSourceDownloader implements RangeDownloader,
             // completed time to be at least one millisecond greater than the
             // connected time to make sure we do not get this infinity.
             final long safeCompletedTime =
-                    Math.max (m_completedTime, m_connectedTime + 1);
+                    Math.max (m_completedTime, m_startedTime + 1);
             
-            final long downloadMs = safeCompletedTime - m_connectedTime;
+            final long downloadMs = safeCompletedTime - m_startedTime;
             
             final int kbs = (int) (m_contentLength * 1000 / downloadMs * 1024);
             
@@ -383,11 +383,13 @@ public class SingleSourceDownloader implements RangeDownloader,
         {
         this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
         }
-
+    
+    /**
+     * {@inheritDoc}
+     */
     public void onConnect(final long ms)
         {
-        this.m_connectedTime = System.currentTimeMillis();
-        LOG.debug ("Connected time recorded as: " + m_connectedTime);
+        // Ignored.
         }
 
     public void onHttpException(final HttpException httpException)
@@ -405,7 +407,7 @@ public class SingleSourceDownloader implements RangeDownloader,
         {
         LOG.debug("Read message body!!");
         this.m_completedTime = System.currentTimeMillis();
-        LOG.debug ("Completed time recorded as: " + m_completedTime);
+        LOG.info ("Completed time recorded as: " + m_completedTime);
         this.m_launchFileTracker.onRangeComplete(this.m_assignedRange);
         this.m_rangeTracker.onRangeComplete(this.m_assignedRange);
         
@@ -438,8 +440,14 @@ public class SingleSourceDownloader implements RangeDownloader,
         // Ignored for now.
         }
 
+    /**
+     * {@inheritDoc}
+     */
     public void onDownloadStarted()
         {
+        m_startedTime = System.currentTimeMillis ();
+        LOG.info ("Connected time recorded as: " + m_startedTime);
+        
         m_rangeDownloadListener.onDownloadStarted(this);
         }
     
