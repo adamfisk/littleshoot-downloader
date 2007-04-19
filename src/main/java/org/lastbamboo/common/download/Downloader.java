@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collection;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -34,6 +35,16 @@ public interface Downloader
      * @return The status of the download.
      */
     String getStatus();
+    
+    /**
+     * Returns a list of source statuses for each source from which a download
+     * has been initiated.
+     * 
+     * @return
+     *      The source statuses.
+     */
+    List<SourceStatus> getSourceStatuses
+            ();
 
     /**
      * Writes the file to the specified HTTP response.  This is useful to 

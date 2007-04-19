@@ -1,18 +1,18 @@
 package org.lastbamboo.common.download;
 
 import org.apache.commons.lang.math.LongRange;
+import org.lastbamboo.common.util.Optional;
 
 /**
  * Interface for classes that can initiate downloads.
  */
 public interface RangeDownloader
     {
-
     /**
      * Gets the speed of this downloader in kilobytes per second.
      * @return The speed of this downloader in kilobytes per second.
      */
-    int getKbs();
+    Optional<Integer> getKbs();
 
     /**
      * Downloads the specified range from the assigned file.
@@ -33,5 +33,4 @@ public interface RangeDownloader
      * range.
      */
     String getContentType();
-
     }

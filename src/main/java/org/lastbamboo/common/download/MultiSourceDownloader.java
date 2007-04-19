@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -25,9 +26,11 @@ import org.apache.commons.logging.LogFactory;
  */
 public class MultiSourceDownloader implements Downloader, RangeDownloadListener
     {
-
+    /**
+     * The log for this class.
+     */
     private static final Log LOG = 
-        LogFactory.getLog(MultiSourceDownloader.class);
+            LogFactory.getLog(MultiSourceDownloader.class);
 
     /**
      * The default number of connections to use for connecting to an HTTP
@@ -392,6 +395,15 @@ public class MultiSourceDownloader implements Downloader, RangeDownloadListener
     public String getStatus()
         {
         return this.m_status;
+        }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public List<SourceStatus> getSourceStatuses
+            ()
+        {
+        return new LinkedList<SourceStatus> ();
         }
 
     public void onDownloadStarted(final RangeDownloader downloader)

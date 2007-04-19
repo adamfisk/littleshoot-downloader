@@ -25,8 +25,11 @@ import org.lastbamboo.common.http.client.CommonsHttpClientImpl;
 import org.lastbamboo.common.http.client.HttpClientRunner;
 import org.lastbamboo.common.http.client.HttpListener;
 import org.lastbamboo.common.util.InputStreamHandler;
+import org.lastbamboo.common.util.NoneImpl;
+import org.lastbamboo.common.util.Optional;
 import org.lastbamboo.common.util.RuntimeHttpException;
 import org.lastbamboo.common.util.RuntimeIoException;
+import org.lastbamboo.common.util.SomeImpl;
 
 /**
  * Downloads data from a single source.
@@ -249,28 +252,47 @@ public class SingleSourceDownloader implements RangeDownloader,
             }
         }
 
-    public int getKbs()
+    /**
+     * {@inheritDoc}
+     */
+    public Optional<Integer> getKbs ()
         {
         if (this.m_contentLength == -1 ||
             this.m_connectedTime == -1 ||
             this.m_completedTime == -1)
             {
-            LOG.debug("Trying to connect the connected time without enough" +
+            LOG.debug ("Trying to get kbs without enough" +
                           " data.  Content Length: "+this.m_contentLength +
                           " Connect Time: "+this.m_connectedTime+" Completed " +
                           "Time: " + this.m_completedTime);
-            return -1;
+            
+            return new NoneImpl<Integer> ();
             }
-        
-        if (this.m_completedTime == this.m_connectedTime)
+        else
             {
-            LOG.error("About to divide by zero -- times both " +
-                          this.m_completedTime);
+            if (m_completedTime == m_connectedTime)
+                {
+                // We warn here, since it is odd that the connection and
+                // completion happened at the same time.
+                LOG.warn ("Completed time same as connected time: " +
+                              m_completedTime);
+                }
+            
+            // We adjust the completed time to make sure that we do not divide
+            // by zero.  If the connected time is the same as the completed
+            // time, it appears to us that the download took no time, which
+            // means that we have infinite download speed.  We adjust the
+            // completed time to be at least one millisecond greater than the
+            // connected time to make sure we do not get this infinity.
+            final long safeCompletedTime =
+                    Math.max (m_completedTime, m_connectedTime + 1);
+            
+            final long downloadMs = safeCompletedTime - m_connectedTime;
+            
+            final int kbs = (int) (m_contentLength * 1000 / downloadMs * 1024);
+            
+            return new SomeImpl<Integer> (kbs);
             }
-        
-        final long downloadMs = this.m_completedTime - this.m_connectedTime;
-        //LOG.debug(downloadMs + " ms to download segment...");
-        return (int)(this.m_contentLength*1000/downloadMs*1024);
         }
 
     /**
@@ -365,6 +387,7 @@ public class SingleSourceDownloader implements RangeDownloader,
     public void onConnect(final long ms)
         {
         this.m_connectedTime = System.currentTimeMillis();
+        LOG.debug ("Connected time recorded as: " + m_connectedTime);
         }
 
     public void onHttpException(final HttpException httpException)
@@ -382,6 +405,7 @@ public class SingleSourceDownloader implements RangeDownloader,
         {
         LOG.debug("Read message body!!");
         this.m_completedTime = System.currentTimeMillis();
+        LOG.debug ("Completed time recorded as: " + m_completedTime);
         this.m_launchFileTracker.onRangeComplete(this.m_assignedRange);
         this.m_rangeTracker.onRangeComplete(this.m_assignedRange);
         
