@@ -84,10 +84,10 @@ public class SourceForgeTest extends TestCase
         LOG.debug("About to download file...");
         downloader.download(uris);
         LOG.debug("Finished call to download...");
-        //Thread.sleep(20*1000);
 
         assertTrue(file.isFile());
 
+        assertEquals(3534076L, file.length());
         final URI sha1 = Sha1Hasher.createSha1Urn(file);
         assertEquals("SHA-1s should be equal!!", expectedSha1, sha1);
         }
