@@ -263,6 +263,10 @@ public class MultiSourceDownloader implements Downloader, RangeDownloadListener
             }
         final LongRange range = this.m_rangeTracker.getNextRange();
         LOG.debug("Accessed range: "+range);
+        
+        // The call to get the next range would block if there were no more
+        // ranges, we use this special, dummy range to signify that we're
+        // done with the download.
         if (range.getMinimumLong() == 183L &&
             range.getMaximumLong() == 183L)
             {
