@@ -6,17 +6,14 @@ import java.io.RandomAccessFile;
 import java.net.URI;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
-import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.HeadMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.LongRange;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -66,8 +63,6 @@ public class SingleSourceDownloader implements RangeDownloader,
     private int m_completedRanges = 0;
 
     private final LaunchFileTracker m_launchFileTracker;
-
-    private String m_contentType;
 
     /**
      * Our HTTP client used to execute our HTTP methods.
@@ -215,12 +210,10 @@ public class SingleSourceDownloader implements RangeDownloader,
             final int statusCode = method.getStatusCode ();
             if (statusCode == HttpStatus.SC_OK)
                 {
-                this.setContentType(method);
                 this.m_rangeDownloadListener.onConnect(this);
                 }
             else if (statusCode == HttpStatus.SC_PARTIAL_CONTENT)
                 {
-                this.setContentType(method);
                 // Do something else here?
                 this.m_rangeDownloadListener.onConnect(this);
                 }
@@ -238,17 +231,6 @@ public class SingleSourceDownloader implements RangeDownloader,
             {
             // We just won't end up using this source.
             LOG.debug("IO error contacting source", e);
-            }
-        }
-    
-    protected void setContentType(final HttpMethod method)
-        {
-        if (StringUtils.isBlank(this.m_contentType))
-            {
-            final Header contentTypeHeader = 
-                method.getResponseHeader("Content-Type");
-            this.m_contentType = contentTypeHeader.getValue();
-            LOG.debug("Setting content type to: "+this.m_contentType);
             }
         }
 
@@ -454,11 +436,6 @@ public class SingleSourceDownloader implements RangeDownloader,
     public void onBytesRead(final int bytesRead)
         {
         // Ingored for now.
-        }
-    
-    public String getContentType()
-        {
-        return this.m_contentType;
         }
     
     public String toString()

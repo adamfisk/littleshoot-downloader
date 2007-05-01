@@ -26,11 +26,4 @@ public interface RangeDownloader
      */
     void issueHeadRequest();
 
-    /**
-     * Accessor for the content type returned from the server.
-     * 
-     * @return The content type HTTP header returned from the server for this
-     * range.
-     */
-    String getContentType();
     }
