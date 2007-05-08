@@ -53,6 +53,8 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                 }
             this.m_completedRanges.add(range);
         
+            // Notify the completed ranges if the range we just got is the
+            // one we're waiting for.
             if (range.getMinimumLong() == this.m_rangeIndex)
                 {
                 this.m_completedRanges.notify();
@@ -109,23 +111,38 @@ public class DownloadingFileLauncher implements LaunchFileTracker
 
             // This will throw an IOException if the user closes the browser 
             // window, for example.
+            // This just writes all the ranges we already have.
             writeRange(startIndex, this.m_rangeIndex, os);
             
             synchronized (this.m_completedRanges)
                 {
                 LOG.debug("Locked completed range...");
+                if (done())
+                    {
+                    LOG.debug("We're done.  Flushing and notifying!");
+                    os.flush();
+                    os.close();
+                    this.m_completedRanges.notify();
+                    return;
+                    }
                 final LongRange range = this.m_completedRanges.peek();
                 LOG.debug("Got range...");
+                
+                // If there is no new range or it's not the next range we
+                // need, wait until we get it.  
                 if (range == null || 
                     range.getMinimumLong() != this.m_rangeIndex)
                     {
                     try
                         {
-                        LOG.debug("Waiting on completed range...");
+                        LOG.debug("Waiting on completed range. Complete: "+
+                            this.m_complete);
                         this.m_completedRanges.wait();
                         
-                        if (this.m_completedRanges.isEmpty() && this.m_complete)
+                        LOG.debug("Finished waiting...");
+                        if (done())
                             {
+                            LOG.debug("We're done.  Writing any remaining...");
                             os.flush();
                             os.close();
                             this.m_completedRanges.notify();
@@ -139,6 +156,22 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                     }
                 }
             }
+        }
+
+    /**
+     * Checks if we're done.  Note that this relies on the downlaoder notifying
+     * this class of all completed ranges prior to the uber-downloader 
+     * thinking we're done.  Otherwise, we'd get the onFileComplete notification
+     * prior to receiving all the ranges in the file, and we potentially
+     * would never write the last few ranges (depending on the thread
+     * scheduling, I believe).
+     * 
+     * @return <code>true</code> if we've received the file complete 
+     * notification and we've written all the ranges in the file.
+     */
+    private boolean done()
+        {
+        return (this.m_completedRanges.isEmpty() && this.m_complete);
         }
 
     private void writeRange(final long startIndex, 

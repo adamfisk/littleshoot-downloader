@@ -43,6 +43,8 @@ public class MultiSourceDownloader implements Downloader, RangeDownloadListener
      * higher in the future and more aggressively purge slow sources.
      */
     private static final int CONNECTION_LIMIT = 20;
+
+    private final Object DOWNLOAD_STREAM_LOCK = new Object();
     
     private final URI m_uri;
     
@@ -83,7 +85,7 @@ public class MultiSourceDownloader implements Downloader, RangeDownloadListener
 
     private boolean m_receivedExpectedSha1;
 
-    private int m_activeWriteCalls;
+    private volatile int m_activeWriteCalls;
 
     private volatile boolean m_cancelled = false;
 
@@ -188,6 +190,14 @@ public class MultiSourceDownloader implements Downloader, RangeDownloadListener
         // random access file.
         this.m_launchFileTracker.onFileComplete();
         
+        // Since the download completion and the file launching happen on
+        // different threads, we need to wait until all the launchers have
+        // finished here before notifying listeners that have free reign over
+        // the downloaded file (like moving it!).
+        // We need to make this call after the file complete notification
+        // above because that's the only way the luancher ever completes it's
+        // write (the launcher waits for the complete notification).
+        waitForLaunchersToComplete();
         try
             {
             this.m_randomAccessFile.close();
@@ -198,6 +208,38 @@ public class MultiSourceDownloader implements Downloader, RangeDownloadListener
             }
         
         onDownloadComplete();
+        }
+
+    /**
+     * Waits until all active launcher have finished their writes, typically
+     * to the browser.
+     */
+    private void waitForLaunchersToComplete()
+        {
+        if (this.m_activeWriteCalls == 0)
+            {
+            LOG.debug("No active launchers...");
+            return;
+            }
+        synchronized (this.DOWNLOAD_STREAM_LOCK)
+            {
+            LOG.debug("Waiting for active streams to finish streaming");
+            try
+                {
+                // It shouldn't take forever to stream the already
+                // downloaded file to the browser, so cap the wait.
+                this.DOWNLOAD_STREAM_LOCK.wait(1*60*1000);
+                if (this.m_activeWriteCalls > 0)
+                    {
+                    LOG.warn("Still " + this.m_activeWriteCalls + 
+                        " active writes!!");
+                    }
+                }
+            catch (final InterruptedException e)
+                {
+                LOG.warn("Unexpected interrupt!!", e);
+                }
+            }
         }
 
     public void cancel()
@@ -338,7 +380,15 @@ public class MultiSourceDownloader implements Downloader, RangeDownloadListener
         try
             {
             this.m_launchFileTracker.write(response.getOutputStream());
+            LOG.debug("Finished launcher write call...");
             this.m_activeWriteCalls--;
+            synchronized (this.DOWNLOAD_STREAM_LOCK)
+                {
+                if (this.m_activeWriteCalls == 0)
+                    {
+                    this.DOWNLOAD_STREAM_LOCK.notify();
+                    }
+                }
             }
         catch (final IOException e)
             {
