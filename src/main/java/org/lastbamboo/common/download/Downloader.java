@@ -1,160 +1,97 @@
 package org.lastbamboo.common.download;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.util.Collection;
-import java.util.List;
-
-import javax.servlet.http.HttpServletResponse;
+import java.io.OutputStream;
 
 /**
- * Interface for classes that download files.
+ * The interface to an object that manages the download of a single resource.
+ * 
+ * @param <StateT>
+ *      The type of object that maintains the
  */
-public interface Downloader
+public interface Downloader<StateT>
     {
-
     /**
-     * Initiates the download.
-     * 
-     * @param sources The sources to download from.
-     * @throws IOException If there's a read/write error downloading the file.
+     * Starts downloading the resource.
      */
-    void download(Collection<URI> sources) throws IOException;
-
-    /**
-     * Sets the status of the download.
-     * 
-     * @param status The status of the download.
-     */
-    void setStatus(final String status);
+    void start
+            ();
     
     /**
-     * Accessor for the status of the download.
-     * 
-     * @return The status of the download.
-     */
-    String getStatus();
-    
-    /**
-     * Returns a list of source statuses for each source from which a download
-     * has been initiated.
+     * Returns the current state of this downloader.
      * 
      * @return
-     *      The source statuses.
+     *      The current state of this downloader. 
      */
-    List<SourceStatus> getSourceStatuses
+    StateT getState
             ();
-
-    /**
-     * Writes the file to the specified HTTP response.  This is useful to 
-     * stream the downloading file to a browser, for example.
-     * 
-     * @param response The HTTP response class.
-     */
-    void writeFile(final HttpServletResponse response);
     
     /**
-     * Cancels the download.
-     */
-    void cancel();
-
-    /**
-     * Alternate download method specifying the number of connections to 
-     * maintain for each single host.  Creating multiple connections to the
-     * same host can speed up downloads by over 200%.
+     * Returns the file to which this downloader downloads the resource.
      * 
-     * @param sources The sources to download from.
-     * @param connectionsPerHost The number of connections to maintain to
-     * each host.
-     * @throws IOException If there's a read/write error downloading the file.
+     * @return
+     *      The file to which this downloader downloads the resource.
      */
-    void download(Collection<URI> sources, int connectionsPerHost) 
-        throws IOException;
-
-    /**
-     * Adds a listener for download events.
-     * 
-     * @param dl The listener.
-     */
-    void addListener(DownloadListener dl);
-
-    /**
-     * Accessor for the file path the download is downloading to.
-     * 
-     * @return The file path the download is downloading to.
-     */
-    File getFile();
+    File getFile
+            ();
     
     /**
-     * Accessor for the session ID for this download.
+     * Returns the MIME type of the resource that is downloaded by this
+     * downloader.
      * 
-     * @return The session ID for this download.
+     * @return
+     *      The MIME type of the resource that is downloaded by this downloader.
      */
-    String getSessionId();
+    String getMimeType
+            ();
     
     /**
-     * Accessor for the URI for this download.
+     * Returns the content type of the resource that is downloaded by this
+     * downloader.
      * 
-     * @return The URI for this download.
+     * @return
+     *      The content type of the resource that is downloaded by this
+     *      downloader.
      */
-    URI getUri();
-
+    String getContentType
+            ();
+    
     /**
-     * Returns whether or not this downloader has already started downloading.
+     * Returns the size of the resource that is downloaded by this downloader.
      * 
-     * @return <code>true</code> if this downloader has already started
-     * downloading, otherwise <code>false</code>.
+     * @return
+     *      The size of the resource that is downloaded by this downloader.
      */
-    boolean isDownloading();
-
+    int getSize
+            ();
+    
     /**
-     * Sets whether or not this downloader should be considered downloading.
-     * This is useful to get around race conditions with many threads, for
-     * example.
-     * 
-     * @param downloading whether or not this downloader should be considered
+     * Writes the resource that this downloader downloads to a given stream.
+     * The download does not have to be complete for writing to occur.  This can
+     * be used to stream the content of this downloader while it is still
      * downloading.
-     */
-    void setDownloading(boolean downloading);
-
-    /**
-     * Accessor for the SHA-1 URN for the downloaded file.
      * 
-     * @return The SHA-1 URN for the downloaded file.
+     * @param os
+     *      The output stream to which to write the resource.
      */
-    URI getSha1Urn();
-
-    /**
-     * Sets the SHA-1 URN for this file.
-     * 
-     * @param sha1 The SHA-1 URN for the file.
-     * @param matchesExpected Whether or not the SHA-1 URN matches the URN
-     * we expected.
-     */
-    void setSha1Urn(URI sha1, boolean matchesExpected);
-
-    /**
-     * Sets the location of the downloaded file.  Applications might move it
-     * after the download, for example, and this method allows it to be 
-     * updated.
-     * 
-     * @param file The file location.
-     */
-    void setFile(File file);
+    void write
+            (OutputStream os);
     
     /**
-     * Accessor for the MIME type.  This allows the central server to set the
-     * MIME type appropriately.
+     * Adds a listener to be notified of events of this downloader.
      * 
-     * @return The MIME type for the downloading file.
+     * @param listener
+     *      The listener to be notified.
      */
-    String getMimeType();
+    void addListener
+            (DownloaderListener<StateT> listener);
 
     /**
-     * Returns whether or not we downloaded the expected SHA-1 URN.
-     * @return Whether or not we downloaded the expected SHA-1 URN.
+     * Removes a listener that was being notified of events of this downloader.
+     * 
+     * @param listener
+     *      The listener to remove.
      */
-    boolean downloadedExpectedSha1();
-
+    void removeListener
+            (DownloaderListener<StateT> listener);
     }

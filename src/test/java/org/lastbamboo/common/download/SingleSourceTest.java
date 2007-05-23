@@ -12,8 +12,6 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lastbamboo.common.download.Downloader;
-import org.lastbamboo.common.download.MultiSourceDownloader;
 
 /**
  * Tests downloading from a single source.
@@ -55,14 +53,33 @@ public class SingleSourceTest extends TestCase
         //final String dateString = format.format(new Date(duration));
         LOG.debug("DOWNLOADED STRAIGHT BASELINE IN "+straighBaselineSecs+" SECONDS");
         
+        final UriResolver resolver = new UriResolver ()
+            {
+            public Collection<URI> resolve
+                    (final URI uri) throws IOException
+                {
+                return uris;
+                }
+            };
+        
         long baseline = 0;
         
         for (int i = 1; i < 16; i++)
             {
-            final Downloader dl = new MultiSourceDownloader("sessionId", 
-                testFile, uri, 6509767L, "video/mpeg");
+//            final MultiSourceDownloader dl = new MultiSourceDownloaderImpl("sessionId", 
+//                testFile, uri, 6509767L, "video/mpeg");
+            
+            final Downloader<MsDState> dl =
+                    new MultiSourceDownloader ("sessionId",
+                                        testFile,
+                                        uri,
+                                        6509767L,
+                                        "video/mpeg",
+                                        resolver,
+                                        i);
+                                        
             final long start = System.currentTimeMillis();
-            dl.download(uris, i);
+            dl.start ();
             final long end = System.currentTimeMillis();
             
             LOG.debug("Found file: "+testFile.exists()+" bytes: "+testFile.length());
@@ -93,7 +110,6 @@ public class SingleSourceTest extends TestCase
                     LOG.debug("Lost "+secondsLost);
                     }
                 }
-            
             }
         }
 
