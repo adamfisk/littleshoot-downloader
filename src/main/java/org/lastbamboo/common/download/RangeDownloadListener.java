@@ -1,12 +1,10 @@
 package org.lastbamboo.common.download;
 
-
 /**
  * Listens for connection events.
  */
 public interface RangeDownloadListener
     {
-
     /**
      * Called when a give downloader has established a connection.
      * 
@@ -20,5 +18,13 @@ public interface RangeDownloadListener
      * @param downloader The downloader.
      */
     void onDownloadStarted(RangeDownloader downloader);
-
+    
+    /**
+     * Notification that the download has finished.
+     * 
+     * @param downloader
+     *      The downloader.
+     */
+    void onDownloadFinished
+            (RangeDownloader downloader);
     }

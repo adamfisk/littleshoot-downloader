@@ -56,6 +56,11 @@ public class SingleSourceDownloader implements RangeDownloader,
     private long m_contentLength = -1L;
 
     private long m_completedTime = -1L;
+    
+    /**
+     * The number of bytes that have been downloaded.
+     */
+    private long m_numBytesDownloaded;
 
     /**
      * The number of ranges this downloader has completed.
@@ -106,6 +111,8 @@ public class SingleSourceDownloader implements RangeDownloader,
         this.m_launchFileTracker = launchTracker;
         this.m_randomAccessFile = randomAccessFile;
         this.m_httpClient = httpClient;
+        
+        m_numBytesDownloaded = 0L;
         }
 
     /**
@@ -276,6 +283,15 @@ public class SingleSourceDownloader implements RangeDownloader,
             return new SomeImpl<Integer> (kbs);
             }
         }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public long getNumBytesDownloaded
+            ()
+        {
+        return m_numBytesDownloaded;
+        }
 
     /**
      * {@inheritDoc}
@@ -284,6 +300,8 @@ public class SingleSourceDownloader implements RangeDownloader,
             (final InputStream is) throws IOException
         {
         copy(is);
+        
+        m_numBytesDownloaded = m_contentLength;
         }
     
     /**
@@ -397,6 +415,8 @@ public class SingleSourceDownloader implements RangeDownloader,
         // Everything's going well with this downloader, so add it to the 
         // available downloaders to keep going.
         this.m_sourceRanker.onAvailable(this);
+        
+        this.m_rangeDownloadListener.onDownloadFinished (this);
         }
 
     public void onBadHeader(final String header)

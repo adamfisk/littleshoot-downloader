@@ -13,6 +13,15 @@ public interface RangeDownloader
      * @return The speed of this downloader in kilobytes per second.
      */
     Optional<Integer> getKbs();
+    
+    /**
+     * Returns the number of bytes downloaded by this downloader.
+     * 
+     * @return
+     *      The number of bytes downloaded by this downloader.
+     */
+    long getNumBytesDownloaded
+            ();
 
     /**
      * Downloads the specified range from the assigned file.

@@ -1,5 +1,6 @@
 package org.lastbamboo.common.download;
 
+
 /**
  * The state for the multi-source downloader.
  */
@@ -200,7 +201,17 @@ public interface MsDState extends DownloaderState
     /**
      * A state that indicates that the downloader is downloading.
      */
-    public interface Downloading extends MsDState {}
+    public interface Downloading extends MsDState
+        {
+        /**
+         * Returns the speed of the download in kilobytes per second.
+         * 
+         * @return
+         *      The speed of the download in kilobytes per second.
+         */
+        int getKbs
+                ();
+        }
 
     /**
      * A state that indicates that the downloader is done downloading.
@@ -283,6 +294,23 @@ public interface MsDState extends DownloaderState
             extends DownloaderState.AbstractRunning implements Downloading
         {
         /**
+         * The speed of the downloading in kilobytes per second.
+         */
+        private final int m_kbs;
+        
+        /**
+         * Constructs a new downloading state.
+         * 
+         * @param kbs
+         *      The speed of the downloading n kilobytes per second.
+         */
+        public DownloadingImpl
+                (final int kbs)
+            {
+            m_kbs = kbs;
+            }
+        
+        /**
          * {@inheritDoc}
          */
         public <T> T accept
@@ -294,11 +322,29 @@ public interface MsDState extends DownloaderState
         /**
          * {@inheritDoc}
          */
+        public int getKbs
+                ()
+            {
+            return m_kbs;
+            }
+        
+        /**
+         * {@inheritDoc}
+         */
         @Override
         public boolean equals
                 (final Object otherObject)
             {
-            return otherObject instanceof Downloading;
+            if (otherObject instanceof Downloading)
+                {
+                final Downloading other = (Downloading) otherObject;
+                
+                return other.getKbs () == m_kbs;
+                }
+            else
+                {
+                return false;
+                }
             }
         }
 
@@ -433,12 +479,6 @@ public interface MsDState extends DownloaderState
      */
     public static final MsDState GETTING_SOURCES =
             new GettingSourcesImpl ();
-
-    /**
-     * An instance of the downloading state.
-     */
-    public static final MsDState DOWNLOADING =
-            new DownloadingImpl ();
 
     /**
      * An instance of the complete state.
