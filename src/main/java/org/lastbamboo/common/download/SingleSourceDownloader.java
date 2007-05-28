@@ -292,6 +292,15 @@ public class SingleSourceDownloader implements RangeDownloader,
         {
         return m_numBytesDownloaded;
         }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public URI getSourceUri
+            ()
+        {
+        return m_uri;
+        }
 
     /**
      * {@inheritDoc}

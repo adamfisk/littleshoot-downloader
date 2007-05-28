@@ -211,6 +211,15 @@ public interface MsDState extends DownloaderState
          */
         int getKbs
                 ();
+
+        /**
+         * Returns the number of sources used by the download.
+         * 
+         * @return
+         *      The number of sources used by the download.
+         */
+        int getNumSources
+                ();
         }
 
     /**
@@ -299,15 +308,24 @@ public interface MsDState extends DownloaderState
         private final int m_kbs;
         
         /**
+         * The number of sources used by the download.
+         */
+        private final int m_numSources;
+        
+        /**
          * Constructs a new downloading state.
          * 
          * @param kbs
          *      The speed of the downloading n kilobytes per second.
+         * @param numSources
+         *      The number of sources used by the download.
          */
         public DownloadingImpl
-                (final int kbs)
+                (final int kbs,
+                 final int numSources)
             {
             m_kbs = kbs;
+            m_numSources = numSources;
             }
         
         /**
@@ -326,6 +344,15 @@ public interface MsDState extends DownloaderState
                 ()
             {
             return m_kbs;
+            }
+        
+        /**
+         * {@inheritDoc}
+         */
+        public int getNumSources
+                ()
+            {
+            return m_numSources;
             }
         
         /**

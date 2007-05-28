@@ -1,5 +1,7 @@
 package org.lastbamboo.common.download;
 
+import java.net.URI;
+
 import org.apache.commons.lang.math.LongRange;
 import org.lastbamboo.common.util.Optional;
 
@@ -35,4 +37,12 @@ public interface RangeDownloader
      */
     void issueHeadRequest();
 
+    /**
+     * Returns the source URI for this downloader.
+     * 
+     * @return
+     *      The source URI for this downloader.
+     */
+    URI getSourceUri
+            ();
     }
