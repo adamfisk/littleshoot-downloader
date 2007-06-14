@@ -36,6 +36,7 @@ public final class MultiSourceDownloader
      */
     private final class SingleDownloadListener implements RangeDownloadListener
         {
+        
         /**
          * {@inheritDoc}
          */
