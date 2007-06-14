@@ -72,6 +72,11 @@ public final class MultiSourceDownloader
         public void onDownloadFinished
                 (final RangeDownloader downloader)
             {
+            if (downloader == null)
+                {
+                LOG.error("Downloader is null");
+                throw new NullPointerException("Null Downloader");
+                }
             final long start = m_startTimes.remove (downloader);
             final long end = System.currentTimeMillis ();
             final long size = downloader.getNumBytesDownloaded ();
