@@ -21,10 +21,10 @@ import org.lastbamboo.common.http.client.CommonsHttpClient;
 import org.lastbamboo.common.http.client.CommonsHttpClientImpl;
 import org.lastbamboo.common.http.client.HttpClientRunner;
 import org.lastbamboo.common.http.client.HttpListener;
+import org.lastbamboo.common.http.client.RuntimeHttpException;
 import org.lastbamboo.common.util.InputStreamHandler;
 import org.lastbamboo.common.util.NoneImpl;
 import org.lastbamboo.common.util.Optional;
-import org.lastbamboo.common.util.RuntimeHttpException;
 import org.lastbamboo.common.util.RuntimeIoException;
 import org.lastbamboo.common.util.SomeImpl;
 
