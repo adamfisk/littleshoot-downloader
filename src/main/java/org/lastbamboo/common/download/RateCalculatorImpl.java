@@ -104,9 +104,12 @@ public class RateCalculatorImpl implements RateCalculator
                 }
             };
             
-        final Collection<RateSegment> valid =
-                m_optionalUtils.filterNones
+        final Collection<RateSegment> valid;
+        synchronized (segments)
+            {
+            valid = m_optionalUtils.filterNones
                     (m_collectionUtils.map (segments, f));
+            }
         
         final F1<RateSegment,Long> getDuration = new F1<RateSegment,Long> ()
             {
