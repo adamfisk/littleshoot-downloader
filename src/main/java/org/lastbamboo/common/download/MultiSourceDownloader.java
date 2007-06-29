@@ -239,7 +239,8 @@ public final class MultiSourceDownloader
                 Collections.synchronizedSet (new HashSet<URI> ());
         
         m_startTimes = new HashMap<RangeDownloader,Long> ();
-        m_rateSegments = new LinkedList<RateSegment> ();
+        m_rateSegments = 
+            Collections.synchronizedList(new LinkedList<RateSegment> ());
         
         try
             {
