@@ -198,14 +198,12 @@ public class SingleSourceDownloader implements RangeDownloader,
     private void sendHeadRequest()
         {
         // Override the default of attempting to connect 3 times.
-        /*
         final HttpMethodRetryHandler retryHandler = 
             new DefaultHttpMethodRetryHandler(0, false);
         this.m_httpClient.getParams().setParameter(
             HttpMethodParams.RETRY_HANDLER, retryHandler);
         this.m_httpClient.getHttpConnectionManager().getParams().
             setConnectionTimeout(10*1000);
-            */
         
         final String uri = SingleSourceDownloader.this.m_uri.toString();
         LOG.debug("Sending request to URI: "+uri);
