@@ -6,8 +6,8 @@
     <artifactId>lastbamboo-common-download</artifactId>
     <packaging>jar</packaging>
     <version>1.0</version>
-    <name>Downloader</name>
-    <description>Last Bamboo Downloader</description>
+    <name>Multi-Source Downloader</name>
+    <description>Last Bamboo Downloader that uses all available sources.  This is built on HttpClient and can be used with arbitrary URLs.</description>
 
     <parent>
         <groupId>org.lastbamboo</groupId>
