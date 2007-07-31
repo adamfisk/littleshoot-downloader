@@ -467,7 +467,7 @@ public class SingleSourceDownloader implements RangeDownloader,
     
     public String toString()
         {
-        return "Downloader at "+getKbs()+" kbs with "+this.m_completedRanges + 
+        return "Downloader with "+this.m_completedRanges + 
             " completed ranges for: "+this.m_uri;
         }
     }
