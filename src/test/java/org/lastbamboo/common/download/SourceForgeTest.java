@@ -1,14 +1,20 @@
 package org.lastbamboo.common.download;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Collection;
 import java.util.LinkedList;
 
 import junit.framework.TestCase;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.lastbamboo.common.util.Sha1Hasher;
 
 /**
@@ -16,11 +22,8 @@ import org.lastbamboo.common.util.Sha1Hasher;
  */
 public class SourceForgeTest extends TestCase
     {
-//    /**
-//     * The log for this class.
-//     */
-    // Currently unused.
-    // private static final Log LOG = LogFactory.getLog(SourceForgeTest.class);
+
+    private static final Log LOG = LogFactory.getLog(SourceForgeTest.class);
     
     private static Downloader<MsDState> getBaseDownloader
             (final File file) throws URISyntaxException
@@ -71,7 +74,7 @@ public class SourceForgeTest extends TestCase
                 return uris;
                 }
             };
-        
+            
         final Downloader<MsDState> downloader =
                 new MultiSourceDownloader ("sessionId",
                                     file,
@@ -83,52 +86,71 @@ public class SourceForgeTest extends TestCase
         
         return downloader;
         }
-
-    /**
-     * Tests a download from multiple sources, verifying we received the
-     * expected file upon completion.
-     *
-     * @throws Exception If any unexpected error occurs.
-     */
-    private void oneDownload() throws Exception
+    
+    private void recordAllSha1s(final File file) throws Exception
         {
-        final String title = "Test-File";
-        final File file = new File(title);
+        LOG.debug("Recording SHA1s....");
         
-        final String sha1String = "urn:sha1:WUOWD7AATBMW4K3EV3TFMJ6FO6SNLZIS";
-        final URI expectedSha1 = new URI(sha1String);
+        final int chunkSize = 100000;
+        final ByteBuffer[] bufs = createBuffers(file, chunkSize);
+        //final long read = fc.read(bufs);
+        //assertEquals(fc.size(), read);
         
-        final Downloader<MsDState> downloader = getBaseDownloader (file);
-        
-        downloader.start ();
-        
-        assertEquals(3534076L, file.length());
-        final URI sha1 = Sha1Hasher.createSha1Urn(file);
-        assertEquals("SHA-1s should be equal!!", expectedSha1, sha1);
-        
-//        final MultiSourceDownloaderImpl downloader =
-//            new MultiSourceDownloaderImpl("sessionId", file, uri, size, "video/mpeg");
-//        LOG.debug("About to download file...");
-//        downloader.download(uris);
-//        LOG.debug("Finished call to download...");
-//        //Thread.sleep(20*1000);
-//
-//        assertTrue(file.isFile());
-//
-//        final URI sha1 = Sha1Hasher.createSha1Urn(file);
-//        assertEquals("SHA-1s should be equal!!", expectedSha1, sha1);
+        ByteBuffer lastBuf = null;
+        for (final ByteBuffer buf : bufs)
+            {
+            assertFalse("ByteBuffers equal!! "+buf+"  "+lastBuf, buf.equals(lastBuf));
+            final URI sha1 = Sha1Hasher.createSha1Urn(buf);
+            LOG.debug(sha1);
+            
+            lastBuf = buf;
+            }
         }
-    
-//    public void testDownload() throws Exception
-//        {
-//        for(int i = 0; i < 1; ++i)
-//            {
-//            oneDownload();
-//            }
-//        }
-    
-    public void testSha1Verifier
-            () throws URISyntaxException
+
+    private ByteBuffer[] createBuffers(final File file, final int chunkSize)
+        throws Exception
+        {
+        final FileInputStream fis = new FileInputStream(file);
+        //final FileChannel fc = fis.getChannel();
+        //fc.position(0);
+        final int numChunks = (int) Math.ceil(file.length()/(double) chunkSize);
+        final ByteBuffer[] bufs = new ByteBuffer[numChunks];
+        int totalSize = 0;
+        for (int i = 0; i < bufs.length; i++)
+            {
+            final int curSize;
+            if (i == bufs.length - 1)
+                {
+                //LOG.debug("Adding last chunk");
+                curSize = (int) (file.length() - (i * chunkSize));
+                }
+            else
+                {
+                curSize = chunkSize;
+                }
+            final byte[] bytes = new byte[curSize];
+            LOG.debug("Reading from "+totalSize+" to "+(totalSize+curSize) +
+                " of file with size: "+file.length());
+            fis.read(bytes, totalSize, curSize);
+            
+            bufs[i] = ByteBuffer.wrap(bytes);
+            
+            /*
+            final int read = fc.read(bufs[i]);
+            assertEquals(curSize, read);
+            LOG.debug("FC position: "+fc.position());
+            totalSize += curSize;
+            assertEquals(totalSize, fc.position());
+            */
+            totalSize += curSize;
+            }
+        fis.close();
+        
+        assertEquals("Did not create bufs correctly", file.length(), totalSize);
+        return bufs;
+        }
+
+    public void testSha1Verifier() throws Exception
         {
         final String title = "Test-File";
         final File file = new File (title);
@@ -145,5 +167,7 @@ public class SourceForgeTest extends TestCase
         
         assertEquals (downloader.getState (),
                       new Sha1DState.VerifiedSha1Impl<MsDState> ());
+        
+        //recordAllSha1s(file);
         }
     }
