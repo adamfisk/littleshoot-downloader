@@ -155,18 +155,21 @@ public class SourceForgeTest extends TestCase
         final String title = "Test-File";
         final File file = new File (title);
         
+        final long expectedSize = 3534076L;
+        
         final String sha1String = "urn:sha1:WUOWD7AATBMW4K3EV3TFMJ6FO6SNLZIS";
         final URI expectedSha1 = new URI (sha1String);
         
         final Downloader<MsDState> baseDownloader = getBaseDownloader (file);
 
         final Downloader<Sha1DState<MsDState>> downloader =
-                new Sha1Downloader<MsDState> (baseDownloader, expectedSha1);
+                new Sha1Downloader<MsDState> (baseDownloader, expectedSha1, 
+                    expectedSize);
         
         downloader.start ();
         
-        assertEquals (downloader.getState (),
-                      new Sha1DState.VerifiedSha1Impl<MsDState> ());
+        assertEquals (new Sha1DState.VerifiedSha1Impl<MsDState> (),
+                downloader.getState ());
         
         //recordAllSha1s(file);
         }

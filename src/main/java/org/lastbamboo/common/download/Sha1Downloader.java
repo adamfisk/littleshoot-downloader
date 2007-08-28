@@ -36,28 +36,39 @@ public final class Sha1Downloader<DsT extends DownloaderState>
             setState (new Sha1DState.VerifyingSha1Impl<DsT> ());
             
             final File file = m_delegate.getFile ();
-            
-            try
+
+            // First just make sure the size is correct.
+            if (file.length() != m_expectedSize)
                 {
-                final URI sha1 = Sha1Hasher.createSha1Urn(file);
-                
-                if (sha1.equals(m_expectedSha1))
-                    {
-                    setState (new Sha1DState.VerifiedSha1Impl<DsT> ());
-                    }
-                else
-                    {
-                    LOG.warn ("The downloaded file is corrupt.  Expected: "+
-                                 m_expectedSha1 + " but was: " + sha1);
-                    
-                    setState (new Sha1DState.Sha1MismatchImpl<DsT> ());
-                }
-            }
-            catch (final IOException e)
-                {
-                LOG.warn ("Could not create SHA-1 for file: " + file);
-                    
+                LOG.warn ("The downloaded file has an unexpected size.  " +
+                    "Expected: "+ m_expectedSize + " but was: " + file.length());
+           
                 setState (new Sha1DState.Sha1MismatchImpl<DsT> ());
+                }
+            else
+                {
+                try
+                    {
+                    final URI sha1 = Sha1Hasher.createSha1Urn(file);
+                    
+                    if (sha1.equals(m_expectedSha1))
+                        {
+                        setState (new Sha1DState.VerifiedSha1Impl<DsT> ());
+                        }
+                    else
+                        {
+                        LOG.warn ("The downloaded file is corrupt.  Expected: "+
+                                     m_expectedSha1 + " but was: " + sha1);
+                        
+                        setState (new Sha1DState.Sha1MismatchImpl<DsT> ());
+                        }
+                    }
+                catch (final IOException e)
+                    {
+                    LOG.warn ("Could not create SHA-1 for file: " + file);
+                        
+                    setState (new Sha1DState.Sha1MismatchImpl<DsT> ());
+                    }
                 }
             }
         
@@ -111,6 +122,8 @@ public final class Sha1Downloader<DsT extends DownloaderState>
      * The current state of this downloader.
      */
     private Sha1DState<DsT> m_state;
+
+    private final long m_expectedSize;
     
     /**
      * Returns whether a given state is the downloading state.
@@ -148,13 +161,15 @@ public final class Sha1Downloader<DsT extends DownloaderState>
      * @param expectedSha1
      *      The expected SHA-1 of the resource downloaded by the delegate
      *      downloader.
+     * @param expectedSize 
      */
     public Sha1Downloader
             (final Downloader<DsT> delegate,
-             final URI expectedSha1)
+             final URI expectedSha1, final long expectedSize)
         {
         m_delegate = delegate;
         m_expectedSha1 = expectedSha1;
+        m_expectedSize = expectedSize;
         
         m_state = new Sha1DState.DownloadingImpl<DsT> (m_delegate.getState ());
         
