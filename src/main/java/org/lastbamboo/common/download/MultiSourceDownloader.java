@@ -78,6 +78,11 @@ public final class MultiSourceDownloader
                 LOG.error("Downloader is null");
                 throw new NullPointerException("Null Downloader");
                 }
+            if (m_startTimes == null)
+                {
+                LOG.error("Start times is somehow null");
+                throw new NullPointerException("Null start times.");
+                }
             final long start = m_startTimes.remove (downloader);
             final long end = System.currentTimeMillis ();
             final long size = downloader.getNumBytesDownloaded ();
@@ -193,16 +198,16 @@ public final class MultiSourceDownloader
      * Variable for the number of hosts we've connected to and are actively
      * downloading from.
      */
-    private int m_numConnections;
+    private volatile int m_numConnections;
     
     private volatile int m_activeWriteCalls;
     
     /**
      * The current state of this downloader.
      */
-    private MsDState m_state;
+    private volatile MsDState m_state;
     
-    private boolean m_cancelled;
+    private volatile boolean m_cancelled;
     
     /**
      * Constructs a new downloader.
