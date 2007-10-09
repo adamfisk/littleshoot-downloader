@@ -13,6 +13,7 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.HeadMethod;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.lang.math.LongRange;
 import org.apache.commons.logging.Log;
@@ -82,7 +83,17 @@ public class SingleSourceDownloader implements RangeDownloader,
     private static HttpConnectionManager getDefaultConnectionManager
             ()
         {
-        return new MultiThreadedHttpConnectionManager();
+        final HttpConnectionManager manager = 
+            new MultiThreadedHttpConnectionManager();
+        
+        // We set this for now because our funky sockets sometimes can't 
+        // handle the stale checking details.
+        // TODO: We should fix our sockets to properly handle it.  See
+        // the call sequence in HttpConnection.java isStale() from 
+        // HTTP client.
+        manager.getParams().setBooleanParameter(
+            HttpConnectionManagerParams.STALE_CONNECTION_CHECK, false);
+        return manager;
         }
 
     /**
@@ -111,6 +122,7 @@ public class SingleSourceDownloader implements RangeDownloader,
         this.m_launchFileTracker = launchTracker;
         this.m_randomAccessFile = randomAccessFile;
         this.m_httpClient = httpClient;
+        
         
         m_numBytesDownloaded = 0L;
         }
@@ -148,6 +160,7 @@ public class SingleSourceDownloader implements RangeDownloader,
         this.m_startedTime = -1;
         this.m_contentLength = -1;
         this.m_assignedRange = range;
+        LOG.debug("Downloading from: "+this.m_uri);
         final GetMethod method = new GetMethod(this.m_uri.toString());
         
         // Don't attempt to connect 3 times unless it's a public web server.
