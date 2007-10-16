@@ -389,7 +389,8 @@ public class SingleSourceDownloader implements RangeDownloader,
             {
             // We were not able to read enough data.  This is an error, since we
             // are unable to handle the range for which we are responsible.
-            throw new IOException("Not enough data in response body");
+            throw new IOException("Not enough data in response body.  " +
+                "Expected "+expectedBytes+" but was "+totalBytesRead);
             }
         }
 
