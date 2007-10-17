@@ -73,25 +73,29 @@ public final class MultiSourceDownloader
         public void onDownloadFinished
                 (final RangeDownloader downloader)
             {
-            if (downloader == null)
-                {
-                LOG.error("Downloader is null");
-                throw new NullPointerException("Null Downloader");
-                }
+            Assert.notNull (downloader, "Downloader is null");
+            
             if (m_startTimes == null)
                 {
                 LOG.error("Start times is somehow null");
                 throw new NullPointerException("Null start times.");
                 }
-            final long start = m_startTimes.remove (downloader);
-            final long end = System.currentTimeMillis ();
-            final long size = downloader.getNumBytesDownloaded ();
             
-            final RateSegment segment = new RateSegmentImpl (start,
-                                                             end - start,
-                                                             size);
+            synchronized (m_startTimes)
+                {
+                LOG.warn ("m_startTimes: " + m_startTimes);
+                LOG.warn ("downloader: " + downloader);
+                
+                final long start = m_startTimes.remove (downloader);
+                final long end = System.currentTimeMillis ();
+            	final long size = downloader.getNumBytesDownloaded ();
             
-            m_rateSegments.add (segment);
+            	final RateSegment segment = new RateSegmentImpl (start,
+                                                              	 end - start,
+                                                              	 size);
+            	
+            	m_rateSegments.add (segment);
+                }
             
             if (isDownloading (m_state))
                 {
@@ -244,8 +248,9 @@ public final class MultiSourceDownloader
                 Collections.synchronizedSet (new HashSet<URI> ());
         
         m_startTimes = new HashMap<RangeDownloader,Long> ();
+        
         m_rateSegments = 
-            Collections.synchronizedList(new LinkedList<RateSegment> ());
+                Collections.synchronizedList(new LinkedList<RateSegment> ());
         
         try
             {
@@ -417,6 +422,7 @@ public final class MultiSourceDownloader
             if (m_cancelled)
                 {
                 setState (MsDState.CANCELED);
+                
                 LOG.debug ("The download was cancelled, not downloading " +
                                 "any more ranges.");
                 }
@@ -509,10 +515,15 @@ public final class MultiSourceDownloader
                 }
             else
                 {
-                m_startTimes.put (downloader, System.currentTimeMillis ());
+                synchronized (m_startTimes)
+                    {
+                    m_startTimes.put (downloader, System.currentTimeMillis ());
                 
-                LOG.debug ("Downloading from downloader: " + downloader);
-                downloader.download (range);
+                    LOG.warn ("Downloading from downloader: " + downloader);
+                	LOG.debug ("Downloading from downloader: " + downloader);
+                	downloader.download (range);
+                    }
+                
                 return false;
                 }
             }

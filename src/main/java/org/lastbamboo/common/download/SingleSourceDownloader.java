@@ -433,11 +433,12 @@ public class SingleSourceDownloader implements RangeDownloader,
         this.m_rangeTracker.onRangeComplete(this.m_assignedRange);
         
         this.m_completedRanges++;
+        
+        this.m_rangeDownloadListener.onDownloadFinished (this);
+        
         // Everything's going well with this downloader, so add it to the 
         // available downloaders to keep going.
         this.m_sourceRanker.onAvailable(this);
-        
-        this.m_rangeDownloadListener.onDownloadFinished (this);
         }
 
     public void onBadHeader(final String header)
