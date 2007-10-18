@@ -74,18 +74,8 @@ public final class MultiSourceDownloader
                 (final RangeDownloader downloader)
             {
             Assert.notNull (downloader, "Downloader is null");
-            
-            if (m_startTimes == null)
-                {
-                LOG.error("Start times is somehow null");
-                throw new NullPointerException("Null start times.");
-                }
-            
             synchronized (m_startTimes)
                 {
-                LOG.warn ("m_startTimes: " + m_startTimes);
-                LOG.warn ("downloader: " + downloader);
-                
                 final long start = m_startTimes.remove (downloader);
                 final long end = System.currentTimeMillis ();
             	final long size = downloader.getNumBytesDownloaded ();
@@ -518,8 +508,6 @@ public final class MultiSourceDownloader
                 synchronized (m_startTimes)
                     {
                     m_startTimes.put (downloader, System.currentTimeMillis ());
-                
-                    LOG.warn ("Downloading from downloader: " + downloader);
                 	LOG.debug ("Downloading from downloader: " + downloader);
                 	downloader.download (range);
                     }

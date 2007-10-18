@@ -336,16 +336,18 @@ public class SingleSourceDownloader implements RangeDownloader,
      *      If there are any I/O problems.
      */
     private void copy
-            (final InputStream is) throws IOException
+            (final InputStream is) throws IOException 
         {
-        final byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-        
         final long min = m_contentRange.getMinimumLong();
         final long max = m_contentRange.getMaximumLong();
         
         // The number of bytes we expect to read from the stream.  This is
         // simply the number of bytes in the range for which we are responsible.
         final int expectedBytes = (int) ((max - min) + 1);
+        
+        // We just create a buffer the size of our expected range, as this
+        // will typically be fairly small.
+        final byte[] buffer = new byte[expectedBytes];
         
         // The position in the file to which we are writing.
         long filePosition = min;
@@ -355,28 +357,38 @@ public class SingleSourceDownloader implements RangeDownloader,
         // our range.
         int totalBytesRead = 0;
         
-        // The number of bytes we have left to read to satisfy our range.
-        int remaining = expectedBytes - totalBytesRead;
-        
         // We either try and read whatever we have left to satisfy our range, or
         // we read as much as can fit in our buffer.
-        int bytesToRead = Math.min(remaining, buffer.length);
+        int bytesToRead = expectedBytes;
         
         // The number of bytes read in one pass of our read loop.
-        int bytesRead = 0;
-        
-        while (-1 != (bytesRead = is.read(buffer, 0, bytesToRead))) 
+        int readLastPass = 0;
+        while (bytesToRead > 0)
             {
+            // If we can ask for a smaller range than our full buffer size,
+            // we do.
+            if (bytesToRead < buffer.length)
+                {
+                readLastPass = is.read(buffer, 0, bytesToRead);
+                }
+            else
+                {
+                readLastPass = is.read(buffer, 0, buffer.length);
+                }
+
+            if (readLastPass == -1)
+                {
+                break;
+                }
             synchronized (this.m_randomAccessFile)
                 {
                 this.m_randomAccessFile.seek(filePosition);
-                this.m_randomAccessFile.write(buffer, 0, bytesRead);
+                this.m_randomAccessFile.write(buffer, 0, readLastPass);
                 }
-            
-            filePosition += bytesRead;
-            totalBytesRead += bytesRead;
-            remaining -= bytesRead;
-            bytesToRead = Math.min(remaining, buffer.length);
+
+            filePosition += readLastPass;
+            totalBytesRead += readLastPass;
+            bytesToRead -= readLastPass;
             }
         
         LOG.trace("Wrote " + totalBytesRead + " bytes to file.");
@@ -392,7 +404,7 @@ public class SingleSourceDownloader implements RangeDownloader,
             throw new IOException("Not enough data in response body.  " +
                 "Expected "+expectedBytes+" but was "+totalBytesRead);
             }
-        }
+        } 
 
     public void onContentLength(final long contentLength)
         {
