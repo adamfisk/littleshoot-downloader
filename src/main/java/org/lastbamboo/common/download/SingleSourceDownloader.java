@@ -75,11 +75,6 @@ public class SingleSourceDownloader implements RangeDownloader,
      */
     private final CommonsHttpClient m_httpClient;
     
-    /**
-     * The default buffer size to use.
-     */
-    private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
-    
     private static HttpConnectionManager getDefaultConnectionManager
             ()
         {
@@ -99,6 +94,8 @@ public class SingleSourceDownloader implements RangeDownloader,
     /**
      * Creates a downloader for downloading from a specific source.
      * 
+     * @param httpClient The HTTP client instance to use for performing 
+     * downloads.
      * @param source The URI for the source to download from.
      * @param rangeDownloadListener The listener for range download events.
      * @param downloadSpeedRanker The class for ranking sources.
