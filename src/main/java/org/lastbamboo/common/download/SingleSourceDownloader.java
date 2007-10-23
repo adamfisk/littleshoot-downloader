@@ -6,20 +6,16 @@ import java.io.RandomAccessFile;
 import java.net.URI;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
-import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.HeadMethod;
-import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.lang.math.LongRange;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.lastbamboo.common.http.client.CommonsHttpClient;
-import org.lastbamboo.common.http.client.CommonsHttpClientImpl;
 import org.lastbamboo.common.http.client.HttpClientRunner;
 import org.lastbamboo.common.http.client.HttpListener;
 import org.lastbamboo.common.http.client.RuntimeHttpException;
@@ -74,22 +70,6 @@ public class SingleSourceDownloader implements RangeDownloader,
      * Our HTTP client used to execute our HTTP methods.
      */
     private final CommonsHttpClient m_httpClient;
-    
-    private static HttpConnectionManager getDefaultConnectionManager
-            ()
-        {
-        final HttpConnectionManager manager = 
-            new MultiThreadedHttpConnectionManager();
-        
-        // We set this for now because our funky sockets sometimes can't 
-        // handle the stale checking details.
-        // TODO: We should fix our sockets to properly handle it.  See
-        // the call sequence in HttpConnection.java isStale() from 
-        // HTTP client.
-        manager.getParams().setBooleanParameter(
-            HttpConnectionManagerParams.STALE_CONNECTION_CHECK, false);
-        return manager;
-        }
 
     /**
      * Creates a downloader for downloading from a specific source.
@@ -123,33 +103,6 @@ public class SingleSourceDownloader implements RangeDownloader,
         
         m_numBytesDownloaded = 0L;
         }
-
-    /**
-     * Creates a downloader for downloading from a specific source.
-     * 
-     * @param source The URI for the source to download from.
-     * @param rangeDownloadListener The listener for range download events.
-     * @param downloadSpeedRanker The class for ranking sources.
-     * @param rangeTracker The class for tracking needed ranges in the file.
-     * @param launchTracker The tracker for bytes to send to the launch file.
-     * @param randomAccessFile The class to store downloaded bytes to.
-     */
-    public SingleSourceDownloader
-            (final URI source, 
-             final RangeDownloadListener rangeDownloadListener,
-             final SourceRanker downloadSpeedRanker, 
-             final RangeTracker rangeTracker, 
-             final LaunchFileTracker launchTracker,
-             final RandomAccessFile randomAccessFile)
-        {
-        this(new CommonsHttpClientImpl(getDefaultConnectionManager()),
-             source,
-             rangeDownloadListener,
-             downloadSpeedRanker,
-             rangeTracker,
-             launchTracker,
-             randomAccessFile);
-        }
     
     public void download(final LongRange range)
         {
@@ -159,17 +112,17 @@ public class SingleSourceDownloader implements RangeDownloader,
         this.m_assignedRange = range;
         LOG.debug("Downloading from: "+this.m_uri);
         final GetMethod method = new GetMethod(this.m_uri.toString());
+        method.getParams().setBooleanParameter(
+            HttpMethodParams.WARN_EXTRA_INPUT, true);
         
-        // Don't attempt to connect 3 times unless it's a public web server.
-        if (!this.m_uri.toString().startsWith("http://"))
+        // Revert to default config if it's a public web server.
+        if (this.m_uri.toString().startsWith("http://"))
             {
             // Override the default of attempting to connect 3 times.
             final HttpMethodRetryHandler retryHandler = 
-                new DefaultHttpMethodRetryHandler(0, false);
-            this.m_httpClient.getParams().setParameter(
+                new DefaultHttpMethodRetryHandler();
+            method.getParams().setParameter(
                 HttpMethodParams.RETRY_HANDLER, retryHandler);
-            this.m_httpClient.getHttpConnectionManager().getParams().
-                setConnectionTimeout(10*1000);
             }
         
         // See RFC 2616 section 14.35.1 - "Byte Ranges"
@@ -207,14 +160,6 @@ public class SingleSourceDownloader implements RangeDownloader,
 
     private void sendHeadRequest()
         {
-        // Override the default of attempting to connect 3 times.
-        final HttpMethodRetryHandler retryHandler = 
-            new DefaultHttpMethodRetryHandler(0, false);
-        this.m_httpClient.getParams().setParameter(
-            HttpMethodParams.RETRY_HANDLER, retryHandler);
-        this.m_httpClient.getHttpConnectionManager().getParams().
-            setConnectionTimeout(10*1000);
-        
         final String uri = SingleSourceDownloader.this.m_uri.toString();
         LOG.debug("Sending request to URI: "+uri);
         final HeadMethod method = new HeadMethod(uri);

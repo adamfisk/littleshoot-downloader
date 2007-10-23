@@ -16,9 +16,17 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
+import org.apache.commons.httpclient.HttpConnectionManager;
+import org.apache.commons.httpclient.HttpMethodRetryHandler;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.lang.math.LongRange;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.lastbamboo.common.http.client.CommonsHttpClient;
+import org.lastbamboo.common.http.client.CommonsHttpClientImpl;
 import org.lastbamboo.common.util.Assert;
 import org.lastbamboo.common.util.RuntimeIoException;
 
@@ -202,6 +210,8 @@ public final class MultiSourceDownloader
     private volatile MsDState m_state;
     
     private volatile boolean m_cancelled;
+
+    private final CommonsHttpClient m_httpClient;
     
     /**
      * Constructs a new downloader.
@@ -242,6 +252,15 @@ public final class MultiSourceDownloader
         m_rateSegments = 
                 Collections.synchronizedList(new LinkedList<RateSegment> ());
         
+        this.m_httpClient = 
+            new CommonsHttpClientImpl(getDefaultConnectionManager());
+        final HttpMethodRetryHandler retryHandler = 
+            new DefaultHttpMethodRetryHandler(0, false);
+        this.m_httpClient.getParams().setParameter(
+            HttpMethodParams.RETRY_HANDLER, retryHandler);
+        this.m_httpClient.getHttpConnectionManager().getParams().
+            setConnectionTimeout(20*1000);
+        
         try
             {
             m_randomAccessFile = new RandomAccessFile (file, "rw");
@@ -264,6 +283,24 @@ public final class MultiSourceDownloader
             LOG.error ("Could not create file: " + file, e);
             throw new IllegalArgumentException ("Cannot create file: "+file);
             }
+        }
+
+    private static HttpConnectionManager getDefaultConnectionManager
+            ()
+        {
+        final HttpConnectionManager manager = 
+            new MultiThreadedHttpConnectionManager();
+        
+        // We set this for now because our funky sockets sometimes can't 
+        // handle the stale checking details.
+        // TODO: We should fix our sockets to properly handle it.  See
+        // the call sequence in HttpConnection.java isStale() from 
+        // HTTP client.
+        manager.getParams().setBooleanParameter(
+            HttpConnectionManagerParams.STALE_CONNECTION_CHECK, false);
+        manager.getParams().setBooleanParameter(
+            HttpMethodParams.WARN_EXTRA_INPUT, true);
+        return manager;
         }
     
     /**
@@ -353,7 +390,7 @@ public final class MultiSourceDownloader
                 LOG.debug ("Creating connection...");
                 
                 final RangeDownloader dl = 
-                        new SingleSourceDownloader (uri,
+                        new SingleSourceDownloader (m_httpClient, uri,
                                                     m_singleDownloadListener, 
                                                     downloadSpeedRanker,
                                                     m_rangeTracker, 
