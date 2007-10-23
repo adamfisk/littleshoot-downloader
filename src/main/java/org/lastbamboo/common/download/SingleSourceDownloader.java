@@ -289,69 +289,6 @@ public class SingleSourceDownloader implements RangeDownloader,
         final int expectedBytes = (int) ((max - min) + 1);
         
         IoUtils.copy(is, this.m_randomAccessFile, min, expectedBytes);
-        
-        /*
-        
-        // We just create a buffer the size of our expected range, as this
-        // will typically be fairly small.
-        final byte[] buffer = new byte[expectedBytes];
-        
-        // The position in the file to which we are writing.
-        long filePosition = min;
-        
-        // The total number of bytes we have read (and written to the file).
-        // We track this so that we may know if have read enough data to handle
-        // our range.
-        int totalBytesRead = 0;
-        
-        // We either try and read whatever we have left to satisfy our range, or
-        // we read as much as can fit in our buffer.
-        int bytesToRead = expectedBytes;
-        
-        // The number of bytes read in one pass of our read loop.
-        int readLastPass = 0;
-        while (bytesToRead > 0)
-            {
-            // If we can ask for a smaller range than our full buffer size,
-            // we do.
-            if (bytesToRead < buffer.length)
-                {
-                readLastPass = is.read(buffer, 0, bytesToRead);
-                }
-            else
-                {
-                readLastPass = is.read(buffer, 0, buffer.length);
-                }
-
-            if (readLastPass == -1)
-                {
-                break;
-                }
-            synchronized (this.m_randomAccessFile)
-                {
-                this.m_randomAccessFile.seek(filePosition);
-                this.m_randomAccessFile.write(buffer, 0, readLastPass);
-                }
-
-            filePosition += readLastPass;
-            totalBytesRead += readLastPass;
-            bytesToRead -= readLastPass;
-            }
-        
-        LOG.trace("Wrote " + totalBytesRead + " bytes to file.");
-        
-        if (totalBytesRead == expectedBytes)
-            {
-            // We read the amount we expected to read.  Everything is okay.
-            }
-        else
-            {
-            // We were not able to read enough data.  This is an error, since we
-            // are unable to handle the range for which we are responsible.
-            throw new IOException("Not enough data in response body.  " +
-                "Expected "+expectedBytes+" but was "+totalBytesRead);
-            }
-            */
         } 
 
     public void onContentLength(final long contentLength)
