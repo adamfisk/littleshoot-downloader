@@ -20,6 +20,7 @@ import org.lastbamboo.common.http.client.HttpClientRunner;
 import org.lastbamboo.common.http.client.HttpListener;
 import org.lastbamboo.common.http.client.RuntimeHttpException;
 import org.lastbamboo.common.util.InputStreamHandler;
+import org.lastbamboo.common.util.IoUtils;
 import org.lastbamboo.common.util.NoneImpl;
 import org.lastbamboo.common.util.Optional;
 import org.lastbamboo.common.util.RuntimeIoException;
@@ -287,6 +288,10 @@ public class SingleSourceDownloader implements RangeDownloader,
         // simply the number of bytes in the range for which we are responsible.
         final int expectedBytes = (int) ((max - min) + 1);
         
+        IoUtils.copy(is, this.m_randomAccessFile, min, expectedBytes);
+        
+        /*
+        
         // We just create a buffer the size of our expected range, as this
         // will typically be fairly small.
         final byte[] buffer = new byte[expectedBytes];
@@ -346,6 +351,7 @@ public class SingleSourceDownloader implements RangeDownloader,
             throw new IOException("Not enough data in response body.  " +
                 "Expected "+expectedBytes+" but was "+totalBytesRead);
             }
+            */
         } 
 
     public void onContentLength(final long contentLength)
