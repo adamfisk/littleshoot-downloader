@@ -62,7 +62,7 @@ public class SourceForgeTest extends TestCase
             assertTrue(file.delete());
             }
         assertFalse(file.isFile());
-        file.deleteOnExit();
+        //file.deleteOnExit();
         
         final UriResolver resolver = new UriResolver ()
             {
