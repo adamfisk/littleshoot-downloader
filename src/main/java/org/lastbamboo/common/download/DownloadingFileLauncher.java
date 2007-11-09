@@ -184,7 +184,12 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             {
             LOG.debug("Got lock on file...");
             this.m_randomAccessFile.seek(startIndex);
+            
             final int numBytesRead = this.m_randomAccessFile.read(bytesToCopy);
+            
+            // The bytes read should equal the expected length because the
+            // file's already on disk.  The API doesn't require this, but
+            // in practice it should always happen.
             if (numBytesRead != length)
                 {
                 LOG.warn("Unexpected number of bytes read: "+numBytesRead);
