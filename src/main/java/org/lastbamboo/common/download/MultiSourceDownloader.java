@@ -28,7 +28,11 @@ import org.apache.commons.logging.LogFactory;
 import org.lastbamboo.common.http.client.CommonsHttpClient;
 import org.lastbamboo.common.http.client.CommonsHttpClientImpl;
 import org.lastbamboo.common.util.Assert;
+import org.lastbamboo.common.util.None;
+import org.lastbamboo.common.util.Optional;
+import org.lastbamboo.common.util.OptionalVisitor;
 import org.lastbamboo.common.util.RuntimeIoException;
+import org.lastbamboo.common.util.Some;
 
 /**
  * A downloader that can download from multiple sources simultaneously.
@@ -523,39 +527,34 @@ public final class MultiSourceDownloader
     private boolean singleRangeDownload
             (final RangeDownloader downloader)
         {
-        // It's possible another thread has already resulted in the download
-        // completing.
-        if (m_rangeTracker.hasMoreRanges ())
+        final Optional<LongRange> oRange = m_rangeTracker.getNextRange ();
+        
+        final OptionalVisitor<Boolean,LongRange> visitor =
+                new OptionalVisitor<Boolean,LongRange> ()
             {
-            final LongRange range = m_rangeTracker.getNextRange ();
-            
-            LOG.debug ("Accessed range: " + range);
-            
-            // The call to get the next range would block if there were no more
-            // ranges.  We use this special dummy range to signify that we are
-            // done with the download.
-            if (range.getMinimumLong () == 183L &&
-                    range.getMaximumLong () == 183L)
+            public Boolean visitNone
+                    (final None<LongRange> none)
                 {
-                LOG.debug ("Received file complete signifier!!");
                 return true;
                 }
-            else
+            
+            public Boolean visitSome
+                    (final Some<LongRange> some)
                 {
+                final LongRange range = some.object ();
+                
                 synchronized (m_startTimes)
                     {
                     m_startTimes.put (downloader, System.currentTimeMillis ());
-                	LOG.debug ("Downloading from downloader: " + downloader);
-                	downloader.download (range);
+                    LOG.debug ("Downloading from downloader: " + downloader);
+                    downloader.download (range);
                     }
                 
                 return false;
                 }
-            }
-        else
-            {
-            return true;
-            }
+            };
+            
+        return oRange.accept (visitor);
         }
     
     /**

@@ -89,10 +89,13 @@ public final class Sha1Downloader<DsT extends DownloaderState>
                 {
                 if (isDownloading (m_state))
                     {
+                    LOG.debug ("Is downloading");
                     setState (new Sha1DState.DownloadingImpl<DsT> (state));
                     }
                 else
                     {
+                    LOG.debug ("Is not downloading");
+                    
                     // Ignore events from the delegate downloader if we do not
                     // think that we are in the downloading state.  Something is
                     // odd if this happens, though.
