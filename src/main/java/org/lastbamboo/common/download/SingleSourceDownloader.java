@@ -347,7 +347,7 @@ public class SingleSourceDownloader implements RangeDownloader,
     public void onContentRange(final LongRange range)
         {
         LOG.debug("Received Content-Range: "+range);
-        if (range.getMinimumLong() != this.m_assignedRange.getMinimumLong())
+        if (!range.equals (m_assignedRange))
             {
             LOG.error("Bad range -- expected: " +this.m_assignedRange+
                 " but was: "+range);
