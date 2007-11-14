@@ -1,30 +1,47 @@
 package org.lastbamboo.common.download;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.PriorityBlockingQueue;
 
 import org.apache.commons.lang.math.LongRange;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.lastbamboo.common.util.NoneImpl;
+import org.lastbamboo.common.util.Optional;
+import org.lastbamboo.common.util.SomeImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class for keeping track of ranges for a single download.
  */
 public class RangeTrackerImpl implements RangeTracker
     {
-
-    private final Log LOG = LogFactory.getLog(RangeTrackerImpl.class);
-
-    private final PriorityBlockingQueue<LongRange> m_ranges;
+    /**
+     * The maximum size of each range.
+     */
+    private static final long CHUNK_SIZE = 100000L;
     
-    private final long CHUNK_SIZE = 100000L;
-    
-    private final Set<LongRange> m_rangeSet = 
-        Collections.synchronizedSet(new HashSet<LongRange>());
+    /**
+     * The set of active ranges.  These are ranges that are currently active but
+     * may be returned to the inactive queue if they fail.
+     */
+    private final Set<LongRange> m_active;
 
+    /**
+     * The queue of inactive ranges.
+     */
+    private final Queue<LongRange> m_inactive;
+    
+    /**
+     * The logger for this class.
+     */
+    private final Logger m_logger;
+
+    /**
+     * The total number of chunks being tracked.
+     */
     private final int m_numChunks;
 
     /**
@@ -35,17 +52,18 @@ public class RangeTrackerImpl implements RangeTracker
      */
     public RangeTrackerImpl(final String name, final long fileSize)
         {
-        LOG.debug("Creating queue for file size: " + fileSize);
+        m_logger = LoggerFactory.getLogger (RangeTrackerImpl.class);
+        m_logger.debug("Creating queue for file size: " + fileSize);
         
         // We need enough chunks to handle the full file size.
         m_numChunks = (int) Math.ceil(fileSize/(double) CHUNK_SIZE);
         
-        LOG.debug("Creating a queue with " + m_numChunks + " chunks...");
+        m_logger.debug("Creating a queue with " + m_numChunks + " chunks...");
         
         final Comparator<LongRange> rangeComparator = new LongRangeComparator();
         
-        m_ranges = new PriorityBlockingQueue<LongRange>(m_numChunks, 
-                                                        rangeComparator);
+        m_inactive = new PriorityQueue<LongRange> (m_numChunks, rangeComparator);
+        m_active = new HashSet<LongRange> ();
         
         long index = 0;
         while (index < fileSize)
@@ -57,64 +75,121 @@ public class RangeTrackerImpl implements RangeTracker
             
             final LongRange curRange = new LongRange(index, max);
             
-            LOG.debug("Adding range: " + curRange);
+            m_logger.debug("Adding range: " + curRange);
             
-            m_ranges.add(curRange);
-            m_rangeSet.add(curRange);
+            m_inactive.add (curRange);
             
             index = max + 1;
             }
         }
-
-    public LongRange getNextRange()
-        {
-        try
-            {
-            return this.m_ranges.take();
-            }
-        catch (final InterruptedException e)
-            {
-            LOG.warn("Interrupt waiting for ranges!!", e);
-            return null;
-            }
-        }
-
-    public boolean hasMoreRanges()
-        {
-        return !this.m_rangeSet.isEmpty();
-        }
-
     
-    public void onRangeComplete(final LongRange range)
+    /**
+     * {@inheritDoc}
+     */
+    public Optional<LongRange> getNextRange
+            ()
         {
-        LOG.debug("Removing completed range: "+range + " " + 
-            this.m_rangeSet.size() + " left...");
-        this.m_rangeSet.remove(range);
-        
-        if (this.m_rangeSet.isEmpty())
+        synchronized (this)
             {
-            // Add our special range signifier indicating the file is complete.
-            this.m_ranges.put(new LongRange(183L,183L));
+            while (m_inactive.isEmpty () && !m_active.isEmpty ())
+            	{
+            	try
+                	{
+                	wait ();
+                	}
+            	catch (final InterruptedException e)
+                	{
+                	// This should never happen in normal operation, so we
+                	// propagate the exception.
+                	throw new RuntimeException (e);
+                	}
+            	}
+            
+            if (m_inactive.isEmpty ())
+                {
+                if (m_active.isEmpty ())
+                    {
+                    // Both are empty.  We are done.
+                    return new NoneImpl<LongRange> ();
+                    }
+                else
+                    {
+                    // We should never enter this case, since we were blocking
+                    // until we were out of it.
+                    throw new RuntimeException ("Illegal program state");
+                    }
+                }
+            else
+                {
+                final LongRange nextRange = m_inactive.poll ();
+                m_active.add (nextRange);
+                return new SomeImpl<LongRange> (nextRange);
+                }
             }
         }
-
-    public void onRangeFailed(final LongRange range)
-        {
-        LOG.debug("Range ' " + range + "' failed");
-        
-        // The specified range was not downloaded successfully, so add it 
-        // again.
-        this.m_ranges.put(range);
-        if (!this.m_rangeSet.contains(range))
-            {
-            LOG.error("Failed range should still be in range set "+
-                this.m_rangeSet);
-            }
-        }
-
-    public int getNumChunks()
+    
+    /**
+     * {@inheritDoc}
+     */
+    public int getNumChunks
+            ()
         {
         return this.m_numChunks;
         }
 
+    /**
+     * {@inheritDoc}
+     */
+    public boolean hasMoreRanges
+            ()
+        {
+        return !(m_inactive.isEmpty () && m_active.isEmpty ());
+        }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void onRangeComplete
+            (final LongRange range)
+        {
+        synchronized (this)
+            {
+            if (m_active.contains (range))
+                {
+                m_active.remove (range);
+                
+                notifyAll ();
+                }
+            else
+                {
+                throw new RuntimeException
+                        ("Range '" + range + "' is unknown to this tracker");
+                }
+        	}
+        }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void onRangeFailed
+            (final LongRange range)
+        {
+        m_logger.debug ("Range ' " + range + "' failed");
+        
+        synchronized (this)
+            {
+            if (m_active.contains (range))
+                {
+                m_active.remove (range);
+                m_inactive.add (range);
+                
+                notifyAll ();
+                }
+            else
+                {
+                throw new RuntimeException
+                        ("Range '" + range + "' is unknown to this tracker");
+                }
+        	}
+        }
     }

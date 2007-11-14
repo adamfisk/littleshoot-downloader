@@ -7,8 +7,10 @@ import junit.framework.TestCase;
 import org.apache.commons.lang.math.LongRange;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.lastbamboo.common.download.RangeTracker;
-import org.lastbamboo.common.download.RangeTrackerImpl;
+import org.lastbamboo.common.util.None;
+import org.lastbamboo.common.util.Optional;
+import org.lastbamboo.common.util.OptionalVisitor;
+import org.lastbamboo.common.util.Some;
 
 /**
  * Tests the range tracker class.
@@ -128,13 +130,32 @@ public class RangeTrackerImplTest extends TestCase
         testFile.deleteOnExit();
         final RangeTracker rt = new RangeTrackerImpl("test", size);
         
-        final LongRange range = rt.getNextRange();
-        assertEquals(0, range.getMinimumLong());
-        assertEquals(size-1, range.getMaximumLong());
+        final Optional<LongRange> oRange = rt.getNextRange();
         
-        assertTrue (rt.hasMoreRanges());
+        final OptionalVisitor<Void,LongRange> visitor =
+                new OptionalVisitor<Void,LongRange> ()
+            {
+            public Void visitNone
+                    (final None<LongRange> none)
+                {
+                return null;
+                }
+            
+            public Void visitSome
+                    (final Some<LongRange> some)
+                {
+                final LongRange range = some.object ();
+                assertEquals(0, range.getMinimumLong());
+                assertEquals(size-1, range.getMaximumLong());
+                assertTrue (rt.hasMoreRanges());
         
-        rt.onRangeComplete(range);
-        assertFalse (rt.hasMoreRanges());
+                rt.onRangeComplete(range);
+                assertFalse (rt.hasMoreRanges());
+                
+                return null;
+                }
+            };
+            
+        oRange.accept (visitor);
         }
     }

@@ -1,13 +1,13 @@
 package org.lastbamboo.common.download;
 
 import org.apache.commons.lang.math.LongRange;
+import org.lastbamboo.common.util.Optional;
 
 /**
  * Interface for tracking download ranges.
  */
 public interface RangeTracker
     {
-
     /**
      * Gets the next range to download.  This will be the highest priorty
      * range based on a range ranking that will typically preference the
@@ -17,16 +17,16 @@ public interface RangeTracker
      * 
      * @return The next range to download.
      */
-    LongRange getNextRange();
+    Optional<LongRange> getNextRange();
 
     /**
-     * Returns whether or not their are available ranges to download.
+     * Returns whether or not there are available ranges to download.
      * 
      * @return <code>true</code> if there are more ranges to download, 
      * otherwise <code>false</code>.
      */
     boolean hasMoreRanges();
-
+    
     /**
      * Called when we've completed downloading the specified range.  
      * 
@@ -49,5 +49,4 @@ public interface RangeTracker
      * @return The number of chunks to download.
      */
     int getNumChunks();
-
     }
