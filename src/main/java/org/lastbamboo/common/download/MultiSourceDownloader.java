@@ -656,6 +656,7 @@ public final class MultiSourceDownloader
         catch (final IOException e)
             {
             // There was a problem resolving download sources.
+            LOG.warn("Could not resolve download sources", e);
             setState (MsDState.COULD_NOT_DETERMINE_SOURCES);
             }
         }
