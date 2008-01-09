@@ -281,6 +281,13 @@ public class SingleSourceDownloader implements RangeDownloader,
     private void copy
             (final InputStream is) throws IOException 
         {
+        // It's possible the server never provided a content range.
+        if (this.m_contentRange == null)
+            {
+            LOG.error("No content range provided");
+            this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
+            return;
+            }
         final long min = m_contentRange.getMinimumLong();
         final long max = m_contentRange.getMaximumLong();
         
