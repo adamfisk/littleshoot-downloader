@@ -311,18 +311,12 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
     public class MoveFailedImpl<T>
             extends DownloaderState.AbstractFailed implements MoveFailed<T>
         {
-        /**
-         * {@inheritDoc}
-         */
         public <ReturnT> ReturnT accept
                 (final Visitor<ReturnT,T> visitor)
             {
             return visitor.visitMoveFailed (this);
             }
         
-        /**
-         * {@inheritDoc}
-         */
         @Override
         public boolean equals
                 (final Object otherObject)
