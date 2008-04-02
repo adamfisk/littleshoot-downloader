@@ -20,8 +20,7 @@ public abstract class AbstractDownloader<T extends DownloaderState>
     /**
      * Initializes this abstract base class.
      */
-    public AbstractDownloader
-            ()
+    public AbstractDownloader()
         {
         m_listeners = new LinkedList<DownloaderListener<T>> ();
         }
