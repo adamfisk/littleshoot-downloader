@@ -150,7 +150,14 @@ public class SingleSourceDownloader implements RangeDownloader,
             {
             public void run()
                 {
-                sendHeadRequest(); 
+                try
+                    {
+                    sendHeadRequest();
+                    }
+                catch (final Throwable t)
+                    {
+                    LOG.error("Unexpected throwable.", t);
+                    }
                 }
             };
         final Thread headThread = new Thread(headRunner, 
