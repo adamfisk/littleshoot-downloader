@@ -6,7 +6,7 @@ import org.apache.commons.lang.math.LongRange;
 
 /**
  * Comparator for ranking ranges.  This comparator simply ranks ranges from
- * start to finish.  So, earlier ranges combe before later ranges.
+ * start to finish.  So, earlier ranges come before later ranges.
  */
 public class IncreasingLongRangeComparator implements Comparator<LongRange>
     {
