@@ -84,14 +84,13 @@ public class SingleSourceDownloader implements RangeDownloader,
      * @param launchTracker The tracker for bytes to send to the launch file.
      * @param randomAccessFile The class to store downloaded bytes to.
      */
-    public SingleSourceDownloader
-            (final CommonsHttpClient httpClient,
-             final URI source, 
-             final RangeDownloadListener rangeDownloadListener,
-             final SourceRanker downloadSpeedRanker, 
-             final RangeTracker rangeTracker, 
-             final LaunchFileTracker launchTracker,
-             final RandomAccessFile randomAccessFile)
+    public SingleSourceDownloader(final CommonsHttpClient httpClient,
+        final URI source, 
+        final RangeDownloadListener rangeDownloadListener,
+        final SourceRanker downloadSpeedRanker, 
+        final RangeTracker rangeTracker, 
+        final LaunchFileTracker launchTracker,
+        final RandomAccessFile randomAccessFile)
         {
         this.m_uri = source;
         this.m_rangeDownloadListener = rangeDownloadListener;
@@ -262,11 +261,9 @@ public class SingleSourceDownloader implements RangeDownloader,
      * which we are responsible.  The input stream is queued up to the part of
      * the file for which we are responsible.
      * 
-     * @param is
-     *      The input stream from which to read data to put into the file.
+     * @param is The input stream from which to read data to put into the file.
      *      
-     * @throws IOException
-     *      If there are any I/O problems.
+     * @throws IOException If there are any I/O problems.
      */
     private void copy(final InputStream is) throws IOException 
         {
@@ -284,7 +281,10 @@ public class SingleSourceDownloader implements RangeDownloader,
         // simply the number of bytes in the range for which we are responsible.
         final int expectedBytes = (int) ((max - min) + 1);
         
-        IoUtils.copy(is, this.m_randomAccessFile, min, expectedBytes);
+        synchronized (this.m_randomAccessFile)
+            {
+            IoUtils.copy(is, this.m_randomAccessFile, min, expectedBytes);
+            }
         } 
 
     public void onContentLength(final long contentLength)
