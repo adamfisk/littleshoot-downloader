@@ -100,9 +100,7 @@ public class SingleSourceDownloader implements RangeDownloader,
         this.m_launchFileTracker = launchTracker;
         this.m_randomAccessFile = randomAccessFile;
         this.m_httpClient = httpClient;
-        
-        
-        m_numBytesDownloaded = 0L;
+        this.m_numBytesDownloaded = 0L;
         }
     
     public void download(final LongRange range)
@@ -202,9 +200,6 @@ public class SingleSourceDownloader implements RangeDownloader,
             }
         }
 
-    /**
-     * {@inheritDoc}
-     */
     public Optional<Integer> getKbs ()
         {
         if (this.m_contentLength == -1 ||
@@ -245,29 +240,17 @@ public class SingleSourceDownloader implements RangeDownloader,
             }
         }
     
-    /**
-     * {@inheritDoc}
-     */
-    public long getNumBytesDownloaded
-            ()
+    public long getNumBytesDownloaded()
         {
         return m_numBytesDownloaded;
         }
     
-    /**
-     * {@inheritDoc}
-     */
-    public URI getSourceUri
-            ()
+    public URI getSourceUri()
         {
         return m_uri;
         }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void handleInputStream
-            (final InputStream is) throws IOException
+    public void handleInputStream(final InputStream is) throws IOException
         {
         copy(is);
         
@@ -285,8 +268,7 @@ public class SingleSourceDownloader implements RangeDownloader,
      * @throws IOException
      *      If there are any I/O problems.
      */
-    private void copy
-            (final InputStream is) throws IOException 
+    private void copy(final InputStream is) throws IOException 
         {
         // It's possible the server never provided a content range.
         if (this.m_contentRange == null)
