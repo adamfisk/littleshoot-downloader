@@ -118,7 +118,10 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                 // because new writers might come along and need to know 
                 // what has already been written.  Note this is just the ranges
                 // and doesn't take much memory.
-                this.m_completedRanges.add(range);
+                synchronized (m_completedRanges)
+                    {
+                    this.m_completedRanges.add(range);
+                    }
                 tracker.onRangeComplete(range);
                 if (LOG.isDebugEnabled())
                     {

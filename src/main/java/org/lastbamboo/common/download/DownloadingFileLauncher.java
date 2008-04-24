@@ -47,10 +47,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
         {
         synchronized (this.m_completedRanges)
             {   
-            if (LOG.isDebugEnabled())
-                {
-                LOG.debug("Adding completed range!!");
-                }
+            LOG.debug("Adding completed range!!");
             this.m_completedRanges.add(range);
         
             // Notify the completed ranges if the range we just got is the
