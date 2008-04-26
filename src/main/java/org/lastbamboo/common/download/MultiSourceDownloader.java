@@ -491,7 +491,7 @@ public final class MultiSourceDownloader
         // finished here before notifying listeners that have free reign over
         // the downloaded file (like moving it!).
         // We need to make this call after the file complete notification
-        // above because that's the only way the luancher ever completes it's
+        // above because that's the only way the launcher ever completes it's
         // write (the launcher waits for the complete notification).
         waitForLaunchersToComplete ();
         
