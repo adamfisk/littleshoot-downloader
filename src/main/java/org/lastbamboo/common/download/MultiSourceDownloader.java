@@ -576,7 +576,7 @@ public final class MultiSourceDownloader
                 {
                 // It shouldn't take forever to stream the already
                 // downloaded file to the browser, so cap the wait.
-                this.DOWNLOAD_STREAM_LOCK.wait (1*60*1000);
+                this.DOWNLOAD_STREAM_LOCK.wait (6*60*1000);
                 if (this.m_activeWriteCalls > 0)
                     {
                     LOG.warn ("Still " + this.m_activeWriteCalls + 
