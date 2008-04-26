@@ -92,14 +92,15 @@ public class LaunchFileDispatcher implements LaunchFileTracker
     private void writeDownloadingFile(final OutputStream os) throws IOException
         {
         final PriorityBlockingQueue<LongRange> completedRanges = createQueue();
+        final LaunchFileTracker tracker;
         synchronized (this.m_completedRanges)
             {
             completedRanges.addAll(this.m_completedRanges);
-            }
-        final LaunchFileTracker tracker = 
-            new DownloadingFileLauncher(this.m_randomAccessFile, 
+            tracker = new DownloadingFileLauncher(this.m_randomAccessFile, 
                 completedRanges);
-        this.m_trackers.add(tracker);
+            this.m_trackers.add(tracker);
+            }
+
         tracker.write(os);
         }
 
