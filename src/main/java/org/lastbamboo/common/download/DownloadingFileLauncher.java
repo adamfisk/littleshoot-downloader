@@ -1,6 +1,5 @@
 package org.lastbamboo.common.download;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
@@ -39,6 +38,14 @@ public class DownloadingFileLauncher implements LaunchFileTracker
     public DownloadingFileLauncher(final RandomAccessFile file, 
         final PriorityBlockingQueue<LongRange> completedRanges)
         {
+        if (file == null)
+            {
+            throw new NullPointerException("Null RAF");
+            }
+        if (completedRanges == null)
+            {
+            throw new NullPointerException("Null ranges");
+            }
         this.m_randomAccessFile = file;
         this.m_completedRanges = completedRanges;
         }
@@ -223,10 +230,15 @@ public class DownloadingFileLauncher implements LaunchFileTracker
         LOG.debug("Returning from file complete notification...");
         }
 
-    public void setFile(final File file)
+    public int getActiveWriteCalls()
         {
-        LOG.warn("Should not be setting the file here.");
-        // This has no file reference.
+        // Effectively a NO-OP in this case.
+        return 0;
+        }
+
+    public void waitForLaunchersToComplete()
+        {
+        // Effectively a NO-OP in this case.
         }
 
     }

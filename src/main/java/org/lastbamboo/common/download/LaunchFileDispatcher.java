@@ -33,9 +33,13 @@ public class LaunchFileDispatcher implements LaunchFileTracker
     private final PriorityBlockingQueue<LongRange> m_completedRanges;
     private final int m_numChunks;
 
-    private File m_file;
+    private final File m_file;
 
     private boolean m_complete = false;
+    
+    private volatile int m_activeWriteCalls = 0;
+    
+    private final Object DOWNLOAD_STREAM_LOCK = new Object ();
     
     /**
      * Creates a new tracker for streaming the file to the browser.
@@ -47,6 +51,14 @@ public class LaunchFileDispatcher implements LaunchFileTracker
     public LaunchFileDispatcher(final File file, final RandomAccessFile raf, 
         final int numChunks)
         {
+        if (file == null)
+            {
+            throw new NullPointerException("Null RAF");
+            }
+        if (raf == null)
+            {
+            throw new NullPointerException("Null ranges");
+            }
         this.m_file = file;
         this.m_randomAccessFile = raf;
         this.m_numChunks = numChunks;
@@ -61,18 +73,66 @@ public class LaunchFileDispatcher implements LaunchFileTracker
             increasingRangeComparator);
         }
 
+    public void waitForLaunchersToComplete ()
+        {
+        if (this.m_activeWriteCalls == 0)
+            {
+            LOG.debug ("No active launchers...");
+            return;
+            }
+        synchronized (this.DOWNLOAD_STREAM_LOCK)
+            {
+            LOG.debug ("Waiting for active streams to finish streaming");
+            try
+                {
+                // It shouldn't take forever to stream the already
+                // downloaded file to the browser, so cap the wait.
+                this.DOWNLOAD_STREAM_LOCK.wait (6*60*1000);
+                if (this.m_activeWriteCalls > 0)
+                    {
+                    LOG.warn ("Still " + this.m_activeWriteCalls + 
+                        " active writes!!");
+                    }
+                }
+            catch (final InterruptedException e)
+                {
+                LOG.warn ("Unexpected interrupt!!", e);
+                }
+            }
+        }
+    
     public void write(final OutputStream os) throws IOException
         {
         LOG.debug("Writing file...");
-        if (this.m_complete)
+        try
             {
-            LOG.debug("Writing file on disk...");
-            writeCompleteFile(os);
+            ++m_activeWriteCalls;
+            if (this.m_complete)
+                {
+                LOG.debug("Writing file on disk...");
+                writeCompleteFile(os);
+                }
+            else
+                {
+                LOG.debug("Writing downloading file...");
+                writeDownloadingFile(os);
+                }
+            
+            LOG.debug ("Finished launcher write call...");
+            
+            synchronized (DOWNLOAD_STREAM_LOCK)
+                {
+                // This indicates the last writer has just completed writing,
+                // so we notify the lock that it's OK to close the file stream.
+                if (m_activeWriteCalls == 1)
+                    {
+                    DOWNLOAD_STREAM_LOCK.notify ();
+                    }
+                }
             }
-        else
+        finally
             {
-            LOG.debug("Writing downloading file...");
-            writeDownloadingFile(os);
+            --m_activeWriteCalls;
             }
         }
 
@@ -144,9 +204,8 @@ public class LaunchFileDispatcher implements LaunchFileTracker
         this.m_complete = true;
         }
 
-    public void setFile(final File file)
+    public int getActiveWriteCalls()
         {
-        this.m_file = file;
+        return m_activeWriteCalls;
         }
-
     }

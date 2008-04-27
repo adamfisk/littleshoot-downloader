@@ -1,6 +1,5 @@
 package org.lastbamboo.common.download;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -35,10 +34,16 @@ public interface LaunchFileTracker
     void onFileComplete();
 
     /**
-     * Sets the file on disk.
-     * 
-     * @param file The file on disk.
+     * Waits until all active launcher have finished their writes, typically
+     * to the browser.
      */
-    void setFile(File file);
+    void waitForLaunchersToComplete();
+
+    /**
+     * Accessor for the number of active writers.
+     * 
+     * @return The number of active writers.
+     */
+    int getActiveWriteCalls();
 
     }

@@ -31,7 +31,6 @@ import org.lastbamboo.common.util.Assert;
 import org.lastbamboo.common.util.None;
 import org.lastbamboo.common.util.Optional;
 import org.lastbamboo.common.util.OptionalVisitor;
-import org.lastbamboo.common.util.RuntimeIoException;
 import org.lastbamboo.common.util.Some;
 
 /**
@@ -90,13 +89,13 @@ public final class MultiSourceDownloader
                 {
                 final long start = m_startTimes.remove (downloader);
                 final long end = System.currentTimeMillis ();
-            	final long size = downloader.getNumBytesDownloaded ();
+                final long size = downloader.getNumBytesDownloaded ();
             
-            	final RateSegment segment = new RateSegmentImpl (start,
-                                                              	 end - start,
-                                                              	 size);
-            	
-            	m_rateSegments.add (segment);
+                final RateSegment segment = new RateSegmentImpl (start,
+                                                                   end - start,
+                                                                   size);
+                
+                m_rateSegments.add (segment);
                 }
             
             if (isDownloading (m_state))
@@ -132,8 +131,6 @@ public final class MultiSourceDownloader
      * in the future and more aggressively purge slow sources.
      */
     private static final int CONNECTION_LIMIT = 20;
-    
-    private final Object DOWNLOAD_STREAM_LOCK = new Object ();
     
     private final RateCalculator m_rateCalculator;
     
@@ -206,8 +203,6 @@ public final class MultiSourceDownloader
      */
     private volatile int m_numConnections;
     
-    private volatile int m_activeWriteCalls;
-    
     /**
      * The current state of this downloader.
      */
@@ -278,7 +273,6 @@ public final class MultiSourceDownloader
                                                             numChunks);
             
             m_numConnections = 0;
-            m_activeWriteCalls = 0;
             m_state = MsDState.IDLE;
             m_cancelled = false;
             }
@@ -359,8 +353,7 @@ public final class MultiSourceDownloader
         return state.accept (visitor);
         }
     
-    private void cancel
-            ()
+    private void cancel ()
         {
         m_cancelled = true;
         }
@@ -460,8 +453,7 @@ public final class MultiSourceDownloader
             }
         }
     
-    private int getKbs
-            ()
+    private int getKbs()
         {
         final long since = System.currentTimeMillis () - 5000;
         
@@ -471,14 +463,12 @@ public final class MultiSourceDownloader
         return rate > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) rate;
         }
     
-    private int getNumUniqueHosts
-            ()
+    private int getNumUniqueHosts ()
         {
         return m_uniqueSourceUris.size ();
         }
     
-    private void handleDownloadComplete
-            ()
+    private void handleDownloadComplete()
         {
         LOG.debug ("Downloaded whole file...");
         
@@ -493,7 +483,7 @@ public final class MultiSourceDownloader
         // We need to make this call after the file complete notification
         // above because that's the only way the launcher ever completes it's
         // write (the launcher waits for the complete notification).
-        waitForLaunchersToComplete ();
+        m_launchFileTracker.waitForLaunchersToComplete ();
         
         try
             {
@@ -558,43 +548,9 @@ public final class MultiSourceDownloader
         }
     
     /**
-     * Waits until all active launcher have finished their writes, typically
-     * to the browser.
-     */
-    private void waitForLaunchersToComplete
-            ()
-        {
-        if (this.m_activeWriteCalls == 0)
-            {
-            LOG.debug ("No active launchers...");
-            return;
-            }
-        synchronized (this.DOWNLOAD_STREAM_LOCK)
-            {
-            LOG.debug ("Waiting for active streams to finish streaming");
-            try
-                {
-                // It shouldn't take forever to stream the already
-                // downloaded file to the browser, so cap the wait.
-                this.DOWNLOAD_STREAM_LOCK.wait (6*60*1000);
-                if (this.m_activeWriteCalls > 0)
-                    {
-                    LOG.warn ("Still " + this.m_activeWriteCalls + 
-                        " active writes!!");
-                    }
-                }
-            catch (final InterruptedException e)
-                {
-                LOG.warn ("Unexpected interrupt!!", e);
-                }
-            }
-        }
-    
-    /**
      * {@inheritDoc}
      */
-    public String getContentType
-            ()
+    public String getContentType ()
         {
         return m_contentType;
         }
@@ -602,8 +558,7 @@ public final class MultiSourceDownloader
     /**
      * {@inheritDoc}
      */
-    public File getFile
-            ()
+    public File getFile ()
         {
         return m_file;
         }
@@ -611,8 +566,7 @@ public final class MultiSourceDownloader
     /**
      * {@inheritDoc}
      */
-    public int getSize
-            ()
+    public int getSize ()
         {
         assert (m_size <= Integer.MAX_VALUE);
         
@@ -622,17 +576,7 @@ public final class MultiSourceDownloader
     /**
      * {@inheritDoc}
      */
-    public String getMimeType
-            ()
-        {
-        return m_contentType;
-        }
-    
-    /**
-     * {@inheritDoc}
-     */
-    public MsDState getState
-            ()
+    public MsDState getState ()
         {
         return m_state;
         }
@@ -640,8 +584,7 @@ public final class MultiSourceDownloader
     /**
      * {@inheritDoc}
      */
-    public void start
-            ()
+    public void start ()
         {
         LOG.debug ("Resolving download sources...");
         
@@ -664,37 +607,18 @@ public final class MultiSourceDownloader
     /**
      * {@inheritDoc}
      */
-    public void write
-            (final OutputStream os)
+    public void write (final OutputStream os)
         {
         try
             {
-            ++m_activeWriteCalls;
-            
             m_launchFileTracker.write (os);
-            
-            LOG.debug ("Finished launcher write call...");
-            
-            synchronized (DOWNLOAD_STREAM_LOCK)
-                {
-                if (m_activeWriteCalls == 1)
-                    {
-                    DOWNLOAD_STREAM_LOCK.notify ();
-                    }
-                }
             }
-        catch (final IOException ioe)
+        catch (final IOException e)
             {
-            if (m_activeWriteCalls == 1)
+            if (m_launchFileTracker.getActiveWriteCalls() == 1)
                 {
                 cancel ();
                 }
-            
-            throw new RuntimeIoException (ioe);
-            }
-        finally
-            {
-            --m_activeWriteCalls;
             }
         }
     }

@@ -30,8 +30,7 @@ public final class Sha1Downloader<DsT extends DownloaderState>
          * Performs the necessary actions when the delegate downloader has
          * successfully completed.
          */
-        public void downloadComplete
-                ()
+        public void downloadComplete ()
             {
             setState (new Sha1DState.VerifyingSha1Impl<DsT> ());
             
@@ -225,15 +224,6 @@ public final class Sha1Downloader<DsT extends DownloaderState>
             ()
         {
         return m_delegate.getSize ();
-        }
-    
-    /**
-     * {@inheritDoc}
-     */
-    public String getMimeType
-            ()
-        {
-        return m_delegate.getMimeType ();
         }
     
     /**

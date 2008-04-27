@@ -14,8 +14,7 @@ public interface Downloader<StateT>
     /**
      * Starts downloading the resource.
      */
-    void start
-            ();
+    void start ();
     
     /**
      * Returns the current state of this downloader.
@@ -23,8 +22,7 @@ public interface Downloader<StateT>
      * @return
      *      The current state of this downloader. 
      */
-    StateT getState
-            ();
+    StateT getState ();
     
     /**
      * Returns the file to which this downloader downloads the resource.
@@ -32,18 +30,7 @@ public interface Downloader<StateT>
      * @return
      *      The file to which this downloader downloads the resource.
      */
-    File getFile
-            ();
-    
-    /**
-     * Returns the MIME type of the resource that is downloaded by this
-     * downloader.
-     * 
-     * @return
-     *      The MIME type of the resource that is downloaded by this downloader.
-     */
-    String getMimeType
-            ();
+    File getFile ();
     
     /**
      * Returns the content type of the resource that is downloaded by this
@@ -53,8 +40,7 @@ public interface Downloader<StateT>
      *      The content type of the resource that is downloaded by this
      *      downloader.
      */
-    String getContentType
-            ();
+    String getContentType ();
     
     /**
      * Returns the size of the resource that is downloaded by this downloader.
@@ -62,8 +48,7 @@ public interface Downloader<StateT>
      * @return
      *      The size of the resource that is downloaded by this downloader.
      */
-    int getSize
-            ();
+    int getSize ();
     
     /**
      * Writes the resource that this downloader downloads to a given stream.
@@ -74,8 +59,7 @@ public interface Downloader<StateT>
      * @param os
      *      The output stream to which to write the resource.
      */
-    void write
-            (OutputStream os);
+    void write (OutputStream os);
     
     /**
      * Adds a listener to be notified of events of this downloader.
@@ -83,8 +67,7 @@ public interface Downloader<StateT>
      * @param listener
      *      The listener to be notified.
      */
-    void addListener
-            (DownloaderListener<StateT> listener);
+    void addListener (DownloaderListener<StateT> listener);
 
     /**
      * Removes a listener that was being notified of events of this downloader.
@@ -92,6 +75,5 @@ public interface Downloader<StateT>
      * @param listener
      *      The listener to remove.
      */
-    void removeListener
-            (DownloaderListener<StateT> listener);
+    void removeListener (DownloaderListener<StateT> listener);
     }
