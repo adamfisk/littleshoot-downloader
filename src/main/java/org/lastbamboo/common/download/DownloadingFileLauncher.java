@@ -95,10 +95,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                     this.m_completedRanges.iterator(); 
                     iter.hasNext();)
                     {
-                    if (LOG.isDebugEnabled())
-                        {
-                        LOG.debug("Incrementing index for range...");
-                        }
+                    //LOG.debug("Incrementing index for range...");
                     final LongRange nextRange = iter.next();
                     if (nextRange.getMinimumLong() == this.m_rangeIndex)
                         {
