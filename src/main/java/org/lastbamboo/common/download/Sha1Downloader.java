@@ -34,7 +34,7 @@ public final class Sha1Downloader<DsT extends DownloaderState>
             {
             setState (new Sha1DState.VerifyingSha1Impl<DsT> ());
             
-            final File file = m_delegate.getFile ();
+            final File file = m_delegate.getIncompleteFile ();
 
             // First just make sure the size is correct.
             if (file.length() != m_expectedSize)
@@ -211,10 +211,10 @@ public final class Sha1Downloader<DsT extends DownloaderState>
     /**
      * {@inheritDoc}
      */
-    public File getFile
+    public File getIncompleteFile
             ()
         {
-        return m_delegate.getFile ();
+        return m_delegate.getIncompleteFile ();
         }
     
     /**
@@ -238,10 +238,14 @@ public final class Sha1Downloader<DsT extends DownloaderState>
     /**
      * {@inheritDoc}
      */
-    public void start
-            ()
+    public void start ()
         {
         m_delegate.start ();
+        }
+ 
+    public boolean isStarted ()
+        {
+        return m_delegate.isStarted();
         }
     
     /**

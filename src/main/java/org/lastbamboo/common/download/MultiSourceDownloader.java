@@ -211,9 +211,13 @@ public final class MultiSourceDownloader
     private volatile boolean m_cancelled;
 
     private final CommonsHttpClient m_httpClient;
+
+    private volatile boolean m_started;
     
     /**
      * Constructs a new downloader.
+     * 
+     * @param expectedSha1 The expected SHA-1 URN.
      */
     public MultiSourceDownloader
             (final String sessionId, 
@@ -222,7 +226,7 @@ public final class MultiSourceDownloader
              final long size,
              final String mimeType,
              final UriResolver uriResolver,
-             final int connectionsPerHost)
+             final int connectionsPerHost, final URI expectedSha1)
         {
         Assert.notBlank (sessionId, "Null session ID");
         Assert.notNull (file, "Null file");
@@ -251,14 +255,24 @@ public final class MultiSourceDownloader
         m_rateSegments = 
                 Collections.synchronizedList(new LinkedList<RateSegment> ());
         
-        this.m_httpClient = 
-            new CommonsHttpClientImpl(getDefaultConnectionManager());
+        this.m_httpClient = new CommonsHttpClientImpl();
         final HttpMethodRetryHandler retryHandler = 
             new DefaultHttpMethodRetryHandler(0, false);
         this.m_httpClient.getParams().setParameter(
             HttpMethodParams.RETRY_HANDLER, retryHandler);
-        this.m_httpClient.getHttpConnectionManager().getParams().
-            setConnectionTimeout(20*1000);
+        
+        final HttpConnectionManagerParams params = 
+            this.m_httpClient.getHttpConnectionManager().getParams();
+        params.setConnectionTimeout(20*1000);
+        // We set this for now because our funky sockets sometimes can't 
+        // handle the stale checking details.
+        // TODO: We should fix our sockets to properly handle it.  See
+        // the call sequence in HttpConnection.java isStale() from 
+        // HTTP client.
+        params.setBooleanParameter(
+            HttpConnectionManagerParams.STALE_CONNECTION_CHECK, false);
+        params.setBooleanParameter(
+            HttpMethodParams.WARN_EXTRA_INPUT, true);
         
         try
             {
@@ -268,9 +282,9 @@ public final class MultiSourceDownloader
         
             final int numChunks = m_rangeTracker.getNumChunks ();
             
-            m_launchFileTracker = new LaunchFileDispatcher (file,
-                                                            m_randomAccessFile,
-                                                            numChunks);
+            m_launchFileTracker = 
+                new LaunchFileDispatcher (file, m_randomAccessFile, numChunks,
+                    expectedSha1);
             
             m_numConnections = 0;
             m_state = MsDState.IDLE;
@@ -281,24 +295,6 @@ public final class MultiSourceDownloader
             LOG.error ("Could not create file: " + file, e);
             throw new IllegalArgumentException ("Cannot create file: "+file);
             }
-        }
-
-    private static HttpConnectionManager getDefaultConnectionManager
-            ()
-        {
-        final HttpConnectionManager manager = 
-            new MultiThreadedHttpConnectionManager();
-        
-        // We set this for now because our funky sockets sometimes can't 
-        // handle the stale checking details.
-        // TODO: We should fix our sockets to properly handle it.  See
-        // the call sequence in HttpConnection.java isStale() from 
-        // HTTP client.
-        manager.getParams().setBooleanParameter(
-            HttpConnectionManagerParams.STALE_CONNECTION_CHECK, false);
-        manager.getParams().setBooleanParameter(
-            HttpMethodParams.WARN_EXTRA_INPUT, true);
-        return manager;
         }
     
     /**
@@ -401,8 +397,7 @@ public final class MultiSourceDownloader
             }
         }
     
-    private void download
-            (final Collection<URI> sources)
+    private void download (final Collection<URI> sources)
         {
         if (sources.isEmpty ())
             {
@@ -497,8 +492,7 @@ public final class MultiSourceDownloader
         setState (MsDState.COMPLETE);
         }
     
-    private void setState
-            (final MsDState state)
+    private void setState (final MsDState state)
         {
         if (m_state.equals (state))
             {
@@ -547,25 +541,16 @@ public final class MultiSourceDownloader
         return oRange.accept (visitor);
         }
     
-    /**
-     * {@inheritDoc}
-     */
     public String getContentType ()
         {
         return m_contentType;
         }
     
-    /**
-     * {@inheritDoc}
-     */
-    public File getFile ()
+    public File getIncompleteFile ()
         {
         return m_file;
         }
     
-    /**
-     * {@inheritDoc}
-     */
     public int getSize ()
         {
         assert (m_size <= Integer.MAX_VALUE);
@@ -573,21 +558,20 @@ public final class MultiSourceDownloader
         return (int) m_size;
         }
     
-    /**
-     * {@inheritDoc}
-     */
     public MsDState getState ()
         {
         return m_state;
         }
 
-    /**
-     * {@inheritDoc}
-     */
     public void start ()
         {
+        if (this.m_started)
+            {
+            LOG.warn("Already started...");
+            return;
+            }     
+        m_started = true;
         LOG.debug ("Resolving download sources...");
-        
         setState (MsDState.GETTING_SOURCES);
         
         try
@@ -602,6 +586,23 @@ public final class MultiSourceDownloader
             LOG.warn("Could not resolve download sources", e);
             setState (MsDState.COULD_NOT_DETERMINE_SOURCES);
             }
+        finally 
+            {
+            // Make sure we close the file.
+            try
+                {
+                m_randomAccessFile.close ();
+                }
+            catch (final IOException e)
+                {
+                LOG.warn ("Could not close file: " + m_randomAccessFile, e);
+                }
+            }
+        }
+    
+    public boolean isStarted()
+        {
+        return this.m_started;
         }
     
     /**

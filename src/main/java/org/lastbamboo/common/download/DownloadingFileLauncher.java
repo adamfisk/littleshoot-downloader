@@ -3,13 +3,18 @@ package org.lastbamboo.common.download;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.concurrent.PriorityBlockingQueue;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.math.LongRange;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.lastbamboo.common.util.Base32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class for tracking parts of the downloading file we can view immediately
@@ -18,8 +23,7 @@ import org.apache.commons.logging.LogFactory;
 public class DownloadingFileLauncher implements LaunchFileTracker
     {
 
-    private static final Log LOG = 
-        LogFactory.getLog(DownloadingFileLauncher.class);
+    private final Logger m_log = LoggerFactory.getLogger(getClass()); 
     
     private final PriorityBlockingQueue<LongRange> m_completedRanges;
     private final RandomAccessFile m_randomAccessFile;
@@ -27,6 +31,17 @@ public class DownloadingFileLauncher implements LaunchFileTracker
     private long m_rangeIndex = 0L;
 
     private boolean m_complete = false;
+
+    /**
+     * This is a SHA-1 message digest sanity checker.  It helps to make sure
+     * we actually write the same SHA-1 to the caller that the downloading
+     * file should match with.
+     */
+    private final MessageDigest m_messageDigest;
+
+    private final URI m_expectedSha1;
+
+    private volatile boolean m_failed = false;
     
     /**
      * Creates a new tracker for streaming the file to the browser.
@@ -34,9 +49,11 @@ public class DownloadingFileLauncher implements LaunchFileTracker
      * @param file The random access file to copy the downloaded data from.
      * @param completedRanges The ranges that have already completed 
      * downloading.
+     * @param expectedSha1 The expected SHA-1 for the file.
      */
     public DownloadingFileLauncher(final RandomAccessFile file, 
-        final PriorityBlockingQueue<LongRange> completedRanges)
+        final PriorityBlockingQueue<LongRange> completedRanges, 
+        final URI expectedSha1)
         {
         if (file == null)
             {
@@ -48,13 +65,24 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             }
         this.m_randomAccessFile = file;
         this.m_completedRanges = completedRanges;
+        this.m_expectedSha1 = expectedSha1;
+        
+        try
+            {
+            this.m_messageDigest = MessageDigest.getInstance("SHA-1");
+            }
+        catch (final NoSuchAlgorithmException e)
+            {
+            m_log.error("No SHA-1??", e);
+            throw new IllegalStateException("Need a message digest");
+            }
         }
     
     public void onRangeComplete(final LongRange range)
         {
         synchronized (this.m_completedRanges)
             {   
-            LOG.debug("Adding completed range!!");
+            m_log.debug("Adding completed range!!");
             this.m_completedRanges.add(range);
         
             // Notify the completed ranges if the range we just got is the
@@ -71,6 +99,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
         try
             {
             writeAllRanges(os);
+            m_log.debug("Wrote all ranges...");
             }
         finally
             {
@@ -80,9 +109,9 @@ public class DownloadingFileLauncher implements LaunchFileTracker
 
     private void writeAllRanges(final OutputStream os) throws IOException
         {
-        if (LOG.isDebugEnabled())
+        if (m_log.isDebugEnabled())
             {
-            LOG.debug("Writing "+this.m_completedRanges.size()+
+            m_log.debug("Writing "+this.m_completedRanges.size()+
                 " completed ranges...");
             }
         while (true)
@@ -117,17 +146,17 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             
             synchronized (this.m_completedRanges)
                 {
-                LOG.debug("Locked completed range...");
+                m_log.debug("Locked completed range...");
                 if (done())
                     {
-                    LOG.debug("We're done.  Flushing and notifying!");
+                    m_log.debug("We're done.  Flushing and notifying!");
                     os.flush();
                     os.close();
                     this.m_completedRanges.notify();
                     return;
                     }
                 final LongRange range = this.m_completedRanges.peek();
-                LOG.debug("Got range...");
+                m_log.debug("Got range...");
                 
                 // If there is no new range or it's not the next range we
                 // need, wait until we get it.  
@@ -136,14 +165,14 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                     {
                     try
                         {
-                        LOG.debug("Waiting on completed range. Complete: "+
+                        m_log.debug("Waiting on completed range. Complete: "+
                             this.m_complete);
                         this.m_completedRanges.wait();
                         
-                        LOG.debug("Finished waiting...");
+                        m_log.debug("Finished waiting...");
                         if (done())
                             {
-                            LOG.debug("We're done.  Writing any remaining...");
+                            m_log.debug("We're done.  Writing any remaining...");
                             os.flush();
                             os.close();
                             this.m_completedRanges.notify();
@@ -152,7 +181,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                         }
                     catch (final InterruptedException e)
                         {
-                        LOG.warn("Interrupted!!", e);
+                        m_log.warn("Interrupted!!", e);
                         }
                     }
                 }
@@ -172,18 +201,19 @@ public class DownloadingFileLauncher implements LaunchFileTracker
      */
     private boolean done()
         {
-        return (this.m_completedRanges.isEmpty() && this.m_complete);
+        return this.m_failed || 
+            (this.m_completedRanges.isEmpty() && this.m_complete);
         }
 
     private void writeRange(final long startIndex, 
         final long endIndex, final OutputStream os) throws IOException
         {
         final int length = (int) (endIndex - startIndex);
-        LOG.debug("Copying "+length+" bytes...");
+        m_log.debug("Copying "+length+" bytes...");
         final byte[] bytesToCopy = new byte[length];
         synchronized (this.m_randomAccessFile)
             {
-            LOG.debug("Got lock on file...");
+            m_log.debug("Got lock on file...");
             this.m_randomAccessFile.seek(startIndex);
             
             final int numBytesRead = this.m_randomAccessFile.read(bytesToCopy);
@@ -193,16 +223,27 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             // in practice it should always happen.
             if (numBytesRead != length)
                 {
-                LOG.warn("Unexpected number of bytes read: "+numBytesRead);
+                m_log.warn("Unexpected number of bytes read: "+numBytesRead);
                 }
             os.write(bytesToCopy);
+            this.m_messageDigest.update(bytesToCopy, 0, numBytesRead);
             }
-        LOG.debug("Wrote range...");
+        m_log.debug("Wrote range...");
         }
 
+
+    public void onFail()
+        {
+        this.m_failed = true;
+        synchronized (this.m_completedRanges)
+            {
+            this.m_completedRanges.notify();
+            }
+        }
+    
     public void onFileComplete()
         {
-        LOG.debug("Received notification file is complete");
+        m_log.debug("Received notification file is complete");
         this.m_complete = true;
         synchronized (this.m_completedRanges)
             {
@@ -220,11 +261,46 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                     }
                 catch (final InterruptedException e)
                     {
-                    LOG.error("Interrupted while writing...");
+                    m_log.error("Interrupted while writing...");
                     }
                 }
             }
-        LOG.debug("Returning from file complete notification...");
+        m_log.debug("Returning from file complete notification...");
+        
+        verifySha1();
+        }
+
+    private void verifySha1()
+        {
+        final byte[] sha1Bytes = this.m_messageDigest.digest();
+
+        try
+            {
+            // preferred casing: lowercase "urn:sha1:", uppercase encoded value
+            // note that all URNs are case-insensitive for the "urn:<type>:" part,
+            // but some MAY be case-sensitive thereafter (SHA1/Base32 is case 
+            // insensitive)
+            final URI sha1 = new URI("urn:sha1:"+Base32.encode(sha1Bytes));
+            if (this.m_expectedSha1 == null)
+                {
+                // This can happen during tests.
+                m_log.warn("Null expected SHA-1.  Testing?");
+                }
+            else if (!this.m_expectedSha1.equals(sha1))
+                {
+                m_log.error("Did not get expected SHA-1!!!  Expected "+
+                    this.m_expectedSha1+" but was "+sha1);
+                }
+            else
+                {
+                m_log.debug("SHA-1s match!!");
+                }
+            }
+        catch (final URISyntaxException e)
+            {
+            // This should never happen.
+            m_log.error("Could not encode SHA-1", e);
+            }  
         }
 
     public int getActiveWriteCalls()

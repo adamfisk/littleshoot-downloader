@@ -46,4 +46,9 @@ public interface LaunchFileTracker
      */
     int getActiveWriteCalls();
 
+    /**
+     * Notifies the launcher the download has failed.
+     */
+    void onFail();
+
     }

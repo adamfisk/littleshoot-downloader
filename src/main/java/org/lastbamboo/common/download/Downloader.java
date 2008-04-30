@@ -30,7 +30,7 @@ public interface Downloader<StateT>
      * @return
      *      The file to which this downloader downloads the resource.
      */
-    File getFile ();
+    File getIncompleteFile ();
     
     /**
      * Returns the content type of the resource that is downloaded by this
@@ -76,4 +76,12 @@ public interface Downloader<StateT>
      *      The listener to remove.
      */
     void removeListener (DownloaderListener<StateT> listener);
+
+    /**
+     * Returns whether or not this downloader has already started.
+     * 
+     * @return <code>true</code> if this downloader has already started, 
+     * otherwise <code>false</code>.
+     */
+    boolean isStarted();
     }

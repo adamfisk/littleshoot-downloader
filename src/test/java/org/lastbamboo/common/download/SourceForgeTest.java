@@ -24,7 +24,7 @@ public class SourceForgeTest extends TestCase
     private static final Log LOG = LogFactory.getLog(SourceForgeTest.class);
     
     private static Downloader<MsDState> getBaseDownloader
-            (final File file) throws URISyntaxException
+            (final File file, final URI expectedSha1) throws URISyntaxException
         {
         final String[] urls =
             {
@@ -80,7 +80,7 @@ public class SourceForgeTest extends TestCase
                                     size,
                                     "video/mpeg",
                                     resolver,
-                                    2);
+                                    2, expectedSha1);
         
         return downloader;
         }
@@ -158,7 +158,8 @@ public class SourceForgeTest extends TestCase
         final String sha1String = "urn:sha1:WUOWD7AATBMW4K3EV3TFMJ6FO6SNLZIS";
         final URI expectedSha1 = new URI (sha1String);
         
-        final Downloader<MsDState> baseDownloader = getBaseDownloader (file);
+        final Downloader<MsDState> baseDownloader = 
+            getBaseDownloader (file, expectedSha1);
 
         final Downloader<Sha1DState<MsDState>> downloader =
                 new Sha1Downloader<MsDState> (baseDownloader, expectedSha1, 

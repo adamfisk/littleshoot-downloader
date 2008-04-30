@@ -69,14 +69,9 @@ public class SingleSourceTest extends TestCase
 //            final MultiSourceDownloader dl = new MultiSourceDownloaderImpl("sessionId", 
 //                testFile, uri, 6509767L, "video/mpeg");
             
-            final Downloader<MsDState> dl =
-                    new MultiSourceDownloader ("sessionId",
-                                        testFile,
-                                        uri,
-                                        6509767L,
-                                        "video/mpeg",
-                                        resolver,
-                                        i);
+            final Downloader<MsDState> dl = 
+                new MultiSourceDownloader ("sessionId", testFile, uri,
+                    6509767L, "video/mpeg", resolver, i, null);
                                         
             final long start = System.currentTimeMillis();
             dl.start ();

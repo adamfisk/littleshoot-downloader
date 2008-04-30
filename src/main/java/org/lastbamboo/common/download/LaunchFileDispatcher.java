@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,6 +41,8 @@ public class LaunchFileDispatcher implements LaunchFileTracker
     private volatile int m_activeWriteCalls = 0;
     
     private final Object DOWNLOAD_STREAM_LOCK = new Object ();
+
+    private final URI m_expectedSha1;
     
     /**
      * Creates a new tracker for streaming the file to the browser.
@@ -47,9 +50,10 @@ public class LaunchFileDispatcher implements LaunchFileTracker
      * @param file The file on disk.
      * @param raf The random access file to copy the downloaded data from.
      * @param numChunks The number of chunks we're downloading.
+     * @param expectedSha1 The expected SHA-1 for the file.
      */
     public LaunchFileDispatcher(final File file, final RandomAccessFile raf, 
-        final int numChunks)
+        final int numChunks, final URI expectedSha1)
         {
         if (file == null)
             {
@@ -63,6 +67,7 @@ public class LaunchFileDispatcher implements LaunchFileTracker
         this.m_randomAccessFile = raf;
         this.m_numChunks = numChunks;
         this.m_completedRanges = createQueue();
+        this.m_expectedSha1 = expectedSha1;
         }
     
     private PriorityBlockingQueue<LongRange> createQueue()
@@ -98,6 +103,8 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                 {
                 LOG.warn ("Unexpected interrupt!!", e);
                 }
+            
+            LOG.debug("Finished waiting...");
             }
         }
     
@@ -157,7 +164,7 @@ public class LaunchFileDispatcher implements LaunchFileTracker
             {
             completedRanges.addAll(this.m_completedRanges);
             tracker = new DownloadingFileLauncher(this.m_randomAccessFile, 
-                completedRanges);
+                completedRanges, this.m_expectedSha1);
             this.m_trackers.add(tracker);
             }
 
@@ -207,5 +214,16 @@ public class LaunchFileDispatcher implements LaunchFileTracker
     public int getActiveWriteCalls()
         {
         return m_activeWriteCalls;
+        }
+
+    public void onFail()
+        {
+        synchronized (this.m_trackers)
+        {
+        for (final LaunchFileTracker tracker : this.m_trackers)
+            {
+            tracker.onFail();
+            }
+        }
         }
     }
