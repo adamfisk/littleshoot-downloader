@@ -65,7 +65,14 @@ public class LaunchFileDispatcher implements LaunchFileTracker
             }
         this.m_file = file;
         this.m_randomAccessFile = raf;
-        this.m_numChunks = numChunks;
+        if (numChunks > 0)
+            {
+            this.m_numChunks = numChunks;
+            }
+        else
+            {
+            this.m_numChunks = 1;
+            }
         this.m_completedRanges = createQueue();
         this.m_expectedSha1 = expectedSha1;
         }
