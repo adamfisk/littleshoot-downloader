@@ -14,13 +14,15 @@ import java.util.LinkedList;
 import java.util.concurrent.PriorityBlockingQueue;
 
 import org.apache.commons.lang.math.LongRange;
-import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Test;
 import org.lastbamboo.common.util.Sha1Hasher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+/**
+ * Download streaming test.
+ */
 public class DownloadingFileLauncherTest
     {
 
