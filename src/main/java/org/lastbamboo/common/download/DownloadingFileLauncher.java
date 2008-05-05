@@ -170,7 +170,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                         m_log.debug("Waiting on completed range. Complete: {}",
                             this.m_complete);
                         m_log.debug("Next range min is: {}", this.m_rangeIndex);
-                        m_log.debug("Ranges: {}", this.m_completedRanges);
+                        //m_log.debug("Ranges: {}", this.m_completedRanges);
                         this.m_completedRanges.wait();
                         
                         m_log.debug("Finished waiting...");
