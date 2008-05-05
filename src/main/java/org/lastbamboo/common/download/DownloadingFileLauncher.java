@@ -213,24 +213,43 @@ public class DownloadingFileLauncher implements LaunchFileTracker
     private void writeRange(final long startIndex, 
         final long endIndex, final OutputStream os) throws IOException
         {
-        final int length = (int) (endIndex - startIndex);
-        m_log.debug("Copying "+length+" bytes...");
-        final byte[] bytesToCopy = new byte[length];
+        int index = 0;
+        final long length = endIndex - startIndex;
+        m_log.debug("Copying total bytes: {}", length);
+        final long maxChunkSize = 1024 * 500;
+        final int numArrays = (int) Math.ceil(length / maxChunkSize);
+        m_log.debug("Copying arrays: {}", numArrays);
         synchronized (this.m_randomAccessFile)
             {
             m_log.debug("Got lock on file...");
-            this.m_randomAccessFile.seek(startIndex);
-            
-            final int numBytesRead = this.m_randomAccessFile.read(bytesToCopy);
-            
-            // The bytes read should equal the expected length because the
-            // file's already on disk.  The API doesn't require this, but
-            // in practice it should always happen.
-            if (numBytesRead != length)
+            while (index < length)
                 {
-                m_log.warn("Unexpected number of bytes read: "+numBytesRead);
+                final long curChunkSize;
+                if (length - index < maxChunkSize)
+                    {
+                    curChunkSize = (length - index);
+                    }
+                else
+                    {
+                    curChunkSize = maxChunkSize;
+                    }
+                final byte[] bytesToCopy = new byte[(int) curChunkSize];
+                final long baseIndex = startIndex + index;
+                this.m_randomAccessFile.seek(baseIndex);
+                
+                final int numBytesRead = 
+                    this.m_randomAccessFile.read(bytesToCopy);
+                
+                // The bytes read should equal the expected length because the
+                // file's already on disk.  The API doesn't require this, but
+                // in practice it should always happen.
+                if (numBytesRead != curChunkSize)
+                    {
+                    m_log.warn("Unexpected number of bytes read: "+numBytesRead);
+                    }
+                os.write(bytesToCopy);
+                index += curChunkSize;
                 }
-            os.write(bytesToCopy);
             }
         m_log.debug("Wrote range...");
         }
