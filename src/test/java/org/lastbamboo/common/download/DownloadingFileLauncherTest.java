@@ -29,7 +29,7 @@ public class DownloadingFileLauncherTest
     @Test public void testLauncher() throws Exception
         {
         final File file = new File(getClass().getSimpleName());
-        //file.deleteOnExit();
+        file.deleteOnExit();
         final OutputStream os = new FileOutputStream(file);
         for (int i = 0; i < 100000; i++)
             {
@@ -57,27 +57,14 @@ public class DownloadingFileLauncherTest
                     }
                 catch (InterruptedException e)
                     {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                     }
                 final Collection<LongRange> ranges = createRanges(file.length());
                 m_log.debug("Ranges: "+ranges);
-                //if (true) return;
                 for (final LongRange lr : ranges)
                     {
                     launcher.onRangeComplete(lr);
-                    final long sleepTime = RandomUtils.nextLong() % 6;
-                    try
-                        {
-                        if (false) Thread.sleep(sleepTime);
-                        }
-                    catch (InterruptedException e)
-                        {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                        }
                     }
-                System.out.println("Calling file complete...");
                 launcher.onFileComplete();
                 }
             };
@@ -95,7 +82,6 @@ public class DownloadingFileLauncherTest
     private Collection<LongRange> createRanges(final long length)
         {
         final LinkedList<LongRange> ranges = new LinkedList<LongRange>();
-        //final Random rand = new Random();
         
         final long rangeSize = length / 1000L;
         long min = 0;
@@ -108,35 +94,13 @@ public class DownloadingFileLauncherTest
             
             if (max == (length - 1))
                 {
-                //ranges.add(new LongRange())
                 break;
                 }
             min = max + 1;
             }
-        /*
-        while (true)
-            {
-            final long curRand = rand.nextLong() % 1000;
-            final long max; 
-            if (i + curRand >= length)
-                {
-                max = length - i;
-                }
-            else
-                {
-                max = i + curRand;
-                }
-            final LongRange curRange = new LongRange(i, max);
-            if (max == length)
-                {
-                break;
-                }
-            i += curRange.
-            }
-            */
+        
         
         Collections.shuffle(ranges);
-        //Collections.reverse(ranges);
         return ranges;
         }
 
