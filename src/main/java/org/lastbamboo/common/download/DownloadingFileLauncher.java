@@ -217,8 +217,6 @@ public class DownloadingFileLauncher implements LaunchFileTracker
         final long length = endIndex - startIndex;
         m_log.debug("Copying total bytes: {}", length);
         final long maxChunkSize = 1024 * 500;
-        final int numArrays = (int) Math.ceil(length / maxChunkSize);
-        m_log.debug("Copying arrays: {}", numArrays);
         synchronized (this.m_randomAccessFile)
             {
             m_log.debug("Got lock on file...");
@@ -248,7 +246,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                     m_log.warn("Unexpected number of bytes read: "+numBytesRead);
                     }
                 os.write(bytesToCopy);
-                index += curChunkSize;
+                index += numBytesRead;
                 }
             }
         m_log.debug("Wrote range...");
@@ -318,9 +316,9 @@ public class DownloadingFileLauncher implements LaunchFileTracker
         try
             {
             // preferred casing: lowercase "urn:sha1:", uppercase encoded value
-            // note that all URNs are case-insensitive for the "urn:<type>:" part,
-            // but some MAY be case-sensitive thereafter (SHA1/Base32 is case 
-            // insensitive)
+            // note that all URNs are case-insensitive for the "urn:<type>:" 
+            // part, but some MAY be case-sensitive thereafter (SHA1/Base32 is 
+            // case insensitive)
             final URI sha1 = new URI("urn:sha1:"+Base32.encode(sha1Bytes));
             if (this.m_expectedSha1 == null)
                 {
