@@ -6,11 +6,10 @@ import java.util.LinkedList;
 /**
  * An abstract base class to help implement downloaders.
  * 
- * @param <T>
- *      The downloader state type.
+ * @param <T> The downloader state type.
  */
 public abstract class AbstractDownloader<T extends DownloaderState>
-        implements Downloader<T>
+    implements Downloader<T>
     {
     /**
      * The listeners to be notified of events involving this downloader.
@@ -28,11 +27,9 @@ public abstract class AbstractDownloader<T extends DownloaderState>
     /**
      * Fires notification that this downloader's state has changed.
      * 
-     * @param state
-     *      The new state.
+     * @param state The new state.
      */
-    protected final void fireStateChanged
-            (final T state)
+    protected final void fireStateChanged (final T state)
         {
         for (final DownloaderListener<T> listener : m_listeners)
             {
@@ -40,20 +37,12 @@ public abstract class AbstractDownloader<T extends DownloaderState>
             }
         }
     
-    /**
-     * {@inheritDoc}
-     */
-    public final void addListener
-            (final DownloaderListener<T> listener)
+    public final void addListener (final DownloaderListener<T> listener)
         {
         m_listeners.add (listener);
         }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void removeListener
-            (final DownloaderListener<T> listener)
+    public void removeListener (final DownloaderListener<T> listener)
         {
         m_listeners.remove (listener);
         }
