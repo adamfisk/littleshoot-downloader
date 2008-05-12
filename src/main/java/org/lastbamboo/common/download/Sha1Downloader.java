@@ -26,14 +26,46 @@ public final class Sha1Downloader<DsT extends DownloaderState>
      */
     private class DelegateListener implements DownloaderListener<DsT>
         {        
+        
+        /**
+         * {@inheritDoc}
+         */
+        public void stateChanged (final DsT state)
+            {
+            LOG.debug ("(state, type) == (" + state + ", " + state.getType () +
+                           ")");
+            
+            if (state.getType () == DownloaderStateType.SUCCEEDED)
+                {
+                downloadComplete ();
+                }
+            else
+                {
+                if (isDownloading (m_state))
+                    {
+                    LOG.debug ("Is downloading");
+                    setState (new Sha1DState.DownloadingImpl<DsT> (state));
+                    }
+                else
+                    {
+                    LOG.debug ("Is not downloading");
+                    
+                    // Ignore events from the delegate downloader if we do not
+                    // think that we are in the downloading state.  Something is
+                    // odd if this happens, though.
+                    LOG.warn ("Got delegate downloader event despite being " +
+                                  "done with the downloader: " + state);
+                    }
+                }
+            }
+        
         /**
          * Performs the necessary actions when the delegate downloader has
          * successfully completed.
          */
-        public void downloadComplete ()
+        private void downloadComplete ()
             {
             setState (new Sha1DState.VerifyingSha1Impl<DsT> ());
-            
             final File file = m_delegate.getIncompleteFile ();
 
             // First just make sure the size is correct.
@@ -70,39 +102,6 @@ public final class Sha1Downloader<DsT extends DownloaderState>
                     }
                 }
             }
-        
-        /**
-         * {@inheritDoc}
-         */
-        public void stateChanged
-                (final DsT state)
-            {
-            LOG.debug ("(state, type) == (" + state + ", " + state.getType () +
-                           ")");
-            
-            if (state.getType () == DownloaderStateType.SUCCEEDED)
-                {
-                downloadComplete ();
-                }
-            else
-                {
-                if (isDownloading (m_state))
-                    {
-                    LOG.debug ("Is downloading");
-                    setState (new Sha1DState.DownloadingImpl<DsT> (state));
-                    }
-                else
-                    {
-                    LOG.debug ("Is not downloading");
-                    
-                    // Ignore events from the delegate downloader if we do not
-                    // think that we are in the downloading state.  Something is
-                    // odd if this happens, though.
-                    LOG.warn ("Got delegate downloader event despite being " +
-                                  "done with the downloader: " + state);
-                    }
-                }
-            }
         }
     
     /**
@@ -130,23 +129,18 @@ public final class Sha1Downloader<DsT extends DownloaderState>
     /**
      * Returns whether a given state is the downloading state.
      * 
-     * @param <DsT>
-     *      The type of the underlying delegate downloading state.
+     * @param <DsT> The type of the underlying delegate downloading state.
      *      
-     * @param state
-     *      The state.
+     * @param state The state.
      *      
-     * @return
-     *      True if the state is the downloading state, false otherwise.
+     * @return True if the state is the downloading state, false otherwise.
      */
-    private static <DsT> boolean isDownloading
-            (final Sha1DState<DsT> state)
+    private static <DsT> boolean isDownloading (final Sha1DState<DsT> state)
         {
         final Sha1DState.VisitorAdapter<Boolean,DsT> visitor =
                 new Sha1DState.VisitorAdapter<Boolean,DsT> (false)
             {
-            public Boolean visitDownloading
-                    (final Downloading<DsT> state)
+            public Boolean visitDownloading (final Downloading<DsT> state)
                 {
                 return true;
                 }
@@ -158,16 +152,13 @@ public final class Sha1Downloader<DsT extends DownloaderState>
     /**
      * Constructs a new downloader.
      * 
-     * @param delegate
-     *      The delegate downloader.
-     * @param expectedSha1
-     *      The expected SHA-1 of the resource downloaded by the delegate
-     *      downloader.
-     * @param expectedSize 
+     * @param delegate The delegate downloader.
+     * @param expectedSha1 The expected SHA-1 of the resource downloaded by the 
+     *  delegate downloader.
+     * @param expectedSize The expected size of the file.
      */
-    public Sha1Downloader
-            (final Downloader<DsT> delegate,
-             final URI expectedSha1, final long expectedSize)
+    public Sha1Downloader (final Downloader<DsT> delegate,
+        final URI expectedSha1, final long expectedSize)
         {
         m_delegate = delegate;
         m_expectedSha1 = expectedSha1;
@@ -181,11 +172,9 @@ public final class Sha1Downloader<DsT extends DownloaderState>
     /**
      * Sets the current state of this SHA-1 verifying downloader.
      * 
-     * @param state
-     *      The new state.
+     * @param state The new state.
      */
-    private void setState
-            (final Sha1DState<DsT> state)
+    private void setState (final Sha1DState<DsT> state)
         {
         if (m_state.equals (state))
             {
@@ -194,50 +183,30 @@ public final class Sha1Downloader<DsT extends DownloaderState>
         else
             {
             m_state = state;
-            
             fireStateChanged (state);
             }
         }
     
-    /**
-     * {@inheritDoc}
-     */
-    public String getContentType
-            ()
+    public String getContentType ()
         {
         return m_delegate.getContentType ();
         }
     
-    /**
-     * {@inheritDoc}
-     */
-    public File getIncompleteFile
-            ()
+    public File getIncompleteFile ()
         {
         return m_delegate.getIncompleteFile ();
         }
     
-    /**
-     * {@inheritDoc}
-     */
-    public int getSize
-            ()
+    public int getSize ()
         {
         return m_delegate.getSize ();
         }
     
-    /**
-     * {@inheritDoc}
-     */
-    public Sha1DState<DsT> getState
-            ()
+    public Sha1DState<DsT> getState ()
         {
         return m_state;
         }
 
-    /**
-     * {@inheritDoc}
-     */
     public void start ()
         {
         m_delegate.start ();
@@ -248,11 +217,7 @@ public final class Sha1Downloader<DsT extends DownloaderState>
         return m_delegate.isStarted();
         }
     
-    /**
-     * {@inheritDoc}
-     */
-    public void write
-            (final OutputStream os)
+    public void write (final OutputStream os)
         {
         m_delegate.write (os);
         }

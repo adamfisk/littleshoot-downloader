@@ -17,9 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
-import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpMethodRetryHandler;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.lang.math.LongRange;
@@ -36,10 +34,10 @@ import org.lastbamboo.common.util.Some;
 /**
  * A downloader that can download from multiple sources simultaneously.
  */
-public final class MultiSourceDownloader
-        extends AbstractDownloader<MsDState>
-        implements Downloader<MsDState>
+public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
+    implements Downloader<MsDState>
     {
+    
     /**
      * The listener we use for notification of events on single source
      * downloaders.  We use one of these for all single downloads (as opposed to
@@ -48,11 +46,7 @@ public final class MultiSourceDownloader
     private final class SingleDownloadListener implements RangeDownloadListener
         {
         
-        /**
-         * {@inheritDoc}
-         */
-        public void onConnect
-                (final RangeDownloader downloader)
+        public void onConnect (final RangeDownloader downloader)
             {
             LOG.debug ("Connected to: " + downloader);
             
@@ -78,11 +72,7 @@ public final class MultiSourceDownloader
                 }
             }
         
-        /**
-         * {@inheritDoc}
-         */
-        public void onDownloadFinished
-                (final RangeDownloader downloader)
+        public void onDownloadFinished (final RangeDownloader downloader)
             {
             Assert.notNull (downloader, "Downloader is null");
             synchronized (m_startTimes)
@@ -110,11 +100,7 @@ public final class MultiSourceDownloader
                 }
             }
 
-        /**
-         * {@inheritDoc}
-         */
-        public void onDownloadStarted
-                (final RangeDownloader downloader)
+        public void onDownloadStarted (final RangeDownloader downloader)
             {
             m_activeRangeDownloaders.add (downloader);
             }
@@ -219,14 +205,10 @@ public final class MultiSourceDownloader
      * 
      * @param expectedSha1 The expected SHA-1 URN.
      */
-    public MultiSourceDownloader
-            (final String sessionId, 
-             final File file,
-             final URI uri,
-             final long size,
-             final String mimeType,
-             final UriResolver uriResolver,
-             final int connectionsPerHost, final URI expectedSha1)
+    public MultiSourceDownloader (final String sessionId, final File file,
+        final URI uri, final long size, final String mimeType,
+        final UriResolver uriResolver, final int connectionsPerHost, 
+        final URI expectedSha1)
         {
         Assert.notBlank (sessionId, "Null session ID");
         Assert.notNull (file, "Null file");
@@ -298,43 +280,14 @@ public final class MultiSourceDownloader
         }
     
     /**
-     * Returns whether a given state indicates that the download is complete.
-     * 
-     * @param state
-     *      The state.
-     *      
-     * @return
-     *      True if the state indicates that the download is complete, false
-     *      otherwise.
-     */
-    private static boolean isDownloadComplete
-            (final MsDState state)
-        {
-        final MsDState.Visitor<Boolean> visitor =
-                new MsDState.VisitorAdapter<Boolean> (false)
-            {
-            public Boolean visitComplete
-                    (final MsDState.Complete state)
-                {
-                return true;
-                }
-            };
-            
-        return state.accept (visitor);
-        }
-    
-    /**
      * Returns whether a given state indicates that we are downloading.
      * 
-     * @param state
-     *      The state.
+     * @param state The state.
      *      
-     * @return
-     *      True if the state indicates that we are downloading, false
-     *      otherwise.
+     * @return True if the state indicates that we are downloading, false
+     *  otherwise.
      */
-    private static boolean isDownloading
-            (final MsDState state)
+    private static boolean isDownloading (final MsDState state)
         {
         final MsDState.Visitor<Boolean> visitor =
                 new MsDState.VisitorAdapter<Boolean> (false)
@@ -354,10 +307,8 @@ public final class MultiSourceDownloader
         m_cancelled = true;
         }
     
-    private void connect
-            (final Collection<URI> sources, 
-             final SourceRanker downloadSpeedRanker,
-             final int connectionsPerHost)
+    private void connect (final Collection<URI> sources, 
+        final SourceRanker downloadSpeedRanker, final int connectionsPerHost)
         {
         LOG.debug ("Attempting to connection to " + connectionsPerHost +
                       " hosts..");
@@ -501,39 +452,32 @@ public final class MultiSourceDownloader
         else
             {
             m_state = state;
-            
             LOG.debug ("Setting state to: " + state);
-            
             fireStateChanged (state);
             }
         }
     
-    private boolean singleRangeDownload
-            (final RangeDownloader downloader)
+    private boolean singleRangeDownload (final RangeDownloader downloader)
         {
         final Optional<LongRange> oRange = m_rangeTracker.getNextRange ();
         
         final OptionalVisitor<Boolean,LongRange> visitor =
                 new OptionalVisitor<Boolean,LongRange> ()
             {
-            public Boolean visitNone
-                    (final None<LongRange> none)
+            public Boolean visitNone (final None<LongRange> none)
                 {
                 return true;
                 }
             
-            public Boolean visitSome
-                    (final Some<LongRange> some)
+            public Boolean visitSome (final Some<LongRange> some)
                 {
                 final LongRange range = some.object ();
-                
                 synchronized (m_startTimes)
                     {
                     m_startTimes.put (downloader, System.currentTimeMillis ());
                     LOG.debug ("Downloading from downloader: " + downloader);
                     downloader.download (range);
                     }
-                
                 return false;
                 }
             };
@@ -554,7 +498,6 @@ public final class MultiSourceDownloader
     public int getSize ()
         {
         assert (m_size <= Integer.MAX_VALUE);
-        
         return (int) m_size;
         }
     
@@ -605,9 +548,6 @@ public final class MultiSourceDownloader
         return this.m_started;
         }
     
-    /**
-     * {@inheritDoc}
-     */
     public void write (final OutputStream os)
         {
         try
