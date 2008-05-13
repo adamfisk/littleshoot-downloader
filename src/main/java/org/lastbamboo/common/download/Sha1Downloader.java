@@ -14,8 +14,7 @@ import org.lastbamboo.common.util.Sha1Hasher;
  * A downloader that checks the SHA-1 of a resource downloaded by a delegate
  * downloader.
  * 
- * @param <DsT>
- *      The state type of the delegate downloader.
+ * @param <DsT> The state type of the delegate downloader.
  */
 public final class Sha1Downloader<DsT extends DownloaderState>
         extends AbstractDownloader<Sha1DState<DsT>>
@@ -130,9 +129,7 @@ public final class Sha1Downloader<DsT extends DownloaderState>
      * Returns whether a given state is the downloading state.
      * 
      * @param <DsT> The type of the underlying delegate downloading state.
-     *      
      * @param state The state.
-     *      
      * @return True if the state is the downloading state, false otherwise.
      */
     private static <DsT> boolean isDownloading (final Sha1DState<DsT> state)
@@ -163,9 +160,7 @@ public final class Sha1Downloader<DsT extends DownloaderState>
         m_delegate = delegate;
         m_expectedSha1 = expectedSha1;
         m_expectedSize = expectedSize;
-        
         m_state = new Sha1DState.DownloadingImpl<DsT> (m_delegate.getState ());
-        
         m_delegate.addListener (new DelegateListener ());
         }
     
