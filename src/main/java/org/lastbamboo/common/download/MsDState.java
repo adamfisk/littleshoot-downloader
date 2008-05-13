@@ -17,93 +17,71 @@ public interface MsDState extends DownloaderState
         /**
          * Visits an idle state.
          * 
-         * @param state
-         *      The state.
+         * @param state The state.
          *      
-         * @return
-         *      The result of the visitation.
+         * @return The result of the visitation.
          */
-        T visitIdle
-                (Idle state);
+        T visitIdle (Idle state);
 
         /**
          * Visits a getting sources state.
          * 
-         * @param state
-         *      The state.
+         * @param state The state.
          *      
-         * @return
-         *      The result of the visitation.
+         * @return The result of the visitation.
          */
-        T visitGettingSources
-                (GettingSources state);
+        T visitGettingSources (GettingSources state);
 
         /**
          * Visits a downloading state.
          * 
-         * @param state
-         *      The state.
+         * @param state The state.
          *      
-         * @return
-         *      The result of the visitation.
+         * @return The result of the visitation.
          */
-        T visitDownloading
-                (Downloading state);
+        T visitDownloading (Downloading state);
 
         /**
          * Visits a complete state.
          * 
-         * @param state
-         *      The state.
+         * @param state The state.
          *      
-         * @return
-         *      The result of the visitation.
+         * @return The result of the visitation.
          */
-        T visitComplete
-                (Complete state);
+        T visitComplete (Complete state);
 
         /**
          * Visits a canceled state.
          * 
-         * @param state
-         *      The state.
+         * @param state The state.
          *      
-         * @return
-         *      The result of the visitation.
+         * @return The result of the visitation.
          */
-        T visitCanceled
-                (Canceled state);
+        T visitCanceled (Canceled state);
 
         /**
          * Visits a no sources available state.
          * 
-         * @param state
-         *      The state.
+         * @param state The state.
          *      
-         * @return
-         *      The result of the visitation.
+         * @return The result of the visitation.
          */
-        T visitNoSourcesAvailable
-                (NoSourcesAvailable state);
+        T visitNoSourcesAvailable (NoSourcesAvailable state);
 
         /**
          * Visits a could not determine sources state.
          * 
-         * @param state
-         *      The state.
+         * @param state The state.
          *      
-         * @return
-         *      The result of the visitation.
+         * @return The result of the visitation.
          */
-        T visitCouldNotDetermineSources
-                (CouldNotDetermineSources state);
+        T visitCouldNotDetermineSources (CouldNotDetermineSources state);
         }
     
     /**
      * An adaptor to help implement visitors.
      * 
-     * @param <T>
-     *      The type of this visitor's return value.
+     * @param <T> The type of this visitor's return value.
      */
     public abstract class VisitorAdapter<T> implements Visitor<T>
         {
@@ -115,20 +93,25 @@ public interface MsDState extends DownloaderState
         /**
          * Constructs a new visitor adapter.
          * 
-         * @param defaultValue
-         *      The default value returned by this visitor.
+         * @param defaultValue The default value returned by this visitor.
          */
-        public VisitorAdapter
-                (final T defaultValue)
+        public VisitorAdapter (final T defaultValue)
             {
             m_defaultValue = defaultValue;
             }
 
-        /**
-         * {@inheritDoc}
-         */
-        public T visitCouldNotDetermineSources
-                (final CouldNotDetermineSources state)
+        public T visitCouldNotDetermineSources (
+            final CouldNotDetermineSources state)
+            {
+            return m_defaultValue;
+            }
+
+        public T visitComplete (final Complete state)
+            {
+            return m_defaultValue;
+            }
+
+        public T visitCanceled (final Canceled state)
             {
             return m_defaultValue;
             }
@@ -136,53 +119,22 @@ public interface MsDState extends DownloaderState
         /**
          * {@inheritDoc}
          */
-        public T visitComplete
-                (final Complete state)
+        public T visitDownloading (final Downloading state)
             {
             return m_defaultValue;
             }
 
-        /**
-         * {@inheritDoc}
-         */
-        public T visitCanceled
-                (final Canceled state)
-            {
-            return m_defaultValue;
-            }
-
-        /**
-         * {@inheritDoc}
-         */
-        public T visitDownloading
-                (final Downloading state)
-            {
-            return m_defaultValue;
-            }
-
-        /**
-         * {@inheritDoc}
-         */
-        public T visitGettingSources
-                (final GettingSources state)
+        public T visitGettingSources (final GettingSources state)
             {
             return m_defaultValue;
             }
         
-        /**
-         * {@inheritDoc}
-         */
-        public T visitIdle
-                (final Idle state)
+        public T visitIdle (final Idle state)
             {
             return m_defaultValue;
             }
 
-        /**
-         * {@inheritDoc}
-         */
-        public T visitNoSourcesAvailable
-                (final NoSourcesAvailable state)
+        public T visitNoSourcesAvailable (final NoSourcesAvailable state)
             {
             return m_defaultValue;
             }
@@ -209,8 +161,7 @@ public interface MsDState extends DownloaderState
          * @return
          *      The speed of the download in kilobytes per second.
          */
-        int getKbs
-                ();
+        int getKbs ();
 
         /**
          * Returns the number of sources used by the download.
@@ -218,8 +169,7 @@ public interface MsDState extends DownloaderState
          * @return
          *      The number of sources used by the download.
          */
-        int getNumSources
-                ();
+        int getNumSources ();
         }
 
     /**
@@ -250,21 +200,13 @@ public interface MsDState extends DownloaderState
     public class IdleImpl
             extends DownloaderState.AbstractRunning implements Idle
         {
-        /**
-         * {@inheritDoc}
-         */
-        public <T> T accept
-                (final Visitor<T> visitor)
+        public <T> T accept (final Visitor<T> visitor)
             {
             return visitor.visitIdle (this);
             }
         
-        /**
-         * {@inheritDoc}
-         */
         @Override
-        public boolean equals
-                (final Object otherObject)
+        public boolean equals (final Object otherObject)
             {
             return otherObject instanceof Idle;
             }
@@ -276,21 +218,13 @@ public interface MsDState extends DownloaderState
     public class GettingSourcesImpl
             extends DownloaderState.AbstractRunning implements GettingSources
         {
-        /**
-         * {@inheritDoc}
-         */
-        public <T> T accept
-                (final Visitor<T> visitor)
+        public <T> T accept (final Visitor<T> visitor)
             {
             return visitor.visitGettingSources (this);
             }
         
-        /**
-         * {@inheritDoc}
-         */
         @Override
-        public boolean equals
-                (final Object otherObject)
+        public boolean equals (final Object otherObject)
             {
             return otherObject instanceof GettingSources;
             }
@@ -315,57 +249,36 @@ public interface MsDState extends DownloaderState
         /**
          * Constructs a new downloading state.
          * 
-         * @param kbs
-         *      The speed of the downloading n kilobytes per second.
-         * @param numSources
-         *      The number of sources used by the download.
+         * @param kbs The speed of the downloading n kilobytes per second.
+         * @param numSources The number of sources used by the download.
          */
-        public DownloadingImpl
-                (final int kbs,
-                 final int numSources)
+        public DownloadingImpl (final int kbs, final int numSources)
             {
             m_kbs = kbs;
             m_numSources = numSources;
             }
         
-        /**
-         * {@inheritDoc}
-         */
-        public <T> T accept
-                (final Visitor<T> visitor)
+        public <T> T accept (final Visitor<T> visitor)
             {
             return visitor.visitDownloading (this);
             }
         
-        /**
-         * {@inheritDoc}
-         */
-        public int getKbs
-                ()
+        public int getKbs ()
             {
             return m_kbs;
             }
         
-        /**
-         * {@inheritDoc}
-         */
-        public int getNumSources
-                ()
+        public int getNumSources ()
             {
             return m_numSources;
             }
         
-        /**
-         * {@inheritDoc}
-         */
         @Override
-        public boolean equals
-                (final Object otherObject)
+        public boolean equals (final Object otherObject)
             {
             if (otherObject instanceof Downloading)
                 {
                 final Downloading other = (Downloading) otherObject;
-                
                 return other.getKbs () == m_kbs;
                 }
             else
@@ -381,21 +294,13 @@ public interface MsDState extends DownloaderState
     public class CompleteImpl
             extends DownloaderState.AbstractSucceeded implements Complete
         {
-        /**
-         * {@inheritDoc}
-         */
-        public <T> T accept
-                (final Visitor<T> visitor)
+        public <T> T accept (final Visitor<T> visitor)
             {
             return visitor.visitComplete (this);
             }
         
-        /**
-         * {@inheritDoc}
-         */
         @Override
-        public boolean equals
-                (final Object otherObject)
+        public boolean equals (final Object otherObject)
             {
             return otherObject instanceof Complete;
             }
@@ -407,21 +312,13 @@ public interface MsDState extends DownloaderState
     public class CanceledImpl
             extends DownloaderState.AbstractFailed implements Canceled
         {
-        /**
-         * {@inheritDoc}
-         */
-        public <T> T accept
-                (final Visitor<T> visitor)
+        public <T> T accept (final Visitor<T> visitor)
             {
             return visitor.visitCanceled (this);
             }
         
-        /**
-         * {@inheritDoc}
-         */
         @Override
-        public boolean equals
-                (final Object otherObject)
+        public boolean equals (final Object otherObject)
             {
             return otherObject instanceof Canceled;
             }
@@ -431,23 +328,15 @@ public interface MsDState extends DownloaderState
      * An implementation of the no sources available state.
      */
     public class NoSourcesAvailableImpl
-            extends DownloaderState.AbstractFailed implements NoSourcesAvailable
+         extends DownloaderState.AbstractFailed implements NoSourcesAvailable
         {
-        /**
-         * {@inheritDoc}
-         */
-        public <T> T accept
-                (final Visitor<T> visitor)
+        public <T> T accept (final Visitor<T> visitor)
             {
             return visitor.visitNoSourcesAvailable (this);
             }
         
-        /**
-         * {@inheritDoc}
-         */
         @Override
-        public boolean equals
-                (final Object otherObject)
+        public boolean equals (final Object otherObject)
             {
             return otherObject instanceof NoSourcesAvailable;
             }
@@ -460,21 +349,14 @@ public interface MsDState extends DownloaderState
             extends DownloaderState.AbstractFailed
             implements CouldNotDetermineSources
         {
-        /**
-         * {@inheritDoc}
-         */
-        public <T> T accept
-                (final Visitor<T> visitor)
+
+        public <T> T accept (final Visitor<T> visitor)
             {
             return visitor.visitCouldNotDetermineSources (this);
             }
         
-        /**
-         * {@inheritDoc}
-         */
         @Override
-        public boolean equals
-                (final Object otherObject)
+        public boolean equals (final Object otherObject)
             {
             return otherObject instanceof CouldNotDetermineSources;
             }
@@ -483,17 +365,13 @@ public interface MsDState extends DownloaderState
     /**
      * Accepts a visitor to this state.
      * 
-     * @param <T>
-     *      The return type of the visitor.
+     * @param <T> The return type of the visitor.
      *      
-     * @param visitor
-     *      The visitor.
+     * @param visitor The visitor.
      *      
-     * @return
-     *      The result of the visitation.
+     * @return The result of the visitation.
      */
-    <T> T accept
-            (Visitor<T> visitor);
+    <T> T accept (Visitor<T> visitor);
 
     /**
      * An instance of the idle state.
