@@ -29,15 +29,11 @@ public class RateCalculatorImpl implements RateCalculator
     /**
      * Returns the size calculated from a partial rate segment.
      * 
-     * @param partialDuration
-     *      The partial duration.
-     * @param duration
-     *      The full duration.
-     * @param size
-     *      The full size.
+     * @param partialDuration The partial duration.
+     * @param duration The full duration.
+     * @param size The full size.
      *      
-     * @return
-     *      The partial size.
+     * @return The partial size.
      */
     private static long getPartialSize
             (final long partialDuration,
@@ -52,8 +48,7 @@ public class RateCalculatorImpl implements RateCalculator
     /**
      * Constructs a new rate calculator.
      */
-    public RateCalculatorImpl
-            ()
+    public RateCalculatorImpl ()
         {
         m_collectionUtils = new CollectionUtilsImpl ();
         m_optionalUtils = new OptionalUtilsImpl ();
@@ -62,15 +57,13 @@ public class RateCalculatorImpl implements RateCalculator
     /**
      * {@inheritDoc}
      */
-    public double getRate
-            (final Collection<RateSegment> segments,
-             final long since)
+    public double getRate (final Collection<RateSegment> segments,
+        final long since)
         {
         final F1<RateSegment,Optional<RateSegment>> f =
                 new F1<RateSegment,Optional<RateSegment>> ()
             {
-            public Optional<RateSegment> run
-                    (final RateSegment segment)
+            public Optional<RateSegment> run(final RateSegment segment)
                 {
                 final long end = segment.getStart () + segment.getDuration ();
                 
@@ -113,8 +106,7 @@ public class RateCalculatorImpl implements RateCalculator
         
         final F1<RateSegment,Long> getDuration = new F1<RateSegment,Long> ()
             {
-            public Long run
-                    (final RateSegment segment)
+            public Long run (final RateSegment segment)
                 {
                 return segment.getDuration ();
                 }
@@ -125,8 +117,7 @@ public class RateCalculatorImpl implements RateCalculator
         
         final F1<RateSegment,Long> getSize = new F1<RateSegment,Long> ()
             {
-            public Long run
-                    (final RateSegment segment)
+            public Long run (final RateSegment segment)
                 {
                 return segment.getSize ();
                 }

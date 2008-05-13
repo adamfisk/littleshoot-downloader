@@ -199,6 +199,8 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     private final CommonsHttpClient m_httpClient;
 
     private volatile boolean m_started;
+
+    private final String m_finalName;
     
     /**
      * Constructs a new downloader.
@@ -219,6 +221,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         
         m_sessionId = sessionId;
         m_file = file;
+        m_finalName = file.getName();
         m_uri = uri;
         m_size = size;
         m_contentType = mimeType;
@@ -399,7 +402,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             }
         }
     
-    private int getKbs()
+    private double getKbs()
         {
         final long since = System.currentTimeMillis () - 5000;
         
@@ -561,5 +564,10 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 cancel ();
                 }
             }
+        }
+
+    public String getFinalName()
+        {
+        return m_finalName;
         }
     }

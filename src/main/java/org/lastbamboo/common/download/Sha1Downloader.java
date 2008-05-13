@@ -221,4 +221,9 @@ public final class Sha1Downloader<DsT extends DownloaderState>
         {
         m_delegate.write (os);
         }
+
+    public String getFinalName()
+        {
+        return m_delegate.getFinalName();
+        }
     }

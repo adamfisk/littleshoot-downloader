@@ -10,15 +10,10 @@ public interface RateCalculator
     /**
      * Returns the rate since a given time.
      * 
-     * @param segments
-     *      The rate segments that abstractly describe the activity.
-     * @param since
-     *      The time.
+     * @param segments The rate segments that abstractly describe the activity.
+     * @param since The time.
      *      
-     * @return
-     *      The rate since the given time.
+     * @return The rate since the given time.
      */
-    double getRate
-            (Collection<RateSegment> segments,
-             long since);
+    double getRate (Collection<RateSegment> segments, long since);
     }

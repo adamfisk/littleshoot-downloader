@@ -8,27 +8,21 @@ public interface RateSegment
     /**
      * Returns the start time.
      * 
-     * @return
-     *      The start time.
+     * @return The start time.
      */
-    long getStart
-            ();
+    long getStart ();
     
     /**
      * Returns the duration.
      * 
-     * @return
-     *      The duration.
+     * @return The duration.
      */
-    long getDuration
-            ();
+    long getDuration ();
     
     /**
      * Returns the size.
      * 
-     * @return
-     *      The size.
+     * @return The size.
      */
-    long getSize
-            ();
+    long getSize ();
     }

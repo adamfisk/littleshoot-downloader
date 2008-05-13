@@ -84,4 +84,11 @@ public interface Downloader<StateT>
      * otherwise <code>false</code>.
      */
     boolean isStarted();
+
+    /**
+     * The final name for the file.
+     * 
+     * @return The final name for the file.
+     */
+    String getFinalName();
     }

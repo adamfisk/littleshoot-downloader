@@ -158,16 +158,14 @@ public interface MsDState extends DownloaderState
         /**
          * Returns the speed of the download in kilobytes per second.
          * 
-         * @return
-         *      The speed of the download in kilobytes per second.
+         * @return The speed of the download in kilobytes per second.
          */
-        int getKbs ();
+        double getKbs ();
 
         /**
          * Returns the number of sources used by the download.
          * 
-         * @return
-         *      The number of sources used by the download.
+         * @return The number of sources used by the download.
          */
         int getNumSources ();
         }
@@ -239,7 +237,7 @@ public interface MsDState extends DownloaderState
         /**
          * The speed of the downloading in kilobytes per second.
          */
-        private final int m_kbs;
+        private final double m_kbs;
         
         /**
          * The number of sources used by the download.
@@ -252,7 +250,7 @@ public interface MsDState extends DownloaderState
          * @param kbs The speed of the downloading n kilobytes per second.
          * @param numSources The number of sources used by the download.
          */
-        public DownloadingImpl (final int kbs, final int numSources)
+        public DownloadingImpl (final double kbs, final int numSources)
             {
             m_kbs = kbs;
             m_numSources = numSources;
@@ -263,7 +261,7 @@ public interface MsDState extends DownloaderState
             return visitor.visitDownloading (this);
             }
         
-        public int getKbs ()
+        public double getKbs ()
             {
             return m_kbs;
             }
