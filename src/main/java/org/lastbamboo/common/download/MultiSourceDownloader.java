@@ -62,7 +62,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             else
                 {
                 m_uniqueSourceUris.add (downloader.getSourceUri ());
-                
                 m_numConnections++;
                 
                 if (singleRangeDownload (downloader))
@@ -91,7 +90,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             if (isDownloading (m_state))
                 {
                 setState (new MsDState.DownloadingImpl (getKbs (),
-                                                        getNumUniqueHosts ()));
+                    getNumUniqueHosts (), m_rangeTracker.getBytesRead()));
                 }
             else
                 {
@@ -201,6 +200,8 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     private volatile boolean m_started;
 
     private final String m_finalName;
+
+    private final File m_completeFile;
     
     /**
      * Constructs a new downloader.
@@ -210,7 +211,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     public MultiSourceDownloader (final String sessionId, final File file,
         final URI uri, final long size, final String mimeType,
         final UriResolver uriResolver, final int connectionsPerHost, 
-        final URI expectedSha1)
+        final URI expectedSha1, final File downloadsDir)
         {
         Assert.notBlank (sessionId, "Null session ID");
         Assert.notNull (file, "Null file");
@@ -248,7 +249,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         
         final HttpConnectionManagerParams params = 
             this.m_httpClient.getHttpConnectionManager().getParams();
-        params.setConnectionTimeout(20*1000);
+        params.setConnectionTimeout(30*1000);
         // We set this for now because our funky sockets sometimes can't 
         // handle the stale checking details.
         // TODO: We should fix our sockets to properly handle it.  See
@@ -262,11 +263,8 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         try
             {
             m_randomAccessFile = new RandomAccessFile (file, "rw");
-            
-            m_rangeTracker = new RangeTrackerImpl (file.getName (), size);
-        
+            m_rangeTracker = new RangeTrackerImpl (size);
             final int numChunks = m_rangeTracker.getNumChunks ();
-            
             m_launchFileTracker = 
                 new LaunchFileDispatcher (file, m_randomAccessFile, numChunks,
                     expectedSha1);
@@ -280,6 +278,8 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             LOG.error ("Could not create file: " + file, e);
             throw new IllegalArgumentException ("Cannot create file: "+file);
             }
+
+        m_completeFile = new File (downloadsDir, m_finalName);
         }
     
     /**
@@ -360,7 +360,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         else
             {
             setState (new MsDState.DownloadingImpl (getKbs (),
-                                                    getNumUniqueHosts ()));
+                getNumUniqueHosts (), m_rangeTracker.getBytesRead()));
             
             final Comparator<RangeDownloader> speedComparator = 
                     new DownloadSpeedComparator ();
@@ -569,5 +569,11 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     public String getFinalName()
         {
         return m_finalName;
+        }
+
+    public File getCompleteFile()
+        {
+        // TODO Auto-generated method stub
+        return null;
         }
     }

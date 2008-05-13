@@ -6,8 +6,7 @@ import java.io.OutputStream;
 /**
  * The interface to an object that manages the download of a single resource.
  * 
- * @param <StateT>
- *      The type of object that maintains the
+ * @param <StateT> The type of object that maintains the state.
  */
 public interface Downloader<StateT>
     {
@@ -19,34 +18,37 @@ public interface Downloader<StateT>
     /**
      * Returns the current state of this downloader.
      * 
-     * @return
-     *      The current state of this downloader. 
+     * @return The current state of this downloader. 
      */
     StateT getState ();
     
     /**
      * Returns the file to which this downloader downloads the resource.
      * 
-     * @return
-     *      The file to which this downloader downloads the resource.
+     * @return The file to which this downloader downloads the resource.
      */
     File getIncompleteFile ();
+    
+    /**
+     * Returns the final path for the file.
+     * 
+     * @return The final path for the file.
+     */
+    File getCompleteFile ();
     
     /**
      * Returns the content type of the resource that is downloaded by this
      * downloader.
      * 
-     * @return
-     *      The content type of the resource that is downloaded by this
-     *      downloader.
+     * @return The content type of the resource that is downloaded by this
+     *  downloader.
      */
     String getContentType ();
     
     /**
      * Returns the size of the resource that is downloaded by this downloader.
      * 
-     * @return
-     *      The size of the resource that is downloaded by this downloader.
+     * @return The size of the resource that is downloaded by this downloader.
      */
     int getSize ();
     
@@ -56,24 +58,21 @@ public interface Downloader<StateT>
      * be used to stream the content of this downloader while it is still
      * downloading.
      * 
-     * @param os
-     *      The output stream to which to write the resource.
+     * @param os The output stream to which to write the resource.
      */
     void write (OutputStream os);
     
     /**
      * Adds a listener to be notified of events of this downloader.
      * 
-     * @param listener
-     *      The listener to be notified.
+     * @param listener The listener to be notified.
      */
     void addListener (DownloaderListener<StateT> listener);
 
     /**
      * Removes a listener that was being notified of events of this downloader.
      * 
-     * @param listener
-     *      The listener to remove.
+     * @param listener The listener to remove.
      */
     void removeListener (DownloaderListener<StateT> listener);
 

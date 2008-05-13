@@ -37,7 +37,8 @@ public class RangeTrackerImpl implements RangeTracker
     /**
      * The logger for this class.
      */
-    private final Logger m_logger;
+    private final Logger m_log = 
+        LoggerFactory.getLogger (RangeTrackerImpl.class);
 
     /**
      * The total number of chunks being tracked.
@@ -45,20 +46,22 @@ public class RangeTrackerImpl implements RangeTracker
     private final int m_numChunks;
 
     /**
+     * Keeps track of the number of bytes successfully read.
+     */
+    private volatile long m_bytesRead;
+
+    /**
      * Creates a new range tracker for a file of the specified size.
-     * @param name 
-     * 
      * @param fileSize The size of the file we're downloading.
      */
-    public RangeTrackerImpl(final String name, final long fileSize)
+    public RangeTrackerImpl(final long fileSize)
         {
-        m_logger = LoggerFactory.getLogger (RangeTrackerImpl.class);
-        m_logger.debug("Creating queue for file size: " + fileSize);
+        m_log.debug("Creating queue for file size: " + fileSize);
         
         // We need enough chunks to handle the full file size.
         m_numChunks = (int) Math.ceil(fileSize/(double) CHUNK_SIZE);
         
-        m_logger.debug("Creating a queue with " + m_numChunks + " chunks...");
+        m_log.debug("Creating a queue with " + m_numChunks + " chunks...");
         
         final Comparator<LongRange> rangeComparator = new LongRangeComparator();
         
@@ -72,13 +75,9 @@ public class RangeTrackerImpl implements RangeTracker
             // size.  Since the range is inclusive at both ends, we always
             // subtract 1 to get the maximum byte.
             final long max = Math.min(fileSize - 1, index + CHUNK_SIZE - 1);
-            
             final LongRange curRange = new LongRange(index, max);
-            
-            m_logger.debug("Adding range: " + curRange);
-            
+            m_log.debug("Adding range: " + curRange);
             m_inactive.add (curRange);
-            
             index = max + 1;
             }
         }
@@ -86,24 +85,23 @@ public class RangeTrackerImpl implements RangeTracker
     /**
      * {@inheritDoc}
      */
-    public Optional<LongRange> getNextRange
-            ()
+    public Optional<LongRange> getNextRange ()
         {
         synchronized (this)
             {
             while (m_inactive.isEmpty () && !m_active.isEmpty ())
-            	{
-            	try
-                	{
-                	wait ();
-                	}
-            	catch (final InterruptedException e)
-                	{
-                	// This should never happen in normal operation, so we
-                	// propagate the exception.
-                	throw new RuntimeException (e);
-                	}
-            	}
+                {
+                try
+                    {
+                    wait ();
+                    }
+                catch (final InterruptedException e)
+                    {
+                    // This should never happen in normal operation, so we
+                    // propagate the exception.
+                    throw new RuntimeException (e);
+                    }
+                }
             
             if (m_inactive.isEmpty ())
                 {
@@ -116,6 +114,7 @@ public class RangeTrackerImpl implements RangeTracker
                     {
                     // We should never enter this case, since we were blocking
                     // until we were out of it.
+                    m_log.error("Active ranges???");
                     throw new RuntimeException ("Illegal program state");
                     }
                 }
@@ -131,8 +130,7 @@ public class RangeTrackerImpl implements RangeTracker
     /**
      * {@inheritDoc}
      */
-    public int getNumChunks
-            ()
+    public int getNumChunks ()
         {
         return this.m_numChunks;
         }
@@ -140,8 +138,7 @@ public class RangeTrackerImpl implements RangeTracker
     /**
      * {@inheritDoc}
      */
-    public boolean hasMoreRanges
-            ()
+    public boolean hasMoreRanges ()
         {
         return !(m_inactive.isEmpty () && m_active.isEmpty ());
         }
@@ -149,32 +146,32 @@ public class RangeTrackerImpl implements RangeTracker
     /**
      * {@inheritDoc}
      */
-    public void onRangeComplete
-            (final LongRange range)
+    public void onRangeComplete (final LongRange range)
         {
         synchronized (this)
             {
             if (m_active.contains (range))
                 {
+                this.m_bytesRead += 
+                    (range.getMaximumLong() - range.getMinimumLong());
                 m_active.remove (range);
-                
                 notifyAll ();
                 }
             else
                 {
+                m_log.error("Nothing known about range!!");
                 throw new RuntimeException
                         ("Range '" + range + "' is unknown to this tracker");
                 }
-        	}
+            }
         }
 
     /**
      * {@inheritDoc}
      */
-    public void onRangeFailed
-            (final LongRange range)
+    public void onRangeFailed (final LongRange range)
         {
-        m_logger.debug ("Range ' " + range + "' failed");
+        m_log.debug ("Range ' " + range + "' failed");
         
         synchronized (this)
             {
@@ -187,9 +184,15 @@ public class RangeTrackerImpl implements RangeTracker
                 }
             else
                 {
+                m_log.error("Nothing known about range!!");
                 throw new RuntimeException
                         ("Range '" + range + "' is unknown to this tracker");
                 }
-        	}
+            }
+        }
+
+    public long getBytesRead()
+        {
+        return this.m_bytesRead;
         }
     }

@@ -49,4 +49,10 @@ public interface RangeTracker
      * @return The number of chunks to download.
      */
     int getNumChunks();
+
+    /**
+     * Accessor for the number of bytes read.
+     * @return The number of bytes read.
+     */
+    long getBytesRead();
     }

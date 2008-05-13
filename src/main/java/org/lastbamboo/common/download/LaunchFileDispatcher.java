@@ -226,11 +226,11 @@ public class LaunchFileDispatcher implements LaunchFileTracker
     public void onFail()
         {
         synchronized (this.m_trackers)
-        {
-        for (final LaunchFileTracker tracker : this.m_trackers)
             {
-            tracker.onFail();
+            for (final LaunchFileTracker tracker : this.m_trackers)
+                {
+                tracker.onFail();
+                }
             }
-        }
         }
     }

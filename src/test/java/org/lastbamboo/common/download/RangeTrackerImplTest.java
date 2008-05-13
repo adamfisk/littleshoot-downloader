@@ -124,11 +124,10 @@ public class RangeTrackerImplTest extends TestCase
      */
     public void testTracker() throws Exception
         {
-        
         final long size = 41021L;
         final File testFile = new File("testFile");
         testFile.deleteOnExit();
-        final RangeTracker rt = new RangeTrackerImpl("test", size);
+        final RangeTracker rt = new RangeTrackerImpl(size);
         
         final Optional<LongRange> oRange = rt.getNextRange();
         

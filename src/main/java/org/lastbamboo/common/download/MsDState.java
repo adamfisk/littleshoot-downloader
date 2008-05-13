@@ -9,8 +9,7 @@ public interface MsDState extends DownloaderState
     /**
      * A visitor for a multi-source downloader state.
      * 
-     * @param <T>
-     *      The type of this visitor's return value.
+     * @param <T> The type of this visitor's return value.
      */
     public interface Visitor<T>
         {
@@ -18,7 +17,6 @@ public interface MsDState extends DownloaderState
          * Visits an idle state.
          * 
          * @param state The state.
-         *      
          * @return The result of the visitation.
          */
         T visitIdle (Idle state);
@@ -27,7 +25,6 @@ public interface MsDState extends DownloaderState
          * Visits a getting sources state.
          * 
          * @param state The state.
-         *      
          * @return The result of the visitation.
          */
         T visitGettingSources (GettingSources state);
@@ -36,7 +33,6 @@ public interface MsDState extends DownloaderState
          * Visits a downloading state.
          * 
          * @param state The state.
-         *      
          * @return The result of the visitation.
          */
         T visitDownloading (Downloading state);
@@ -45,7 +41,6 @@ public interface MsDState extends DownloaderState
          * Visits a complete state.
          * 
          * @param state The state.
-         *      
          * @return The result of the visitation.
          */
         T visitComplete (Complete state);
@@ -54,7 +49,6 @@ public interface MsDState extends DownloaderState
          * Visits a canceled state.
          * 
          * @param state The state.
-         *      
          * @return The result of the visitation.
          */
         T visitCanceled (Canceled state);
@@ -63,7 +57,6 @@ public interface MsDState extends DownloaderState
          * Visits a no sources available state.
          * 
          * @param state The state.
-         *      
          * @return The result of the visitation.
          */
         T visitNoSourcesAvailable (NoSourcesAvailable state);
@@ -72,7 +65,6 @@ public interface MsDState extends DownloaderState
          * Visits a could not determine sources state.
          * 
          * @param state The state.
-         *      
          * @return The result of the visitation.
          */
         T visitCouldNotDetermineSources (CouldNotDetermineSources state);
@@ -157,17 +149,21 @@ public interface MsDState extends DownloaderState
         {
         /**
          * Returns the speed of the download in kilobytes per second.
-         * 
          * @return The speed of the download in kilobytes per second.
          */
         double getKbs ();
 
         /**
          * Returns the number of sources used by the download.
-         * 
          * @return The number of sources used by the download.
          */
         int getNumSources ();
+
+        /**
+         * Accessor for the number of bytes read.
+         * @return The number of bytes read.
+         */
+        long getBytesRead();
         }
 
     /**
@@ -232,7 +228,7 @@ public interface MsDState extends DownloaderState
      * An implementation of the downloading state.
      */
     public class DownloadingImpl
-            extends DownloaderState.AbstractRunning implements Downloading
+        extends DownloaderState.AbstractRunning implements Downloading
         {
         /**
          * The speed of the downloading in kilobytes per second.
@@ -243,17 +239,21 @@ public interface MsDState extends DownloaderState
          * The number of sources used by the download.
          */
         private final int m_numSources;
-        
+
+        private final long m_bytesRead;
+
         /**
          * Constructs a new downloading state.
          * 
          * @param kbs The speed of the downloading n kilobytes per second.
          * @param numSources The number of sources used by the download.
          */
-        public DownloadingImpl (final double kbs, final int numSources)
+        public DownloadingImpl (final double kbs, final int numSources,
+            final long bytesRead)
             {
             m_kbs = kbs;
             m_numSources = numSources;
+            this.m_bytesRead = bytesRead;
             }
         
         public <T> T accept (final Visitor<T> visitor)
@@ -269,6 +269,11 @@ public interface MsDState extends DownloaderState
         public int getNumSources ()
             {
             return m_numSources;
+            }
+        
+        public long getBytesRead()
+            {
+            return this.m_bytesRead;
             }
         
         @Override

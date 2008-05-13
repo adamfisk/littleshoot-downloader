@@ -73,14 +73,12 @@ public class SourceForgeTest extends TestCase
                 }
             };
             
+        final File downloadDir = new File("tempDownloadDir");
+        downloadDir.mkdir();
+        downloadDir.deleteOnExit();
         final Downloader<MsDState> downloader =
-                new MultiSourceDownloader ("sessionId",
-                                    file,
-                                    uri,
-                                    size,
-                                    "video/mpeg",
-                                    resolver,
-                                    2, expectedSha1);
+            new MultiSourceDownloader ("sessionId", file, uri, size,
+                "video/mpeg", resolver, 2, expectedSha1, downloadDir);
         
         return downloader;
         }

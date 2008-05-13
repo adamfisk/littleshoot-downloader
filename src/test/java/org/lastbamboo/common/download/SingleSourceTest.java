@@ -64,6 +64,9 @@ public class SingleSourceTest extends TestCase
         
         long baseline = 0;
         
+        final File tempDownloadDir = new File("tempDownloadDir");
+        tempDownloadDir.mkdir();
+        tempDownloadDir.deleteOnExit();
         for (int i = 1; i < 16; i++)
             {
 //            final MultiSourceDownloader dl = new MultiSourceDownloaderImpl("sessionId", 
@@ -71,7 +74,7 @@ public class SingleSourceTest extends TestCase
             
             final Downloader<MsDState> dl = 
                 new MultiSourceDownloader ("sessionId", testFile, uri,
-                    6509767L, "video/mpeg", resolver, i, null);
+                    6509767L, "video/mpeg", resolver, i, null, tempDownloadDir);
                                         
             final long start = System.currentTimeMillis();
             dl.start ();
