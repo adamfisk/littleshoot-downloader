@@ -71,7 +71,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
         {
         synchronized (this.m_completedRanges)
             {   
-            m_log.debug("Adding completed range: "+range);
+            //m_log.debug("Adding completed range: "+range);
             this.m_completedRanges.add(range);
         
             // Notify the completed ranges if the range we just got is the
@@ -147,7 +147,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             
             synchronized (this.m_completedRanges)
                 {
-                m_log.debug("Locked completed range...");
+                //m_log.debug("Locked completed range...");
                 if (done())
                     {
                     m_log.debug("We're done.  Flushing and notifying!");
@@ -158,7 +158,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                     return;
                     }
                 final LongRange range = this.m_completedRanges.peek();
-                m_log.debug("Got range...");
+                //m_log.debug("Got range...");
                 
                 // If there is no new range or it's not the next range we
                 // need, wait until we get it.  
@@ -167,9 +167,9 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                     {
                     try
                         {
-                        m_log.debug("Waiting on completed range. Complete: {}",
-                            this.m_complete);
-                        m_log.debug("Next range min is: {}", this.m_rangeIndex);
+                        //m_log.debug("Waiting on completed range. Complete: {}",
+                          //  this.m_complete);
+                        //m_log.debug("Next range min is: {}", this.m_rangeIndex);
                         //m_log.debug("Ranges: {}", this.m_completedRanges);
                         this.m_completedRanges.wait();
                         
@@ -215,7 +215,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
         {
         int index = 0;
         final long length = endIndex - startIndex;
-        m_log.debug("Copying total bytes: {}", length);
+        //m_log.debug("Copying total bytes: {}", length);
         final long maxChunkSize = 1024 * 500;
         synchronized (this.m_randomAccessFile)
             {
@@ -249,7 +249,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                 index += numBytesRead;
                 }
             }
-        m_log.debug("Wrote range...");
+        //m_log.debug("Wrote range...");
         }
 
 
