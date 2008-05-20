@@ -67,7 +67,7 @@ public class DownloadingFileLauncherTest
         final PriorityBlockingQueue<LongRange> completedRanges = createQueue();
         final URI sha1 = Sha1Hasher.createSha1Urn(file);
         final DownloadingFileLauncher launcher = 
-            new DownloadingFileLauncher(raf, completedRanges, sha1);
+            new DownloadingFileLauncher(raf, completedRanges, sha1, file);
         
         final File fileCopy = new File(file.getName()+"Copy");
         fileCopy.deleteOnExit();
@@ -132,7 +132,7 @@ public class DownloadingFileLauncherTest
         final PriorityBlockingQueue<LongRange> completedRanges = createQueue();
         final URI sha1 = Sha1Hasher.createSha1Urn(file);
         final DownloadingFileLauncher launcher = 
-            new DownloadingFileLauncher(raf, completedRanges, sha1);
+            new DownloadingFileLauncher(raf, completedRanges, sha1, file);
         
         final File fileCopy = new File(file.getName()+"Copy");
         fileCopy.deleteOnExit();
