@@ -212,9 +212,9 @@ public final class Sha1Downloader<DsT extends DownloaderState>
         return m_delegate.isStarted();
         }
     
-    public void write (final OutputStream os)
+    public void write (final OutputStream os, final boolean cancelOnStreamClose)
         {
-        m_delegate.write (os);
+        m_delegate.write (os, cancelOnStreamClose);
         }
 
     public String getFinalName()

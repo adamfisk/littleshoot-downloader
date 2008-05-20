@@ -551,11 +551,11 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         return this.m_started;
         }
     
-    public void write (final OutputStream os)
+    public void write (final OutputStream os, final boolean cancelOnStreamClose)
         {
         try
             {
-            m_launchFileTracker.write (os);
+            m_launchFileTracker.write (os, cancelOnStreamClose);
             }
         catch (final IOException e)
             {
@@ -573,7 +573,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
 
     public File getCompleteFile()
         {
-        // TODO Auto-generated method stub
-        return null;
+        return this.m_completeFile;
         }
     }

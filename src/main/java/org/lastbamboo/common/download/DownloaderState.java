@@ -10,11 +10,7 @@ public interface DownloaderState
      */
     public static abstract class AbstractRunning implements DownloaderState
         {
-        /**
-         * {@inheritDoc}
-         */
-        public DownloaderStateType getType
-                ()
+        public DownloaderStateType getType ()
             {
             return DownloaderStateType.RUNNING;
             }
@@ -25,11 +21,7 @@ public interface DownloaderState
      */
     public static abstract class AbstractFailed implements DownloaderState
         {
-        /**
-         * {@inheritDoc}
-         */
-        public DownloaderStateType getType
-                ()
+        public DownloaderStateType getType()
             {
             return DownloaderStateType.FAILED;
             }
@@ -40,11 +32,7 @@ public interface DownloaderState
      */
     public static abstract class AbstractSucceeded implements DownloaderState
         {
-        /**
-         * {@inheritDoc}
-         */
-        public DownloaderStateType getType
-                ()
+        public DownloaderStateType getType()
             {
             return DownloaderStateType.SUCCEEDED;
             }
@@ -53,9 +41,7 @@ public interface DownloaderState
     /**
      * Returns the type of this state.
      * 
-     * @return
-     *      The type of this state.
+     * @return The type of this state.
      */
-    DownloaderStateType getType
-            ();
+    DownloaderStateType getType();
     }

@@ -1,5 +1,6 @@
 package org.lastbamboo.common.download;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
@@ -11,7 +12,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.concurrent.PriorityBlockingQueue;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.math.LongRange;
 import org.lastbamboo.common.util.Base32;
 import org.slf4j.Logger;
@@ -35,26 +35,32 @@ public class DownloadingFileLauncher implements LaunchFileTracker
 
     private final URI m_expectedSha1;
 
-    private volatile boolean m_failed = false;
-
     private DigestOutputStream m_digestOutputStream;
 
     private volatile boolean m_writtenAll = false;
+
+    private final File m_incompleteFile;
+
+    /**
+     * Flag for whether or not the stream we're writing to is closed.
+     */
+    private volatile boolean m_streamClosed = false;
     
     
     /**
      * Creates a new tracker for streaming the file to the browser.
      * 
-     * @param file The random access file to copy the downloaded data from.
+     * @param raf The random access file to copy the downloaded data from.
      * @param completedRanges The ranges that have already completed 
      * downloading.
      * @param expectedSha1 The expected SHA-1 for the file.
+     * @param incompleteFile The incomplete file on disk.
      */
-    public DownloadingFileLauncher(final RandomAccessFile file, 
+    public DownloadingFileLauncher(final RandomAccessFile raf, 
         final PriorityBlockingQueue<LongRange> completedRanges, 
-        final URI expectedSha1)
+        final URI expectedSha1, final File incompleteFile)
         {
-        if (file == null)
+        if (raf == null)
             {
             throw new NullPointerException("Null RAF");
             }
@@ -62,9 +68,10 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             {
             throw new NullPointerException("Null ranges");
             }
-        this.m_randomAccessFile = file;
+        this.m_randomAccessFile = raf;
         this.m_completedRanges = completedRanges;
         this.m_expectedSha1 = expectedSha1;
+        this.m_incompleteFile = incompleteFile;
         }
     
     public void onRangeComplete(final LongRange range)
@@ -78,13 +85,14 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             // one we're waiting for.
             if (range.getMinimumLong() == this.m_rangeIndex)
                 {
-                m_log.debug("Found range we need -- notifying...");
+                //m_log.debug("Found range we need -- notifying...");
                 this.m_completedRanges.notify();
                 }
             }
         }
     
-    public void write(final OutputStream os) throws IOException
+    public void write(final OutputStream os, final boolean cancelOnStreamClose) 
+        throws IOException
         {
         MessageDigest digest = null;
         try
@@ -102,9 +110,17 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             writeAllRanges(this.m_digestOutputStream);
             m_log.debug("Wrote all ranges...");
             }
-        finally
+        catch (final IOException e)
             {
-            IOUtils.closeQuietly(os);
+            m_log.debug("IO error writing file: " + 
+                this.m_incompleteFile.getName(), e);
+            this.m_streamClosed = true;
+            throw e;
+            }
+        catch (final Throwable t)
+            {
+            m_log.debug("Throwable streaming file: " + 
+                this.m_incompleteFile.getName(), t);
             }
         }
 
@@ -150,7 +166,8 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                 //m_log.debug("Locked completed range...");
                 if (done())
                     {
-                    m_log.debug("We're done.  Flushing and notifying!");
+                    m_log.debug("We're done.  Flushing and notifying for: {}", 
+                        m_incompleteFile.getName());
                     os.flush();
                     os.close();
                     this.m_writtenAll = true;
@@ -173,7 +190,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                         //m_log.debug("Ranges: {}", this.m_completedRanges);
                         this.m_completedRanges.wait();
                         
-                        m_log.debug("Finished waiting...");
+                        //m_log.debug("Finished waiting...");
                         if (done())
                             {
                             m_log.debug("We're done.  Writing any remaining...");
@@ -206,8 +223,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
      */
     private boolean done()
         {
-        return this.m_failed || 
-            (this.m_completedRanges.isEmpty() && this.m_complete);
+        return this.m_completedRanges.isEmpty() && this.m_complete;
         }
 
     private void writeRange(final long startIndex, 
@@ -219,7 +235,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
         final long maxChunkSize = 1024 * 500;
         synchronized (this.m_randomAccessFile)
             {
-            m_log.debug("Got lock on file...");
+            //m_log.debug("Got lock on file...");
             while (index < length)
                 {
                 final long curChunkSize;
@@ -251,16 +267,6 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             }
         //m_log.debug("Wrote range...");
         }
-
-
-    public void onFail()
-        {
-        this.m_failed = true;
-        synchronized (this.m_completedRanges)
-            {
-            this.m_completedRanges.notify();
-            }
-        }
     
     public void onFileComplete()
         {
@@ -268,9 +274,14 @@ public class DownloadingFileLauncher implements LaunchFileTracker
         this.m_complete = true;
         synchronized (this.m_completedRanges)
             {
-            m_log.debug("Got lock with remaining ranges: {}",m_completedRanges);
+            //m_log.debug("Got lock with remaining ranges: {}",m_completedRanges);
             this.m_completedRanges.notify();
             
+            if (this.m_streamClosed)
+                {
+                m_log.debug("Stream is closed...returning");
+                return;
+                }
             // Wait until everything is copied to the output stream.  This
             // should not take too long because we're just copying bytes
             // we already have.  Could see it causing issues in the future

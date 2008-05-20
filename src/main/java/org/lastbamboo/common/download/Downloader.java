@@ -59,8 +59,10 @@ public interface Downloader<StateT>
      * downloading.
      * 
      * @param os The output stream to which to write the resource.
+     * @param cancelOnStreamClose Whether or not the cancel the download 
+     * when the stream closes.
      */
-    void write (OutputStream os);
+    void write (OutputStream os, boolean cancelOnStreamClose);
     
     /**
      * Adds a listener to be notified of events of this downloader.

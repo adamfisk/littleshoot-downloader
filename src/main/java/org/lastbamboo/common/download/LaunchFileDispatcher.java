@@ -15,8 +15,8 @@ import java.util.concurrent.PriorityBlockingQueue;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.math.LongRange;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class for dispatching file download events to all the open file 
@@ -25,8 +25,8 @@ import org.apache.commons.logging.LogFactory;
 public class LaunchFileDispatcher implements LaunchFileTracker
     {
 
-    private static final Log LOG = 
-        LogFactory.getLog(LaunchFileDispatcher.class);
+    private final Logger m_log = 
+        LoggerFactory.getLogger(LaunchFileDispatcher.class);
     
     private final Collection<LaunchFileTracker> m_trackers = 
         Collections.synchronizedList(new LinkedList<LaunchFileTracker>());
@@ -34,7 +34,7 @@ public class LaunchFileDispatcher implements LaunchFileTracker
     private final PriorityBlockingQueue<LongRange> m_completedRanges;
     private final int m_numChunks;
 
-    private final File m_file;
+    private final File m_incompleteFile;
 
     private boolean m_complete = false;
     
@@ -47,15 +47,16 @@ public class LaunchFileDispatcher implements LaunchFileTracker
     /**
      * Creates a new tracker for streaming the file to the browser.
      * 
-     * @param file The file on disk.
+     * @param incompleteFile The file on disk.
      * @param raf The random access file to copy the downloaded data from.
      * @param numChunks The number of chunks we're downloading.
      * @param expectedSha1 The expected SHA-1 for the file.
      */
-    public LaunchFileDispatcher(final File file, final RandomAccessFile raf, 
-        final int numChunks, final URI expectedSha1)
+    public LaunchFileDispatcher(final File incompleteFile, 
+        final RandomAccessFile raf, final int numChunks, 
+        final URI expectedSha1)
         {
-        if (file == null)
+        if (incompleteFile == null)
             {
             throw new NullPointerException("Null RAF");
             }
@@ -63,7 +64,7 @@ public class LaunchFileDispatcher implements LaunchFileTracker
             {
             throw new NullPointerException("Null ranges");
             }
-        this.m_file = file;
+        this.m_incompleteFile = incompleteFile;
         this.m_randomAccessFile = raf;
         if (numChunks > 0)
             {
@@ -89,12 +90,12 @@ public class LaunchFileDispatcher implements LaunchFileTracker
         {
         if (this.m_activeWriteCalls == 0)
             {
-            LOG.debug ("No active launchers...");
+            m_log.debug ("No active launchers...");
             return;
             }
         synchronized (this.DOWNLOAD_STREAM_LOCK)
             {
-            LOG.debug ("Waiting for active streams to finish streaming");
+            m_log.debug ("Waiting for active streams to finish streaming");
             try
                 {
                 // It shouldn't take forever to stream the already
@@ -102,37 +103,38 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                 this.DOWNLOAD_STREAM_LOCK.wait (6*60*1000);
                 if (this.m_activeWriteCalls > 0)
                     {
-                    LOG.warn ("Still " + this.m_activeWriteCalls + 
+                    m_log.warn ("Still " + this.m_activeWriteCalls + 
                         " active writes!!");
                     }
                 }
             catch (final InterruptedException e)
                 {
-                LOG.warn ("Unexpected interrupt!!", e);
+                m_log.warn ("Unexpected interrupt!!", e);
                 }
             
-            LOG.debug("Finished waiting...");
+            m_log.debug("Finished waiting...");
             }
         }
     
-    public void write(final OutputStream os) throws IOException
+    public void write(final OutputStream os, final boolean cancelOnStreamClose) 
+        throws IOException
         {
-        LOG.debug("Writing file...");
+        m_log.debug("Writing file...");
         try
             {
             ++m_activeWriteCalls;
             if (this.m_complete)
                 {
-                LOG.debug("Writing file on disk...");
+                m_log.debug("Writing file on disk...");
                 writeCompleteFile(os);
                 }
             else
                 {
-                LOG.debug("Writing downloading file...");
-                writeDownloadingFile(os);
+                m_log.debug("Writing downloading file...");
+                writeDownloadingFile(os, cancelOnStreamClose);
                 }
             
-            LOG.debug ("Finished launcher write call...");
+            m_log.debug ("Finished launcher write call...");
             
             synchronized (DOWNLOAD_STREAM_LOCK)
                 {
@@ -146,6 +148,7 @@ public class LaunchFileDispatcher implements LaunchFileTracker
             }
         finally
             {
+            m_log.debug("Decrementing active writes.  Now: " + m_activeWriteCalls);
             --m_activeWriteCalls;
             }
         }
@@ -154,7 +157,7 @@ public class LaunchFileDispatcher implements LaunchFileTracker
         {
         try
             {
-            final InputStream is = new FileInputStream(this.m_file);
+            final InputStream is = new FileInputStream(this.m_incompleteFile);
             IOUtils.copy(is, os);
             }
         finally
@@ -163,7 +166,8 @@ public class LaunchFileDispatcher implements LaunchFileTracker
             }
         }
 
-    private void writeDownloadingFile(final OutputStream os) throws IOException
+    private void writeDownloadingFile(final OutputStream os, 
+        final boolean cancelOnStreamClose) throws IOException
         {
         final PriorityBlockingQueue<LongRange> completedRanges = createQueue();
         final LaunchFileTracker tracker;
@@ -171,11 +175,11 @@ public class LaunchFileDispatcher implements LaunchFileTracker
             {
             completedRanges.addAll(this.m_completedRanges);
             tracker = new DownloadingFileLauncher(this.m_randomAccessFile, 
-                completedRanges, this.m_expectedSha1);
+                completedRanges, this.m_expectedSha1, this.m_incompleteFile);
             this.m_trackers.add(tracker);
             }
 
-        tracker.write(os);
+        tracker.write(os, cancelOnStreamClose);
         }
 
     public void onRangeComplete(final LongRange range)
@@ -184,10 +188,7 @@ public class LaunchFileDispatcher implements LaunchFileTracker
             {
             for (final LaunchFileTracker tracker : this.m_trackers)
                 {
-                if (LOG.isDebugEnabled())
-                    {
-                    LOG.debug("Notifying all trackers of completed range...");
-                    }
+                //m_log.debug("Notifying all trackers of completed range...");
                 
                 // We need to add a range to the global dispatcher range queue
                 // because new writers might come along and need to know 
@@ -198,10 +199,7 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                     this.m_completedRanges.add(range);
                     }
                 tracker.onRangeComplete(range);
-                if (LOG.isDebugEnabled())
-                    {
-                    LOG.debug("Finished range notify...");
-                    }
+                //m_log.debug("Finished range notify...");
                 }
             }
         }
@@ -221,16 +219,5 @@ public class LaunchFileDispatcher implements LaunchFileTracker
     public int getActiveWriteCalls()
         {
         return m_activeWriteCalls;
-        }
-
-    public void onFail()
-        {
-        synchronized (this.m_trackers)
-            {
-            for (final LaunchFileTracker tracker : this.m_trackers)
-                {
-                tracker.onFail();
-                }
-            }
         }
     }

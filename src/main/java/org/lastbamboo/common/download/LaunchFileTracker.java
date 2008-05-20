@@ -19,7 +19,7 @@ public interface LaunchFileTracker
      * @throws IOException If there's any read or write error writing to the
      * stream.
      */
-    void write(OutputStream os) throws IOException;
+    void write(OutputStream os, boolean cancelOnStreamClose) throws IOException;
 
     /**
      * Called when a specific range is complete.
@@ -45,10 +45,5 @@ public interface LaunchFileTracker
      * @return The number of active writers.
      */
     int getActiveWriteCalls();
-
-    /**
-     * Notifies the launcher the download has failed.
-     */
-    void onFail();
 
     }

@@ -109,7 +109,7 @@ public class DownloadingFileLauncherTest
         thread.setDaemon(true);
         thread.start();
         
-        launcher.write(stream);
+        launcher.write(stream, true);
         
         final URI sha1Copy = Sha1Hasher.createSha1Urn(fileCopy);
         assertEquals(sha1, sha1Copy);
@@ -145,7 +145,7 @@ public class DownloadingFileLauncherTest
                     {
                     Thread.sleep(400);
                     }
-                catch (InterruptedException e)
+                catch (final InterruptedException e)
                     {
                     e.printStackTrace();
                     }
@@ -162,7 +162,7 @@ public class DownloadingFileLauncherTest
         thread.setDaemon(true);
         thread.start();
         
-        launcher.write(stream);
+        launcher.write(stream, true);
         
         final URI sha1Copy = Sha1Hasher.createSha1Urn(fileCopy);
         assertEquals(sha1, sha1Copy);
