@@ -88,14 +88,16 @@ public class LaunchFileDispatcher implements LaunchFileTracker
 
     public void waitForLaunchersToComplete ()
         {
-        if (this.m_activeWriteCalls == 0)
-            {
-            m_log.debug ("No active launchers...");
-            return;
-            }
         synchronized (this.DOWNLOAD_STREAM_LOCK)
             {
-            m_log.debug ("Waiting for active streams to finish streaming");
+            if (this.m_activeWriteCalls == 0)
+                {
+                m_log.debug ("No active launchers for: {}",
+                    this.m_incompleteFile.getName());
+                return;
+                }
+            m_log.debug ("Waiting for active streams to finish for: {}",
+                this.m_incompleteFile.getName());
             try
                 {
                 // It shouldn't take forever to stream the already
@@ -148,8 +150,13 @@ public class LaunchFileDispatcher implements LaunchFileTracker
             }
         finally
             {
-            m_log.debug("Decrementing active writes.  Now: " + m_activeWriteCalls);
-            --m_activeWriteCalls;
+            synchronized (DOWNLOAD_STREAM_LOCK)
+                {
+                --m_activeWriteCalls;
+                m_log.debug("Decremented active writes for: " +
+                    this.m_incompleteFile.getName() + 
+                        " Now: " + m_activeWriteCalls);
+                }
             }
         }
 
