@@ -22,9 +22,7 @@ public interface RangeDownloadListener
     /**
      * Notification that the download has finished.
      * 
-     * @param downloader
-     *      The downloader.
+     * @param downloader The downloader.
      */
-    void onDownloadFinished
-            (RangeDownloader downloader);
+    void onDownloadFinished(RangeDownloader downloader);
     }

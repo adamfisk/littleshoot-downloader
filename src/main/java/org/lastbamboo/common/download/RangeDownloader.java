@@ -19,18 +19,16 @@ public interface RangeDownloader
     /**
      * Returns the number of bytes downloaded by this downloader.
      * 
-     * @return
-     *      The number of bytes downloaded by this downloader.
+     * @return The number of bytes downloaded by this downloader.
      */
-    long getNumBytesDownloaded
-            ();
+    long getNumBytesDownloaded ();
 
     /**
      * Downloads the specified range from the assigned file.
      * 
      * @param range The byte range to download.
      */
-    void download(LongRange range);
+    void download (LongRange range);
     
     /**
      * Sends a head request to the server this downloader is downloading from.
@@ -40,9 +38,7 @@ public interface RangeDownloader
     /**
      * Returns the source URI for this downloader.
      * 
-     * @return
-     *      The source URI for this downloader.
+     * @return The source URI for this downloader.
      */
-    URI getSourceUri
-            ();
+    URI getSourceUri ();
     }
