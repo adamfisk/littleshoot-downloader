@@ -175,11 +175,13 @@ public class SingleSourceDownloader implements RangeDownloader,
             final int statusCode = method.getStatusCode ();
             if (statusCode == HttpStatus.SC_OK)
                 {
+                method.releaseConnection();
                 this.m_rangeDownloadListener.onConnect(this);
                 }
             else if (statusCode == HttpStatus.SC_PARTIAL_CONTENT)
                 {
                 // Do something else here?
+                method.releaseConnection();
                 this.m_rangeDownloadListener.onConnect(this);
                 }
             else
@@ -196,6 +198,10 @@ public class SingleSourceDownloader implements RangeDownloader,
             {
             // We just won't end up using this source.
             LOG.debug("IO error contacting source", e);
+            }
+        finally
+            {
+            method.releaseConnection();
             }
         }
 
@@ -357,9 +363,6 @@ public class SingleSourceDownloader implements RangeDownloader,
         // Ignored for now.
         }
 
-    /**
-     * {@inheritDoc}
-     */
     public void onDownloadStarted()
         {
         m_startedTime = System.currentTimeMillis ();
@@ -373,6 +376,7 @@ public class SingleSourceDownloader implements RangeDownloader,
         // Ingored for now.
         }
     
+    @Override
     public String toString()
         {
         return "Downloader with "+this.m_completedRanges + 
