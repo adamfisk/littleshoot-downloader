@@ -15,6 +15,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.math.LongRange;
+import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,7 +103,7 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                 {
                 // It shouldn't take forever to stream the already
                 // downloaded file to the browser, so cap the wait.
-                this.DOWNLOAD_STREAM_LOCK.wait (6*60*1000);
+                this.DOWNLOAD_STREAM_LOCK.wait (60*DateUtils.MILLIS_PER_MINUTE);
                 if (this.m_activeWriteCalls > 0)
                     {
                     m_log.warn ("Still " + this.m_activeWriteCalls + 
