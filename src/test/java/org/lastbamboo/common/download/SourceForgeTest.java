@@ -1,5 +1,9 @@
 package org.lastbamboo.common.download;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -9,16 +13,15 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import junit.framework.TestCase;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.junit.Test;
 import org.lastbamboo.common.util.Sha1Hasher;
 
 /**
  * Multisource download test using multiple SourceForge mirror sites.
  */
-public class SourceForgeTest extends TestCase
+public class SourceForgeTest
     {
 
     private static final Log LOG = LogFactory.getLog(SourceForgeTest.class);
@@ -146,7 +149,7 @@ public class SourceForgeTest extends TestCase
         return bufs;
         }
 
-    public void testSha1Verifier() throws Exception
+    @Test public void testSha1Verifier() throws Exception
         {
         final String title = "Test-File";
         final File file = new File (title);
