@@ -168,8 +168,9 @@ public class SourceForgeTest
         
         downloader.start ();
         
-        assertEquals (new Sha1DState.VerifiedSha1Impl<MsDState> (),
-                downloader.getState ());
+        assertEquals ("Unexpected state: "+downloader.getState (), 
+            new Sha1DState.VerifiedSha1Impl<MsDState> (),
+            downloader.getState ());
         
         //recordAllSha1s(file);
         }
