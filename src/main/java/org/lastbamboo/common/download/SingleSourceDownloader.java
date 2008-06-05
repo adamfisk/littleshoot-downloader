@@ -129,10 +129,12 @@ public class SingleSourceDownloader implements RangeDownloader,
         method.addRequestHeader("Range", rangesSpecifier);
         
         LOG.debug("HTTP connection manager: " +
-                      m_httpClient.getHttpConnectionManager().getClass());
+            m_httpClient.getHttpConnectionManager().getClass());
         
         final Runnable runner = 
             new HttpClientRunner(this, this.m_httpClient, method, this);
+
+        // Tempting to get rid of this extra thread here.
         final Thread httpThread = 
             new Thread(runner, "HTTP-Download-Thread-"+this.hashCode());
         httpThread.setDaemon(true);
@@ -149,7 +151,10 @@ public class SingleSourceDownloader implements RangeDownloader,
                 {
                 try
                     {
-                    sendHeadRequest();
+                    // We skip the HEAD request for now.
+                    m_rangeDownloadListener.onConnect(
+                        SingleSourceDownloader.this);
+                    //sendHeadRequest();
                     }
                 catch (final Throwable t)
                     {
@@ -165,7 +170,7 @@ public class SingleSourceDownloader implements RangeDownloader,
 
     private void sendHeadRequest()
         {
-        final String uri = SingleSourceDownloader.this.m_uri.toString();
+        final String uri = this.m_uri.toString();
         LOG.debug("Sending request to URI: "+uri);
         final HeadMethod method = new HeadMethod(uri);
         
@@ -304,14 +309,16 @@ public class SingleSourceDownloader implements RangeDownloader,
         this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
         }
     
-    /**
-     * {@inheritDoc}
-     */
     public void onConnect(final long ms)
         {
         // Ignored.
         }
 
+    public void onFailure()
+        {
+        this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
+        }
+    
     public void onHttpException(final HttpException httpException)
         {
         this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
@@ -373,7 +380,7 @@ public class SingleSourceDownloader implements RangeDownloader,
     
     public void onBytesRead(final int bytesRead)
         {
-        // Ingored for now.
+        // Ignored for now.
         }
     
     @Override

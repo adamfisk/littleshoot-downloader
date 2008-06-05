@@ -9,12 +9,12 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpMethodRetryHandler;
@@ -74,18 +74,15 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         public void onDownloadFinished (final RangeDownloader downloader)
             {
             Assert.notNull (downloader, "Downloader is null");
-            synchronized (m_startTimes)
-                {
-                final long start = m_startTimes.remove (downloader);
-                final long end = System.currentTimeMillis ();
-                final long size = downloader.getNumBytesDownloaded ();
+            final long start = m_startTimes.remove (downloader);
             
-                final RateSegment segment = new RateSegmentImpl (start,
-                                                                   end - start,
-                                                                   size);
-                
-                m_rateSegments.add (segment);
-                }
+            final long end = System.currentTimeMillis ();
+            final long size = downloader.getNumBytesDownloaded ();
+        
+            final RateSegment segment = 
+                new RateSegmentImpl (start, end - start, size);
+            
+            m_rateSegments.add (segment);
             
             if (isDownloading (m_state))
                 {
@@ -236,10 +233,10 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         m_uniqueSourceUris =
                 Collections.synchronizedSet (new HashSet<URI> ());
         
-        m_startTimes = new HashMap<RangeDownloader,Long> ();
+        m_startTimes = new ConcurrentHashMap<RangeDownloader,Long> ();
         
         m_rateSegments = 
-                Collections.synchronizedList(new LinkedList<RateSegment> ());
+            Collections.synchronizedList(new LinkedList<RateSegment> ());
         
         this.m_httpClient = new CommonsHttpClientImpl();
         final HttpMethodRetryHandler retryHandler = 
@@ -337,12 +334,12 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 LOG.debug ("Creating connection...");
                 
                 final RangeDownloader dl = 
-                        new SingleSourceDownloader (m_httpClient, uri,
-                                                    m_singleDownloadListener, 
-                                                    downloadSpeedRanker,
-                                                    m_rangeTracker, 
-                                                    m_launchFileTracker,
-                                                    m_randomAccessFile);
+                    new SingleSourceDownloader (m_httpClient, uri,
+                                                m_singleDownloadListener, 
+                                                downloadSpeedRanker,
+                                                m_rangeTracker, 
+                                                m_launchFileTracker,
+                                                m_randomAccessFile);
                 
                 dl.issueHeadRequest ();
                 }
@@ -363,10 +360,10 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 getNumUniqueHosts (), m_rangeTracker.getBytesRead()));
             
             final Comparator<RangeDownloader> speedComparator = 
-                    new DownloadSpeedComparator ();
+                new DownloadSpeedComparator ();
             
             final SourceRanker downloadingRanker = 
-                    new SourceRankerImpl (speedComparator);
+                new SourceRankerImpl (speedComparator);
             
             connect (sources, downloadingRanker, m_connectionsPerHost);
             
@@ -469,19 +466,16 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             {
             public Boolean visitNone (final None<LongRange> none)
                 {
-                return true;
+                return Boolean.TRUE;
                 }
             
             public Boolean visitSome (final Some<LongRange> some)
                 {
                 final LongRange range = some.object ();
-                synchronized (m_startTimes)
-                    {
-                    m_startTimes.put (downloader, System.currentTimeMillis ());
-                    LOG.debug ("Downloading from downloader: " + downloader);
-                    downloader.download (range);
-                    }
-                return false;
+                m_startTimes.put (downloader, System.currentTimeMillis ());
+                LOG.debug ("Downloading from downloader: " + downloader);
+                downloader.download (range);
+                return Boolean.FALSE;
                 }
             };
             

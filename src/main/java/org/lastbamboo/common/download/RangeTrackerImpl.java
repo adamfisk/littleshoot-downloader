@@ -82,9 +82,6 @@ public class RangeTrackerImpl implements RangeTracker
             }
         }
     
-    /**
-     * {@inheritDoc}
-     */
     public Optional<LongRange> getNextRange ()
         {
         synchronized (this)
@@ -99,7 +96,8 @@ public class RangeTrackerImpl implements RangeTracker
                     {
                     // This should never happen in normal operation, so we
                     // propagate the exception.
-                    throw new RuntimeException (e);
+                    m_log.error("Wait interrupted", e);
+                    throw new RuntimeException ("Wait interrupted", e);
                     }
                 }
             
@@ -127,9 +125,6 @@ public class RangeTrackerImpl implements RangeTracker
             }
         }
     
-    /**
-     * {@inheritDoc}
-     */
     public int getNumChunks ()
         {
         return this.m_numChunks;
