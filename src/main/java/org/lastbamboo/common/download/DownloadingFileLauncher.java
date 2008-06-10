@@ -259,7 +259,8 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                 // in practice it should always happen.
                 if (numBytesRead != curChunkSize)
                     {
-                    m_log.warn("Unexpected number of bytes read: "+numBytesRead);
+                    m_log.warn("Unexpected number of bytes read.  Expected "+
+                        curChunkSize+" but was "+numBytesRead);
                     }
                 os.write(bytesToCopy);
                 index += numBytesRead;
