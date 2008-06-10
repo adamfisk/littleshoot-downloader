@@ -9,6 +9,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -74,15 +75,17 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         public void onDownloadFinished (final RangeDownloader downloader)
             {
             Assert.notNull (downloader, "Downloader is null");
-            final long start = m_startTimes.remove (downloader);
+            synchronized (m_startTimes)
+                {
+                final long start = m_startTimes.remove (downloader);
+                final long end = System.currentTimeMillis ();
+                final long size = downloader.getNumBytesDownloaded ();
             
-            final long end = System.currentTimeMillis ();
-            final long size = downloader.getNumBytesDownloaded ();
-        
-            final RateSegment segment = 
-                new RateSegmentImpl (start, end - start, size);
-            
-            m_rateSegments.add (segment);
+                final RateSegment segment = 
+                    new RateSegmentImpl (start, end - start, size);
+                
+                m_rateSegments.add (segment);
+                }
             
             if (isDownloading (m_state))
                 {
@@ -233,7 +236,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         m_uniqueSourceUris =
                 Collections.synchronizedSet (new HashSet<URI> ());
         
-        m_startTimes = new ConcurrentHashMap<RangeDownloader,Long> ();
+        m_startTimes = new HashMap<RangeDownloader, Long> ();
         
         m_rateSegments = 
             Collections.synchronizedList(new LinkedList<RateSegment> ());
@@ -472,9 +475,12 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             public Boolean visitSome (final Some<LongRange> some)
                 {
                 final LongRange range = some.object ();
-                m_startTimes.put (downloader, System.currentTimeMillis ());
-                LOG.debug ("Downloading from downloader: " + downloader);
-                downloader.download (range);
+                synchronized (m_startTimes)
+                    {
+                    m_startTimes.put (downloader, System.currentTimeMillis ());
+                    LOG.debug ("Downloading from downloader: " + downloader);
+                    downloader.download (range);
+                    }
                 return Boolean.FALSE;
                 }
             };
