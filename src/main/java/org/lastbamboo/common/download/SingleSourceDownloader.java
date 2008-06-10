@@ -152,9 +152,9 @@ public class SingleSourceDownloader implements RangeDownloader,
                 try
                     {
                     // We skip the HEAD request for now.
-                    m_rangeDownloadListener.onConnect(
-                        SingleSourceDownloader.this);
-                    //sendHeadRequest();
+                    //m_rangeDownloadListener.onConnect(
+                      //  SingleSourceDownloader.this);
+                    sendHeadRequest();
                     }
                 catch (final Throwable t)
                     {
