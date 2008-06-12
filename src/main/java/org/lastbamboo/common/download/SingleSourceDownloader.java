@@ -292,10 +292,13 @@ public class SingleSourceDownloader implements RangeDownloader,
         // simply the number of bytes in the range for which we are responsible.
         final int expectedBytes = (int) ((max - min) + 1);
         
+        LOG.debug("About to copy stream...");
         synchronized (this.m_randomAccessFile)
             {
+            LOG.debug("Copying stream...");
             IoUtils.copy(is, this.m_randomAccessFile, min, expectedBytes);
             }
+        LOG.debug("Finishing copy...");
         } 
 
     public void onContentLength(final long contentLength)
@@ -386,7 +389,7 @@ public class SingleSourceDownloader implements RangeDownloader,
     @Override
     public String toString()
         {
-        return "Downloader with "+this.m_completedRanges + 
+        return getClass().getSimpleName() + " with "+this.m_completedRanges + 
             " completed ranges for: "+this.m_uri;
         }
     }
