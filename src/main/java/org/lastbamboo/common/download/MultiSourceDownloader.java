@@ -15,7 +15,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpMethodRetryHandler;
@@ -231,10 +230,10 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         m_singleDownloadListener = new SingleDownloadListener (); 
         
         m_activeRangeDownloaders =
-                Collections.synchronizedSet (new HashSet<RangeDownloader> ());
+            Collections.synchronizedSet (new HashSet<RangeDownloader> ());
         
         m_uniqueSourceUris =
-                Collections.synchronizedSet (new HashSet<URI> ());
+            Collections.synchronizedSet (new HashSet<URI> ());
         
         m_startTimes = new HashMap<RangeDownloader, Long> ();
         
@@ -250,6 +249,8 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         final HttpConnectionManagerParams params = 
             this.m_httpClient.getHttpConnectionManager().getParams();
         params.setConnectionTimeout(30*1000);
+        params.setSoTimeout(6 * 1000);
+        
         // We set this for now because our funky sockets sometimes can't 
         // handle the stale checking details.
         // TODO: We should fix our sockets to properly handle it.  See
