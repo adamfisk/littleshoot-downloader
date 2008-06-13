@@ -3,8 +3,8 @@ package org.lastbamboo.common.download;
 import java.util.Comparator;
 import java.util.concurrent.PriorityBlockingQueue;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class that ranks available download sources.  This will provide callers 
@@ -13,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
 public class SourceRankerImpl implements SourceRanker
     {
 
-    private static final Log LOG = LogFactory.getLog(SourceRankerImpl.class);
+    private final Logger m_log = LoggerFactory.getLogger(getClass()); 
     
     private final PriorityBlockingQueue<RangeDownloader> m_sources;
     
@@ -40,18 +40,14 @@ public class SourceRankerImpl implements SourceRanker
             }
         catch (final InterruptedException e)
             {
-            LOG.warn("Interrupt waiting for sources!!", e);
+            m_log.warn("Interrupt waiting for sources!!", e);
             return null;
             }
         }
 
     public void onAvailable(final RangeDownloader downloader)
         {
-        if (LOG.isDebugEnabled())
-            {
-            LOG.debug("New source available: " + downloader);
-            }
-        
+        m_log.debug("New source available: {}", downloader);
         this.m_sources.add(downloader);
         }
     }

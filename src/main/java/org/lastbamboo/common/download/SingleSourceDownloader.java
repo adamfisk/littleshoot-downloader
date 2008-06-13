@@ -13,8 +13,6 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.HeadMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.lang.math.LongRange;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.lastbamboo.common.http.client.CommonsHttpClient;
 import org.lastbamboo.common.http.client.HttpClientRunner;
 import org.lastbamboo.common.http.client.HttpListener;
@@ -25,6 +23,8 @@ import org.lastbamboo.common.util.NoneImpl;
 import org.lastbamboo.common.util.Optional;
 import org.lastbamboo.common.util.RuntimeIoException;
 import org.lastbamboo.common.util.SomeImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Downloads data from a single source.
@@ -33,8 +33,8 @@ public class SingleSourceDownloader implements RangeDownloader,
     InputStreamHandler, HttpListener
     {
 
-    private static final Log LOG = 
-        LogFactory.getLog(SingleSourceDownloader.class);
+    private final Logger m_log = 
+        LoggerFactory.getLogger(SingleSourceDownloader.class);
     
     private final URI m_uri;
     private final SourceRanker m_sourceRanker;
@@ -108,7 +108,7 @@ public class SingleSourceDownloader implements RangeDownloader,
         this.m_startedTime = -1;
         this.m_contentLength = -1;
         this.m_assignedRange = range;
-        LOG.debug("Downloading from: "+this.m_uri);
+        m_log.debug("Downloading from: "+this.m_uri);
         final GetMethod method = new GetMethod(this.m_uri.toString());
         method.getParams().setBooleanParameter(
             HttpMethodParams.WARN_EXTRA_INPUT, true);
@@ -128,7 +128,7 @@ public class SingleSourceDownloader implements RangeDownloader,
             "bytes="+range.getMinimumLong()+"-"+range.getMaximumLong();
         method.addRequestHeader("Range", rangesSpecifier);
         
-        LOG.debug("HTTP connection manager: " +
+        m_log.debug("HTTP connection manager: " +
             m_httpClient.getHttpConnectionManager().getClass());
         
         final Runnable runner = 
@@ -158,7 +158,7 @@ public class SingleSourceDownloader implements RangeDownloader,
                     }
                 catch (final Throwable t)
                     {
-                    LOG.error("Unexpected throwable.", t);
+                    m_log.error("Unexpected throwable.", t);
                     }
                 }
             };
@@ -171,7 +171,7 @@ public class SingleSourceDownloader implements RangeDownloader,
     private void sendHeadRequest()
         {
         final String uri = this.m_uri.toString();
-        LOG.debug("Sending request to URI: "+uri);
+        m_log.debug("Sending request to URI: "+uri);
         final HeadMethod method = new HeadMethod(uri);
         
         try
@@ -185,24 +185,23 @@ public class SingleSourceDownloader implements RangeDownloader,
                 }
             else if (statusCode == HttpStatus.SC_PARTIAL_CONTENT)
                 {
-                // Do something else here?
                 method.releaseConnection();
                 this.m_rangeDownloadListener.onConnect(this);
                 }
             else
                 {
-                LOG.debug("Status code: " + statusCode);
+                m_log.debug("Status code: " + statusCode);
                 }
             }
         catch (final RuntimeHttpException e)
             {
             // We just won't end up using this source.
-            LOG.debug("HTTP exception contacting source", e);
+            m_log.debug("HTTP exception contacting source", e);
             }
         catch (final RuntimeIoException e)
             {
             // We just won't end up using this source.
-            LOG.debug("IO error contacting source", e);
+            m_log.debug("IO error contacting source", e);
             }
         finally
             {
@@ -216,7 +215,7 @@ public class SingleSourceDownloader implements RangeDownloader,
             this.m_startedTime == -1 ||
             this.m_completedTime == -1)
             {
-            LOG.debug ("Trying to get kbs without enough" +
+            m_log.debug ("Trying to get kbs without enough" +
                           " data.  Content Length: "+this.m_contentLength +
                           " Connect Time: "+this.m_startedTime+" Completed " +
                           "Time: " + this.m_completedTime);
@@ -229,7 +228,7 @@ public class SingleSourceDownloader implements RangeDownloader,
                 {
                 // We warn here, since it is odd that the connection and
                 // completion happened at the same time.
-                LOG.warn ("Completed time same as connected time: " +
+                m_log.warn ("Completed time same as connected time: " +
                               m_completedTime);
                 }
             
@@ -281,7 +280,7 @@ public class SingleSourceDownloader implements RangeDownloader,
         // It's possible the server never provided a content range.
         if (this.m_contentRange == null)
             {
-            LOG.error("No content range provided");
+            m_log.error("No content range provided");
             this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
             return;
             }
@@ -299,7 +298,7 @@ public class SingleSourceDownloader implements RangeDownloader,
 
     public void onContentLength(final long contentLength)
         {
-        LOG.debug("Received content length: "+contentLength);
+        m_log.debug("Received content length: "+contentLength);
         this.m_contentLength = contentLength;
         }
 
@@ -325,15 +324,15 @@ public class SingleSourceDownloader implements RangeDownloader,
 
     public void onNoTwoHundredOk(final int responseCode)
         {
-        LOG.debug("No 200-level response...re-submitting range...");
+        m_log.debug("No 200-level response...re-submitting range...");
         this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
         }
     
     public void onMessageBodyRead()
         {
-        LOG.debug("Read message body!!");
+        m_log.debug("Read message body!!");
         this.m_completedTime = System.currentTimeMillis();
-        LOG.info ("Completed time recorded as: " + m_completedTime);
+        m_log.info ("Completed time recorded as: " + m_completedTime);
         this.m_launchFileTracker.onRangeComplete(this.m_assignedRange);
         this.m_rangeTracker.onRangeComplete(this.m_assignedRange);
         
@@ -348,16 +347,16 @@ public class SingleSourceDownloader implements RangeDownloader,
 
     public void onBadHeader(final String header)
         {
-        LOG.warn("Could not understand header: "+header);
+        m_log.warn("Could not understand header: "+header);
         this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
         }
 
     public void onContentRange(final LongRange range)
         {
-        LOG.debug("Received Content-Range: "+range);
+        m_log.debug("Received Content-Range: "+range);
         if (!range.equals (m_assignedRange))
             {
-            LOG.error("Bad range -- expected: " +this.m_assignedRange+
+            m_log.error("Bad range -- expected: " +this.m_assignedRange+
                 " but was: "+range);
             this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
             }
@@ -372,7 +371,7 @@ public class SingleSourceDownloader implements RangeDownloader,
     public void onDownloadStarted()
         {
         m_startedTime = System.currentTimeMillis ();
-        LOG.info ("Connected time recorded as: " + m_startedTime);
+        m_log.info ("Connected time recorded as: " + m_startedTime);
         
         m_rangeDownloadListener.onDownloadStarted(this);
         }
