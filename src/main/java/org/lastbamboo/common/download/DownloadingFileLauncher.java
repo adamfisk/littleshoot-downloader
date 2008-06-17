@@ -204,6 +204,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                     catch (final InterruptedException e)
                         {
                         m_log.warn("Interrupted!!", e);
+                        break;
                         }
                     }
                 }
