@@ -46,4 +46,9 @@ public interface LaunchFileTracker
      */
     int getActiveWriteCalls();
 
+    /**
+     * Called when a download fails for any reason.
+     */
+    void onFailure();
+
     }

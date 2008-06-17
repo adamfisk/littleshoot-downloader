@@ -228,4 +228,15 @@ public class LaunchFileDispatcher implements LaunchFileTracker
         {
         return m_activeWriteCalls;
         }
+
+    public void onFailure()
+        {
+        synchronized (this.m_trackers)
+            {
+            for (final LaunchFileTracker tracker : this.m_trackers)
+                {
+                tracker.onFailure();
+                }
+            }
+        }
     }

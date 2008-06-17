@@ -12,6 +12,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.concurrent.PriorityBlockingQueue;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.math.LongRange;
 import org.lastbamboo.common.util.Base32;
 import org.slf4j.Logger;
@@ -45,6 +46,8 @@ public class DownloadingFileLauncher implements LaunchFileTracker
      * Flag for whether or not the stream we're writing to is closed.
      */
     private volatile boolean m_streamClosed = false;
+
+    private volatile boolean m_failed = false;
     
     
     /**
@@ -86,8 +89,20 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             if (range.getMinimumLong() == this.m_rangeIndex)
                 {
                 //m_log.debug("Found range we need -- notifying...");
-                this.m_completedRanges.notify();
+                this.m_completedRanges.notifyAll();
                 }
+            }
+        }
+    
+    public void onFailure()
+        {
+        this.m_failed = true;
+        IOUtils.closeQuietly(this.m_digestOutputStream);
+        this.m_streamClosed = true;
+        synchronized (this.m_completedRanges)
+            {
+            //m_log.debug("Got lock with remaining ranges: {}",m_completedRanges);
+            this.m_completedRanges.notifyAll();
             }
         }
     
@@ -119,7 +134,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             }
         catch (final Throwable t)
             {
-            m_log.debug("Throwable streaming file: " + 
+            m_log.warn("Throwable streaming file: " + 
                 this.m_incompleteFile.getName(), t);
             }
         }
@@ -171,7 +186,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                     os.flush();
                     os.close();
                     this.m_writtenAll = true;
-                    this.m_completedRanges.notify();
+                    this.m_completedRanges.notifyAll();
                     return;
                     }
                 final LongRange range = this.m_completedRanges.peek();
@@ -190,6 +205,15 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                         //m_log.debug("Ranges: {}", this.m_completedRanges);
                         this.m_completedRanges.wait();
                         
+                        if (this.m_failed)
+                            {
+                            m_log.debug("Download failed...");
+                            os.flush();
+                            os.close();
+                            this.m_completedRanges.notifyAll();
+                            return;
+                            }
+                        
                         //m_log.debug("Finished waiting...");
                         if (done())
                             {
@@ -197,7 +221,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                             os.flush();
                             os.close();
                             this.m_writtenAll = true;
-                            this.m_completedRanges.notify();
+                            this.m_completedRanges.notifyAll();
                             return;
                             }
                         }
@@ -277,7 +301,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
         synchronized (this.m_completedRanges)
             {
             //m_log.debug("Got lock with remaining ranges: {}",m_completedRanges);
-            this.m_completedRanges.notify();
+            this.m_completedRanges.notifyAll();
             
             if (this.m_streamClosed)
                 {

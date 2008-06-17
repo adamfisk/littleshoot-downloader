@@ -246,6 +246,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         m_failed = true;
         m_downloadingRanker.onFailed();
         setState (MsDState.FAILED);
+        m_launchFileTracker.onFailure();
         }
     
     private void cancel ()
