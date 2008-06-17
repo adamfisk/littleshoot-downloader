@@ -1,8 +1,11 @@
 package org.lastbamboo.common.download;
 
+import java.net.URI;
 import java.util.Comparator;
 import java.util.concurrent.PriorityBlockingQueue;
 
+import org.apache.commons.lang.math.LongRange;
+import org.lastbamboo.common.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,5 +52,40 @@ public class SourceRankerImpl implements SourceRanker
         {
         m_log.debug("New source available: {}", downloader);
         this.m_sources.add(downloader);
+        }
+
+    public void onFailed()
+        {
+        // We add a dummy failed downloader just to break the source ranker
+        // out of its wait.  This is never used during the download process,
+        // as this failure indicates all sources have failed, and we're done.
+        this.m_sources.add(new DummyRangeDownloader());
+        }
+    
+    private static final class DummyRangeDownloader implements RangeDownloader
+        {
+
+        public void download(LongRange range)
+            {
+            }
+
+        public Optional<Integer> getKbs()
+            {
+            return null;
+            }
+
+        public long getNumBytesDownloaded()
+            {
+            return 0;
+            }
+
+        public URI getSourceUri()
+            {
+            return null;
+            }
+
+        public void issueHeadRequest()
+            {
+            }
         }
     }

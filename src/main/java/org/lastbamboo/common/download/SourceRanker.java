@@ -32,4 +32,6 @@ public interface SourceRanker
      */
     void onAvailable(RangeDownloader downloader);
 
+    void onFailed();
+
     }

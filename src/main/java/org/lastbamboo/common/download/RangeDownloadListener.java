@@ -25,4 +25,11 @@ public interface RangeDownloadListener
      * @param downloader The downloader.
      */
     void onDownloadFinished(RangeDownloader downloader);
+
+    /**
+     * Called when the download has failed.
+     * 
+     * @param downloader The downloader.
+     */
+    void onFail(RangeDownloader downloader);
     }

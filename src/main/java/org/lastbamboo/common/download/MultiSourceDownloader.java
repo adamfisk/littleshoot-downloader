@@ -21,8 +21,6 @@ import org.apache.commons.httpclient.HttpMethodRetryHandler;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.lang.math.LongRange;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.lastbamboo.common.http.client.CommonsHttpClient;
 import org.lastbamboo.common.http.client.CommonsHttpClientImpl;
 import org.lastbamboo.common.util.Assert;
@@ -30,6 +28,8 @@ import org.lastbamboo.common.util.None;
 import org.lastbamboo.common.util.Optional;
 import org.lastbamboo.common.util.OptionalVisitor;
 import org.lastbamboo.common.util.Some;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A downloader that can download from multiple sources simultaneously.
@@ -53,7 +53,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             if (m_numConnections > CONNECTION_LIMIT)
                 {
                 LOG.debug ("We already have " + m_numConnections +
-                                " connections.  Ignoring new host...");
+                    " connections.  Ignoring new host...");
                 }
             else if (m_numConnections >= m_rangeTracker.getNumChunks ())
                 {
@@ -102,19 +102,39 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             {
             m_activeRangeDownloaders.add (downloader);
             }
+
+        public void onFail(final RangeDownloader downloader)
+            {
+            LOG.debug("Received a range failure.");
+            m_uniqueFailedSourceUris.add (downloader.getSourceUri ());
+            final int remainingSources = 
+                m_sources.size() - m_uniqueFailedSourceUris.size();
+            if (remainingSources == 0)
+                {
+                MultiSourceDownloader.this.fail();
+                }
+            else
+                {
+                LOG.debug("Continuing download.  Sources remaining: {}", 
+                    m_sources.size());
+                }
+            }
         }
     
     /**
      * The log for this class.
      */
-    private static final Log LOG =
-            LogFactory.getLog (MultiSourceDownloader.class);
+    private final Logger LOG = 
+        LoggerFactory.getLogger(MultiSourceDownloader.class);
     
     /**
      * Limit on the number of connections to maintain.  We could set this higher
      * in the future and more aggressively purge slow sources.
      */
-    private static final int CONNECTION_LIMIT = 20;
+    private static final int CONNECTION_LIMIT = 25;
+
+    private final SourceRanker m_downloadingRanker = 
+        new SourceRankerImpl (new DownloadSpeedComparator ());
     
     private final RateCalculator m_rateCalculator;
     
@@ -149,26 +169,37 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
      * need one of these, since the callback methods on the listener indicate
      * on which downloader the event occurred.
      */
-    private final RangeDownloadListener m_singleDownloadListener;
+    private final RangeDownloadListener m_singleDownloadListener =
+        new SingleDownloadListener ();
 
-    private final Collection<RangeDownloader> m_activeRangeDownloaders;
+    private final Collection<RangeDownloader> m_activeRangeDownloaders =
+        Collections.synchronizedSet (new HashSet<RangeDownloader> ());
     
     /**
      * The set of unique source URIs to which we are connected.
      */
-    private final Set<URI> m_uniqueSourceUris;
+    private final Set<URI> m_uniqueSourceUris =
+        Collections.synchronizedSet (new HashSet<URI> ());
+   
+    /**
+     * The set of unique source URIs that have failed.
+     */
+    private final Set<URI> m_uniqueFailedSourceUris =
+        Collections.synchronizedSet (new HashSet<URI> ());
     
     /**
      * The map that we use to track the start times for downloaders.  We use 
      * this to calculate our download rate.
      */
-    private final Map<RangeDownloader,Long> m_startTimes;
+    private final Map<RangeDownloader,Long> m_startTimes =
+        new HashMap<RangeDownloader, Long> ();
     
     /**
      * The collection of rate segments that we use to calculate our download
      * rate.
      */
-    private final Collection<RateSegment> m_rateSegments;
+    private final Collection<RateSegment> m_rateSegments =
+        Collections.synchronizedList(new LinkedList<RateSegment> ());
     
     /**
      * The random access file that we use to write the file we are downloading.
@@ -194,13 +225,18 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     
     private volatile boolean m_cancelled;
 
-    private final CommonsHttpClient m_httpClient;
+    private final CommonsHttpClient m_httpClient =
+        new CommonsHttpClientImpl();
 
     private volatile boolean m_started;
 
     private final String m_finalName;
 
     private final File m_completeFile;
+
+    private Collection<URI> m_sources = Collections.emptyList();
+
+    private volatile boolean m_failed = false;
     
     /**
      * Constructs a new downloader.
@@ -226,21 +262,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         m_size = size;
         m_contentType = mimeType;
         m_uriResolver = uriResolver;
-        m_connectionsPerHost = connectionsPerHost;
-        m_singleDownloadListener = new SingleDownloadListener (); 
-        
-        m_activeRangeDownloaders =
-            Collections.synchronizedSet (new HashSet<RangeDownloader> ());
-        
-        m_uniqueSourceUris =
-            Collections.synchronizedSet (new HashSet<URI> ());
-        
-        m_startTimes = new HashMap<RangeDownloader, Long> ();
-        
-        m_rateSegments = 
-            Collections.synchronizedList(new LinkedList<RateSegment> ());
-        
-        this.m_httpClient = new CommonsHttpClientImpl();
+        m_connectionsPerHost = connectionsPerHost;        
         final HttpMethodRetryHandler retryHandler = 
             new DefaultHttpMethodRetryHandler(0, false);
         this.m_httpClient.getParams().setParameter(
@@ -248,7 +270,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         
         final HttpConnectionManagerParams params = 
             this.m_httpClient.getHttpConnectionManager().getParams();
-        params.setConnectionTimeout(30*1000);
+        params.setConnectionTimeout(40*1000);
         params.setSoTimeout(6 * 1000);
         
         // We set this for now because our funky sockets sometimes can't 
@@ -294,16 +316,21 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     private static boolean isDownloading (final MsDState state)
         {
         final MsDState.Visitor<Boolean> visitor =
-                new MsDState.VisitorAdapter<Boolean> (false)
+            new MsDState.VisitorAdapter<Boolean> (false)
             {
-            public Boolean visitDownloading
-                    (final MsDState.Downloading state)
+            public Boolean visitDownloading (final MsDState.Downloading state)
                 {
                 return true;
                 }
             };
             
         return state.accept (visitor);
+        }
+    
+    private void fail ()
+        {
+        m_failed = true;
+        m_downloadingRanker.onFailed();
         }
     
     private void cancel ()
@@ -331,7 +358,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             // We only use multiple connections to a single host if it's a 
             // straight HTTP server on the public Internet.
             final int connectionsPerHostToCreate =
-                    uri.getScheme ().equals ("http") ? connectionsPerHost : 1;
+                uri.getScheme ().equals ("http") ? connectionsPerHost : 1;
             
             for (int i = 0; i < connectionsPerHostToCreate; i++)
                 {
@@ -339,11 +366,9 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 
                 final RangeDownloader dl = 
                     new SingleSourceDownloader (m_httpClient, uri,
-                                                m_singleDownloadListener, 
-                                                downloadSpeedRanker,
-                                                m_rangeTracker, 
-                                                m_launchFileTracker,
-                                                m_randomAccessFile);
+                        m_singleDownloadListener, downloadSpeedRanker,
+                        m_rangeTracker, m_launchFileTracker,
+                        m_randomAccessFile);
                 
                 dl.issueHeadRequest ();
                 }
@@ -363,25 +388,23 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             setState (new MsDState.DownloadingImpl (getKbs (),
                 getNumUniqueHosts (), m_rangeTracker.getBytesRead()));
             
-            final Comparator<RangeDownloader> speedComparator = 
-                new DownloadSpeedComparator ();
-            
-            final SourceRanker downloadingRanker = 
-                new SourceRankerImpl (speedComparator);
-            
-            connect (sources, downloadingRanker, m_connectionsPerHost);
+            connect (sources, this.m_downloadingRanker, m_connectionsPerHost);
             
             boolean done = false;
             
-            while (m_rangeTracker.hasMoreRanges () && !m_cancelled && !done)
+            while (m_rangeTracker.hasMoreRanges () && !m_cancelled && !m_failed && !done)
                 {
                 LOG.debug ("Accessing next source...");
                 
-                final RangeDownloader dl = downloadingRanker.getBestSource ();
+                final RangeDownloader dl = m_downloadingRanker.getBestSource ();
             
                 LOG.debug ("Accessed source...downloading...");
                     
                 if (m_cancelled)
+                    {
+                    done = true;
+                    }
+                else if (this.m_failed)
                     {
                     done = true;
                     }
@@ -392,13 +415,16 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                     done = true;
                     }
                 }
+            if (m_failed)
+                {
+                setState (MsDState.FAILED);
+                LOG.debug ("The download failed");
+                }
             
-            if (m_cancelled)
+            else if (m_cancelled)
                 {
                 setState (MsDState.CANCELED);
-                
-                LOG.debug ("The download was cancelled, not downloading " +
-                                "any more ranges.");
+                LOG.debug ("The download was cancelled");
                 }
             }
         }
@@ -523,15 +549,21 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         
         try
             {
-            final Collection<URI> sources = m_uriResolver.resolve (m_uri);
-            
-            download (sources);
+            this.m_sources = m_uriResolver.resolve (m_uri);
+            download (m_sources);
             }
         catch (final IOException e)
             {
             // There was a problem resolving download sources.
-            LOG.warn("Could not resolve download sources", e);
+            LOG.warn("Error during download", e);
             setState (MsDState.COULD_NOT_DETERMINE_SOURCES);
+            return;
+            }
+        catch (final Throwable t)
+            {
+            LOG.warn ("Unexpected throwable during download", t);
+            setState (MsDState.FAILED);
+            return;
             }
         finally 
             {

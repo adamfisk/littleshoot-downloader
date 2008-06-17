@@ -68,6 +68,14 @@ public interface MsDState extends DownloaderState
          * @return The result of the visitation.
          */
         T visitCouldNotDetermineSources (CouldNotDetermineSources state);
+
+        /**
+         * Visits a general failed state.
+         * 
+         * @param state The state.
+         * @return The result of the visitation.
+         */
+        T visitFailed(Failed failed);
         }
     
     /**
@@ -108,6 +116,11 @@ public interface MsDState extends DownloaderState
             return m_defaultValue;
             }
 
+        public T visitFailed (final Failed state)
+            {
+            return m_defaultValue;
+            }
+        
         /**
          * {@inheritDoc}
          */
@@ -176,6 +189,11 @@ public interface MsDState extends DownloaderState
      */
     public interface Canceled extends MsDState {}
 
+    /**
+     * A state that indicates that the downloader failed.
+     */
+    public interface Failed extends MsDState {}
+    
     /**
      * A state that indicates that the downloader could not find any available
      * sources.
@@ -328,6 +346,24 @@ public interface MsDState extends DownloaderState
         }
 
     /**
+     * An implementation of the failed state.
+     */
+    public class FailedImpl
+        extends DownloaderState.AbstractFailed implements Failed
+        {
+        public <T> T accept (final Visitor<T> visitor)
+            {
+            return visitor.visitFailed (this);
+            }
+        
+        @Override
+        public boolean equals (final Object otherObject)
+            {
+            return otherObject instanceof Failed;
+            }
+        }
+    
+    /**
      * An implementation of the no sources available state.
      */
     public class NoSourcesAvailableImpl
@@ -386,7 +422,7 @@ public interface MsDState extends DownloaderState
      * An instance of the getting sources state.
      */
     public static final MsDState GETTING_SOURCES =
-            new GettingSourcesImpl ();
+        new GettingSourcesImpl ();
 
     /**
      * An instance of the complete state.
@@ -411,4 +447,6 @@ public interface MsDState extends DownloaderState
      */
     public static final MsDState COULD_NOT_DETERMINE_SOURCES =
             new CouldNotDetermineSourcesImpl ();
+
+    public static final MsDState FAILED = new FailedImpl();
     }

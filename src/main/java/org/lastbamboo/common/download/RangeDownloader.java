@@ -41,4 +41,5 @@ public interface RangeDownloader
      * @return The source URI for this downloader.
      */
     URI getSourceUri ();
+
     }

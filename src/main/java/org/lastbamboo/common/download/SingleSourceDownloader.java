@@ -173,7 +173,6 @@ public class SingleSourceDownloader implements RangeDownloader,
         final String uri = this.m_uri.toString();
         m_log.debug("Sending request to URI: "+uri);
         final HeadMethod method = new HeadMethod(uri);
-        
         try
             {
             this.m_httpClient.executeMethod(method);
@@ -197,11 +196,13 @@ public class SingleSourceDownloader implements RangeDownloader,
             {
             // We just won't end up using this source.
             m_log.debug("HTTP exception contacting source", e);
+            this.m_rangeDownloadListener.onFail(this);
             }
         catch (final RuntimeIoException e)
             {
             // We just won't end up using this source.
             m_log.debug("IO error contacting source", e);
+            this.m_rangeDownloadListener.onFail(this);
             }
         finally
             {
