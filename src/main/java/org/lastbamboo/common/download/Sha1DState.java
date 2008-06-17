@@ -14,69 +14,55 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
     /**
      * A visitor for a SHA-1 downloader state.
      * 
-     * @param <T>
-     *      The type of this visitor's return value.
-     * @param <DelegateStateT>
-     *      The type of delegate state held in the SHA-1 state.
+     * @param <T> The type of this visitor's return value.
+     * @param <DelegateStateT> The type of delegate state held in the SHA-1 
+     * state.
      */
     public interface Visitor<T,DelegateStateT>
         {
         /**
          * Visits a downloading state.
          * 
-         * @param state
-         *      The state.
+         * @param state The state.
          *      
-         * @return
-         *      The result of the visitation.
+         * @return The result of the visitation.
          */
-        T visitDownloading
-                (Downloading<DelegateStateT> state);
+        T visitDownloading (Downloading<DelegateStateT> state);
         
         /**
          * Visits a verifying SHA-1 state.
          * 
-         * @param state
-         *      The state.
+         * @param state The state.
          *      
-         * @return
-         *      The result of the visitation.
+         * @return The result of the visitation.
          */
-        T visitVerifyingSha1
-                (VerifyingSha1<DelegateStateT> state);
+        T visitVerifyingSha1 (VerifyingSha1<DelegateStateT> state);
         
         /**
          * Visits a verified SHA-1 state.
          * 
-         * @param state
-         *      The state.
+         * @param state The state.
          *      
-         * @return
-         *      The result of the visitation.
+         * @return The result of the visitation.
          */
-        T visitVerifiedSha1
-                (VerifiedSha1<DelegateStateT> state);
+        T visitVerifiedSha1 (VerifiedSha1<DelegateStateT> state);
         
         /**
          * Visits a SHA-1 mismatch state.
          * 
-         * @param state
-         *      The state.
+         * @param state The state.
          *      
-         * @return
-         *      The result of the visitation.
+         * @return  The result of the visitation.
          */
-        T visitSha1Mismatch
-                (Sha1Mismatch<DelegateStateT> state);
+        T visitSha1Mismatch (Sha1Mismatch<DelegateStateT> state);
         }
     
     /**
      * An adaptor to help implement visitors.
      * 
-     * @param <T>
-     *      The type of this visitor's return value.
-     * @param <DelegateStateT>
-     *      The type of delegate state held in the SHA-1 state.
+     * @param <T> The type of this visitor's return value.
+     * @param <DelegateStateT> The type of delegate state held in the SHA-1 
+     * state.
      */
     public abstract class VisitorAdapter<T,DelegateStateT>
             implements Visitor<T,DelegateStateT>
@@ -89,47 +75,29 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
         /**
          * Constructs a new visitor adapter.
          * 
-         * @param defaultValue
-         *      The default value returned by this visitor.
+         * @param defaultValue The default value returned by this visitor.
          */
-        public VisitorAdapter
-                (final T defaultValue)
+        public VisitorAdapter (final T defaultValue)
             {
             m_defaultValue = defaultValue;
             }
 
-        /**
-         * {@inheritDoc}
-         */
-        public T visitDownloading
-                (final Downloading<DelegateStateT> state)
+        public T visitDownloading (final Downloading<DelegateStateT> state)
             {
             return m_defaultValue;
             }
 
-        /**
-         * {@inheritDoc}
-         */
-        public T visitSha1Mismatch
-                (final Sha1Mismatch<DelegateStateT> state)
+        public T visitSha1Mismatch (final Sha1Mismatch<DelegateStateT> state)
             {
             return m_defaultValue;
             }
 
-        /**
-         * {@inheritDoc}
-         */
-        public T visitVerifyingSha1
-                (final VerifyingSha1<DelegateStateT> state)
+        public T visitVerifyingSha1 (final VerifyingSha1<DelegateStateT> state)
             {
             return m_defaultValue;
             }
 
-        /**
-         * {@inheritDoc}
-         */
-        public T visitVerifiedSha1
-                (final VerifiedSha1<DelegateStateT> state)
+        public T visitVerifiedSha1 (final VerifiedSha1<DelegateStateT> state)
             {
             return m_defaultValue;
             }
@@ -138,53 +106,46 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
     /**
      * A state that indicates that the delegate downloader is downloading.
      * 
-     * @param <T>
-     *      The delegate state type.
+     * @param <T> The delegate state type.
      */
     public interface Downloading<T> extends Sha1DState<T>
         {
         /**
          * Returns the delegate downloader state.
          * 
-         * @return
-         *      The delegate downloader state.
+         * @return The delegate downloader state.
          */
-        T getDelegateState
-                ();
+        T getDelegateState ();
         }
     
     /**
      * A state that indicates the SHA-1 is in the process of being verified.
      * 
-     * @param <T>
-     *      The delegate state type.
+     * @param <T> The delegate state type.
      */
     public interface VerifyingSha1<T> extends Sha1DState<T> {}
     
     /**
      * A state that indicates the SHA-1 has been verified.
      * 
-     * @param <T>
-     *      The delegate state type.
+     * @param <T> The delegate state type.
      */
     public interface VerifiedSha1<T> extends Sha1DState<T> {}
     
     /**
      * A state that indicates the SHA-1 did not match the expected value.
      * 
-     * @param <T>
-     *      The delegate state type.
+     * @param <T> The delegate state type.
      */
     public interface Sha1Mismatch<T> extends Sha1DState<T> {}
 
     /**
      * An implementation of the downloading state.
      * 
-     * @param <T>
-     *      The delegate state type.
+     * @param <T> The delegate state type.
      */
     public class DownloadingImpl<T>
-            extends DownloaderState.AbstractRunning implements Downloading<T>
+        extends DownloaderState.AbstractRunning implements Downloading<T>
         {
         /**
          * The delegate state.
@@ -194,29 +155,19 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
         /**
          * Constructs a new state.
          * 
-         * @param delegateState
-         *      The delegate state.
+         * @param delegateState The delegate state.
          */
-        public DownloadingImpl
-                (final T delegateState)
+        public DownloadingImpl (final T delegateState)
             {
             m_delegateState = delegateState;
             }
         
-        /**
-         * {@inheritDoc}
-         */
-        public <ReturnT> ReturnT accept
-                (final Visitor<ReturnT,T> visitor)
+        public <ReturnT> ReturnT accept (final Visitor<ReturnT,T> visitor)
             {
             return visitor.visitDownloading (this);
             }
         
-        /**
-         * {@inheritDoc}
-         */
-        public T getDelegateState
-                ()
+        public T getDelegateState ()
             {
             return m_delegateState;
             }
@@ -226,8 +177,7 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
          */
         @Override
         @SuppressWarnings("unchecked")
-        public boolean equals
-                (final Object otherObject)
+        public boolean equals (final Object otherObject)
             {
             if (otherObject instanceof Downloading)
                 {
@@ -245,8 +195,7 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
     /**
      * An implementation of the verifying SHA-1 state.
      * 
-     * @param <T>
-     *      The delegate state type.
+     * @param <T> The delegate state type.
      */
     public class VerifyingSha1Impl<T>
             extends DownloaderState.AbstractRunning implements VerifyingSha1<T>
@@ -254,8 +203,7 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
         /**
          * {@inheritDoc}
          */
-        public <ReturnT> ReturnT accept
-                (final Visitor<ReturnT,T> visitor)
+        public <ReturnT> ReturnT accept (final Visitor<ReturnT,T> visitor)
             {
             return visitor.visitVerifyingSha1 (this);
             }
@@ -264,8 +212,7 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
          * {@inheritDoc}
          */
         @Override
-        public boolean equals
-                (final Object otherObject)
+        public boolean equals (final Object otherObject)
             {
             return otherObject instanceof VerifyingSha1;
             }
@@ -274,27 +221,19 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
     /**
      * An implementation of the verified SHA-1 state.
      * 
-     * @param <T>
-     *      The delegate state type.
+     * @param <T> The delegate state type.
      */
     public class VerifiedSha1Impl<T>
-            extends DownloaderState.AbstractSucceeded implements VerifiedSha1<T>
+        extends DownloaderState.AbstractSucceeded implements VerifiedSha1<T>
         {
-        /**
-         * {@inheritDoc}
-         */
-        public <ReturnT> ReturnT accept
-                (final Visitor<ReturnT,T> visitor)
+
+        public <ReturnT> ReturnT accept (final Visitor<ReturnT,T> visitor)
             {
             return visitor.visitVerifiedSha1 (this);
             }
         
-        /**
-         * {@inheritDoc}
-         */
         @Override
-        public boolean equals
-                (final Object otherObject)
+        public boolean equals (final Object otherObject)
             {
             return otherObject instanceof VerifiedSha1;
             }
@@ -303,27 +242,19 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
     /**
      * An implementation of the SHA-1 mismatch state.
      * 
-     * @param <T>
-     *      The delegate state type.
+     * @param <T> The delegate state type.
      */
     public class Sha1MismatchImpl<T>
-            extends DownloaderState.AbstractFailed implements Sha1Mismatch<T>
+        extends DownloaderState.AbstractFailed implements Sha1Mismatch<T>
         {
-        /**
-         * {@inheritDoc}
-         */
-        public <ReturnT> ReturnT accept
-                (final Visitor<ReturnT,T> visitor)
+
+        public <ReturnT> ReturnT accept (final Visitor<ReturnT,T> visitor)
             {
             return visitor.visitSha1Mismatch (this);
             }
         
-        /**
-         * {@inheritDoc}
-         */
         @Override
-        public boolean equals
-                (final Object otherObject)
+        public boolean equals (final Object otherObject)
             {
             return otherObject instanceof Sha1Mismatch;
             }
@@ -332,15 +263,11 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
     /**
      * Accepts a visitor to this state.
      * 
-     * @param <T>
-     *      The return type of the visitor.
+     * @param <T> The return type of the visitor.
      *      
-     * @param visitor
-     *      The visitor.
+     * @param visitor The visitor.
      *      
-     * @return
-     *      The result of the visitation.
+     * @return The result of the visitation.
      */
-    <T> T accept
-            (Visitor<T,DelegateStateT> visitor);
+    <T> T accept (Visitor<T,DelegateStateT> visitor);
     }

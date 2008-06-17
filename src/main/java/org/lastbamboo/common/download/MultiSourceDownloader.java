@@ -52,7 +52,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     private final SourceRanker m_downloadingRanker = 
         new SourceRankerImpl (new DownloadSpeedComparator ());
     
-    private final RateCalculator m_rateCalculator;
+    private final RateCalculator m_rateCalculator = new RateCalculatorImpl ();
     
     private final String m_sessionId;
     
@@ -169,8 +169,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         Assert.notNull (uri, "Null URI");
         Assert.notBlank (mimeType, "Null MIME type");
         
-        m_rateCalculator = new RateCalculatorImpl ();
-        
         m_sessionId = sessionId;
         m_file = file;
         m_finalName = file.getName();
@@ -247,18 +245,20 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         {
         m_failed = true;
         m_downloadingRanker.onFailed();
+        setState (MsDState.FAILED);
         }
     
     private void cancel ()
         {
         m_cancelled = true;
+        setState (MsDState.CANCELED);
         }
     
     private void connect (final Collection<URI> sources, 
         final SourceRanker downloadSpeedRanker, final int connectionsPerHost)
         {
         LOG.debug ("Attempting to connection to " + connectionsPerHost +
-                      " hosts..");
+            " hosts..");
         
         // Keep a counter of the number of hosts we've issued head requests to.
         // We don't want to send out 1000 head requests, for example, so we

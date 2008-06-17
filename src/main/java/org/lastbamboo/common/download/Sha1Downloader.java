@@ -135,11 +135,12 @@ public final class Sha1Downloader<DsT extends DownloaderState>
     private static <DsT> boolean isDownloading (final Sha1DState<DsT> state)
         {
         final Sha1DState.VisitorAdapter<Boolean,DsT> visitor =
-                new Sha1DState.VisitorAdapter<Boolean,DsT> (false)
+            new Sha1DState.VisitorAdapter<Boolean,DsT> (false)
             {
-            public Boolean visitDownloading (final Downloading<DsT> state)
+            @Override
+            public Boolean visitDownloading (final Downloading<DsT> downloading)
                 {
-                return true;
+                return Boolean.TRUE;
                 }
             };
             

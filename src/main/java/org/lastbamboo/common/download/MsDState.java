@@ -415,38 +415,37 @@ public interface MsDState extends DownloaderState
     /**
      * An instance of the idle state.
      */
-    public static final MsDState IDLE =
-            new IdleImpl ();
+    public static final MsDState IDLE = new IdleImpl ();
 
     /**
      * An instance of the getting sources state.
      */
-    public static final MsDState GETTING_SOURCES =
-        new GettingSourcesImpl ();
+    public static final MsDState GETTING_SOURCES = new GettingSourcesImpl ();
 
     /**
      * An instance of the complete state.
      */
-    public static final MsDState COMPLETE =
-            new CompleteImpl ();
+    public static final MsDState COMPLETE = new CompleteImpl ();
 
     /**
      * An instance of the canceled state.
      */
-    public static final MsDState CANCELED =
-            new CanceledImpl ();
+    public static final MsDState CANCELED = new CanceledImpl ();
 
     /**
      * An instance of the no sources available state.
      */
     public static final MsDState NO_SOURCES_AVAILABLE =
-            new NoSourcesAvailableImpl ();
+        new NoSourcesAvailableImpl ();
 
     /**
      * An instance of the could not determine sources state.
      */
     public static final MsDState COULD_NOT_DETERMINE_SOURCES =
-            new CouldNotDetermineSourcesImpl ();
+        new CouldNotDetermineSourcesImpl ();
 
+    /**
+     * Failed state.
+     */
     public static final MsDState FAILED = new FailedImpl();
     }
