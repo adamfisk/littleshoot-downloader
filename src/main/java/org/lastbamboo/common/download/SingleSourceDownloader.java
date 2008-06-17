@@ -73,6 +73,12 @@ public class SingleSourceDownloader implements RangeDownloader,
     private final CommonsHttpClient m_httpClient;
 
     /**
+     * Records the number of times this source has failed.  Sources can
+     * occasionally make recoverable failures, so we keep trying.
+     */
+    private volatile int m_numFailures = 0;
+
+    /**
      * Creates a downloader for downloading from a specific source.
      * 
      * @param httpClient The HTTP client instance to use for performing 
@@ -282,7 +288,7 @@ public class SingleSourceDownloader implements RangeDownloader,
         if (this.m_contentRange == null)
             {
             m_log.error("No content range provided");
-            this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
+            onFailure();
             return;
             }
         final long min = m_contentRange.getMinimumLong();
@@ -305,7 +311,8 @@ public class SingleSourceDownloader implements RangeDownloader,
 
     public void onCouldNotConnect()
         {
-        this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
+        m_log.debug("Received could not connect...");
+        onFailure();
         }
     
     public void onConnect(final long ms)
@@ -315,18 +322,25 @@ public class SingleSourceDownloader implements RangeDownloader,
 
     public void onFailure()
         {
+        m_log.debug("Received download failure");
         this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
+        this.m_numFailures++;
+        if (this.m_numFailures < 4)
+            {
+            this.m_sourceRanker.onAvailable(this);
+            }
         }
     
     public void onHttpException(final HttpException httpException)
         {
-        this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
+        m_log.debug("Received HTTP exception");
+        onFailure();
         }
 
     public void onNoTwoHundredOk(final int responseCode)
         {
         m_log.debug("No 200-level response...re-submitting range...");
-        this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
+        onFailure();
         }
     
     public void onMessageBodyRead()
@@ -348,8 +362,8 @@ public class SingleSourceDownloader implements RangeDownloader,
 
     public void onBadHeader(final String header)
         {
-        m_log.warn("Could not understand header: "+header);
-        this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
+        m_log.warn("Could not understand header: {}", header);
+        onFailure();
         }
 
     public void onContentRange(final LongRange range)
@@ -359,7 +373,7 @@ public class SingleSourceDownloader implements RangeDownloader,
             {
             m_log.error("Bad range -- expected: " +this.m_assignedRange+
                 " but was: "+range);
-            this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
+            onFailure();
             }
         this.m_contentRange = range;
         }
