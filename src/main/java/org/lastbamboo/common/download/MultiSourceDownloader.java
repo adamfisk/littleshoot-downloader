@@ -8,7 +8,6 @@ import java.io.RandomAccessFile;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -37,89 +36,6 @@ import org.slf4j.LoggerFactory;
 public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     implements Downloader<MsDState>
     {
-    
-    /**
-     * The listener we use for notification of events on single source
-     * downloaders.  We use one of these for all single downloads (as opposed to
-     * one each).
-     */
-    private final class SingleDownloadListener implements RangeDownloadListener
-        {
-        
-        public void onConnect (final RangeDownloader downloader)
-            {
-            LOG.debug ("Connected to: " + downloader);
-            
-            if (m_numConnections > CONNECTION_LIMIT)
-                {
-                LOG.debug ("We already have " + m_numConnections +
-                    " connections.  Ignoring new host...");
-                }
-            else if (m_numConnections >= m_rangeTracker.getNumChunks ())
-                {
-                LOG.debug ("We already have a downloader for every chunk!!");
-                }
-            else
-                {
-                m_uniqueSourceUris.add (downloader.getSourceUri ());
-                m_numConnections++;
-                
-                if (singleRangeDownload (downloader))
-                    {
-                    LOG.debug ("Completed download on connect...");
-                    }
-                }
-            }
-        
-        public void onDownloadFinished (final RangeDownloader downloader)
-            {
-            Assert.notNull (downloader, "Downloader is null");
-            synchronized (m_startTimes)
-                {
-                final long start = m_startTimes.remove (downloader);
-                final long end = System.currentTimeMillis ();
-                final long size = downloader.getNumBytesDownloaded ();
-            
-                final RateSegment segment = 
-                    new RateSegmentImpl (start, end - start, size);
-                
-                m_rateSegments.add (segment);
-                }
-            
-            if (isDownloading (m_state))
-                {
-                setState (new MsDState.DownloadingImpl (getKbs (),
-                    getNumUniqueHosts (), m_rangeTracker.getBytesRead()));
-                }
-            else
-                {
-                // We are not in the downloading state.  This is a stray
-                // notification.  Do nothing.
-                }
-            }
-
-        public void onDownloadStarted (final RangeDownloader downloader)
-            {
-            m_activeRangeDownloaders.add (downloader);
-            }
-
-        public void onFail(final RangeDownloader downloader)
-            {
-            LOG.debug("Received a range failure.");
-            m_uniqueFailedSourceUris.add (downloader.getSourceUri ());
-            final int remainingSources = 
-                m_sources.size() - m_uniqueFailedSourceUris.size();
-            if (remainingSources == 0)
-                {
-                MultiSourceDownloader.this.fail();
-                }
-            else
-                {
-                LOG.debug("Continuing download.  Sources remaining: {}", 
-                    m_sources.size());
-                }
-            }
-        }
     
     /**
      * The log for this class.
@@ -607,5 +523,89 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     public File getCompleteFile()
         {
         return this.m_completeFile;
+        }
+    
+    
+    /**
+     * The listener we use for notification of events on single source
+     * downloaders.  We use one of these for all single downloads (as opposed to
+     * one each).
+     */
+    private final class SingleDownloadListener implements RangeDownloadListener
+        {
+        
+        public void onConnect (final RangeDownloader downloader)
+            {
+            LOG.debug ("Connected to: " + downloader);
+            
+            if (m_numConnections > CONNECTION_LIMIT)
+                {
+                LOG.debug ("We already have " + m_numConnections +
+                    " connections.  Ignoring new host...");
+                }
+            else if (m_numConnections >= m_rangeTracker.getNumChunks ())
+                {
+                LOG.debug ("We already have a downloader for every chunk!!");
+                }
+            else
+                {
+                m_uniqueSourceUris.add (downloader.getSourceUri ());
+                m_numConnections++;
+                
+                if (singleRangeDownload (downloader))
+                    {
+                    LOG.debug ("Completed download on connect...");
+                    }
+                }
+            }
+        
+        public void onDownloadFinished (final RangeDownloader downloader)
+            {
+            Assert.notNull (downloader, "Downloader is null");
+            synchronized (m_startTimes)
+                {
+                final long start = m_startTimes.remove (downloader);
+                final long end = System.currentTimeMillis ();
+                final long size = downloader.getNumBytesDownloaded ();
+            
+                final RateSegment segment = 
+                    new RateSegmentImpl (start, end - start, size);
+                
+                m_rateSegments.add (segment);
+                }
+            
+            if (isDownloading (m_state))
+                {
+                setState (new MsDState.DownloadingImpl (getKbs (),
+                    getNumUniqueHosts (), m_rangeTracker.getBytesRead()));
+                }
+            else
+                {
+                // We are not in the downloading state.  This is a stray
+                // notification.  Do nothing.
+                }
+            }
+
+        public void onDownloadStarted (final RangeDownloader downloader)
+            {
+            m_activeRangeDownloaders.add (downloader);
+            }
+
+        public void onFail(final RangeDownloader downloader)
+            {
+            LOG.debug("Received a range failure.");
+            m_uniqueFailedSourceUris.add (downloader.getSourceUri ());
+            final int remainingSources = 
+                m_sources.size() - m_uniqueFailedSourceUris.size();
+            if (remainingSources == 0)
+                {
+                MultiSourceDownloader.this.fail();
+                }
+            else
+                {
+                LOG.debug("Continuing download.  Sources remaining: {}", 
+                    m_sources.size());
+                }
+            }
         }
     }
