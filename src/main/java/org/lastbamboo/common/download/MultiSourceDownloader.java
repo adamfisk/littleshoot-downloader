@@ -185,7 +185,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         final HttpConnectionManagerParams params = 
             this.m_httpClient.getHttpConnectionManager().getParams();
         params.setConnectionTimeout(40*1000);
-        params.setSoTimeout(6 * 1000);
+        params.setSoTimeout(12 * 1000);
         
         // We set this for now because our funky sockets sometimes can't 
         // handle the stale checking details.
