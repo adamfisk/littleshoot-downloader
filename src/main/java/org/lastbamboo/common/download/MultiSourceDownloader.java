@@ -40,7 +40,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     /**
      * The log for this class.
      */
-    private final Logger LOG = 
+    private final Logger m_log = 
         LoggerFactory.getLogger(MultiSourceDownloader.class);
     
     /**
@@ -185,7 +185,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         final HttpConnectionManagerParams params = 
             this.m_httpClient.getHttpConnectionManager().getParams();
         params.setConnectionTimeout(40*1000);
-        params.setSoTimeout(12 * 1000);
+        params.setSoTimeout(30 * 1000);
         
         // We set this for now because our funky sockets sometimes can't 
         // handle the stale checking details.
@@ -212,7 +212,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             }
         catch (final FileNotFoundException e)
             {
-            LOG.error ("Could not create file: " + file, e);
+            m_log.error ("Could not create file: " + file, e);
             throw new IllegalArgumentException ("Cannot create file: "+file);
             }
 
@@ -258,7 +258,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     private void connect (final Collection<URI> sources, 
         final SourceRanker downloadSpeedRanker, final int connectionsPerHost)
         {
-        LOG.debug ("Attempting to connection to " + connectionsPerHost +
+        m_log.debug ("Attempting to connection to " + connectionsPerHost +
             " hosts..");
         
         // Keep a counter of the number of hosts we've issued head requests to.
@@ -279,7 +279,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             
             for (int i = 0; i < connectionsPerHostToCreate; i++)
                 {
-                LOG.debug ("Creating connection...");
+                m_log.debug ("Creating connection...");
                 
                 final RangeDownloader dl = 
                     new SingleSourceDownloader (m_httpClient, uri,
@@ -311,11 +311,11 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             
             while (m_rangeTracker.hasMoreRanges () && !m_cancelled && !m_failed && !done)
                 {
-                LOG.debug ("Accessing next source...");
+                m_log.debug ("Accessing next source...");
                 
                 final RangeDownloader dl = m_downloadingRanker.getBestSource ();
             
-                LOG.debug ("Accessed source...downloading...");
+                m_log.debug ("Accessed source...downloading...");
                     
                 if (m_cancelled)
                     {
@@ -335,13 +335,13 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             if (m_failed)
                 {
                 setState (MsDState.FAILED);
-                LOG.debug ("The download failed");
+                m_log.debug ("The download failed");
                 }
             
             else if (m_cancelled)
                 {
                 setState (MsDState.CANCELED);
-                LOG.debug ("The download was cancelled");
+                m_log.debug ("The download was cancelled");
                 }
             }
         }
@@ -363,7 +363,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     
     private void handleDownloadComplete()
         {
-        LOG.debug ("Downloaded whole file...");
+        m_log.debug ("Downloaded whole file...");
         
         // First notify the launcher because it needs access to the open
         // random access file.
@@ -384,7 +384,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             }
         catch (final IOException e)
             {
-            LOG.warn ("Could not close file: " + m_randomAccessFile, e);
+            m_log.warn ("Could not close file: " + m_randomAccessFile, e);
             }
         
         setState (MsDState.COMPLETE);
@@ -399,7 +399,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         else
             {
             m_state = state;
-            LOG.debug ("Setting state to: " + state);
+            m_log.debug ("Setting state to: " + state);
             fireStateChanged (state);
             }
         }
@@ -422,7 +422,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 synchronized (m_startTimes)
                     {
                     m_startTimes.put (downloader, System.currentTimeMillis ());
-                    LOG.debug ("Downloading from downloader: " + downloader);
+                    m_log.debug ("Downloading from downloader: " + downloader);
                     downloader.download (range);
                     }
                 return Boolean.FALSE;
@@ -457,11 +457,11 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         {
         if (this.m_started)
             {
-            LOG.warn("Already started...");
+            m_log.warn("Already started...");
             return;
             }     
         m_started = true;
-        LOG.debug ("Resolving download sources...");
+        m_log.debug ("Resolving download sources...");
         setState (MsDState.GETTING_SOURCES);
         
         try
@@ -472,13 +472,13 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         catch (final IOException e)
             {
             // There was a problem resolving download sources.
-            LOG.warn("Error during download", e);
+            m_log.warn("Error during download", e);
             setState (MsDState.COULD_NOT_DETERMINE_SOURCES);
             return;
             }
         catch (final Throwable t)
             {
-            LOG.warn ("Unexpected throwable during download", t);
+            m_log.warn ("Unexpected throwable during download", t);
             setState (MsDState.FAILED);
             return;
             }
@@ -491,7 +491,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 }
             catch (final IOException e)
                 {
-                LOG.warn ("Could not close file: " + m_randomAccessFile, e);
+                m_log.warn ("Could not close file: " + m_randomAccessFile, e);
                 }
             }
         }
@@ -537,16 +537,16 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         
         public void onConnect (final RangeDownloader downloader)
             {
-            LOG.debug ("Connected to: " + downloader);
+            m_log.debug ("Connected to: " + downloader);
             
             if (m_numConnections > CONNECTION_LIMIT)
                 {
-                LOG.debug ("We already have " + m_numConnections +
+                m_log.debug ("We already have " + m_numConnections +
                     " connections.  Ignoring new host...");
                 }
             else if (m_numConnections >= m_rangeTracker.getNumChunks ())
                 {
-                LOG.debug ("We already have a downloader for every chunk!!");
+                m_log.debug ("We already have a downloader for every chunk!!");
                 }
             else
                 {
@@ -555,7 +555,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 
                 if (singleRangeDownload (downloader))
                     {
-                    LOG.debug ("Completed download on connect...");
+                    m_log.debug ("Completed download on connect...");
                     }
                 }
             }
@@ -594,7 +594,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
 
         public void onFail(final RangeDownloader downloader)
             {
-            LOG.debug("Received a range failure.");
+            m_log.debug("Received a range failure.");
             m_uniqueFailedSourceUris.add (downloader.getSourceUri ());
             final int remainingSources = 
                 m_sources.size() - m_uniqueFailedSourceUris.size();
@@ -604,7 +604,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 }
             else
                 {
-                LOG.debug("Continuing download.  Sources remaining: {}", 
+                m_log.debug("Continuing download.  Sources remaining: {}", 
                     m_sources.size());
                 }
             }
