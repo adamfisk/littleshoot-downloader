@@ -352,6 +352,10 @@ public class SingleSourceDownloader implements RangeDownloader,
         this.m_rangeTracker.onRangeComplete(this.m_assignedRange);
         
         this.m_completedRanges++;
+        if (this.m_numFailures > 0)
+            {
+            this.m_numFailures--;
+            }
         
         this.m_rangeDownloadListener.onDownloadFinished (this);
         
