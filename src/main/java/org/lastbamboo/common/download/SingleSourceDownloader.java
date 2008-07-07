@@ -297,10 +297,9 @@ public class SingleSourceDownloader implements RangeDownloader,
         // The number of bytes we expect to read from the stream.  This is
         // simply the number of bytes in the range for which we are responsible.
         final int expectedBytes = (int) ((max - min) + 1);
-        synchronized (this.m_randomAccessFile)
-            {
-            IoUtils.copy(is, this.m_randomAccessFile, min, expectedBytes);
-            }
+
+        // The copy method handles synchronizing the RAF.
+        IoUtils.copy(is, this.m_randomAccessFile, min, expectedBytes);
         } 
 
     public void onContentLength(final long contentLength)
