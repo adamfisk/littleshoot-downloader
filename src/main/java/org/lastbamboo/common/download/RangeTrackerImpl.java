@@ -18,11 +18,11 @@ import org.slf4j.LoggerFactory;
  */
 public class RangeTrackerImpl implements RangeTracker
     {
-    /**
-     * The maximum size of each range.
-     */
-    private static final long CHUNK_SIZE = 100000L;
     
+    private static final int MAX_CHUNK_SIZE = 1024 * 512;
+    
+    private static final int MIN_CHUNK_SIZE = 1024 * 50;
+
     /**
      * The set of active ranges.  These are ranges that are currently active but
      * may be returned to the inactive queue if they fail.
@@ -50,22 +50,47 @@ public class RangeTrackerImpl implements RangeTracker
      */
     private volatile long m_bytesRead;
 
+    private final int m_chunkSize;
+
     /**
      * Creates a new range tracker for a file of the specified size.
      * @param fileSize The size of the file we're downloading.
+     * @param numSources The number of sources for the download.
      */
-    public RangeTrackerImpl(final long fileSize)
+    public RangeTrackerImpl(final long fileSize, final int numSources)
         {
         m_log.debug("Creating queue for file size: " + fileSize);
         
-        // We need enough chunks to handle the full file size.
-        m_numChunks = (int) Math.ceil(fileSize/(double) CHUNK_SIZE);
+        // The logic here is to give each source a chunk but then to take
+        // into account that sources download at difference rates.  We 
+        // take a shot in the dark and say this could be a significant
+        // differential, and we just take a stab at it.  It's
+        // generally better to have too many chunks than too few, however,
+        // because a slow downloader can screw up the works more with larger
+        // chunks.  The ideal is to always dynamically determine the chunk 
+        // size, but we'll save that for later.
+        final int theoreticalChunkSize = 
+            (int) Math.ceil((fileSize/numSources)/10);
+        
+        // Make sure the chunk size isn't way too big...
+        final int upperCapChunkSize = 
+            Math.min(MAX_CHUNK_SIZE, theoreticalChunkSize);
+        // ..and make sure the chunk size isn't way too small.
+        final int lowerCapChunkSize = 
+            Math.max(upperCapChunkSize, MIN_CHUNK_SIZE);
+        
+        // Finally, make sure it's not bigger than the file.
+        this.m_chunkSize = (int) Math.min(fileSize, lowerCapChunkSize);
+        m_log.debug("Chunk size is: {}", this.m_chunkSize);
+        
+        m_numChunks = (int) Math.ceil(fileSize/m_chunkSize);
         
         m_log.debug("Creating a queue with " + m_numChunks + " chunks...");
         
         final Comparator<LongRange> rangeComparator = new LongRangeComparator();
         
-        m_inactive = new PriorityQueue<LongRange> (m_numChunks, rangeComparator);
+        m_inactive = 
+            new PriorityQueue<LongRange> (m_numChunks, rangeComparator);
         m_active = new HashSet<LongRange> ();
         
         long index = 0;
@@ -74,9 +99,9 @@ public class RangeTrackerImpl implements RangeTracker
             // If we are at the last chunk, our last chunk ends at the file
             // size.  Since the range is inclusive at both ends, we always
             // subtract 1 to get the maximum byte.
-            final long max = Math.min(fileSize - 1, index + CHUNK_SIZE - 1);
+            final long max = Math.min(fileSize - 1, index + m_chunkSize - 1);
             final LongRange curRange = new LongRange(index, max);
-            m_log.debug("Adding range: " + curRange);
+            //m_log.debug("Adding range: " + curRange);
             m_inactive.add (curRange);
             index = max + 1;
             }

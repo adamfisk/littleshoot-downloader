@@ -124,22 +124,22 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
      */
     private final RandomAccessFile m_randomAccessFile;
     
-    private final RangeTracker m_rangeTracker;
+    private RangeTracker m_rangeTracker;
     
-    private final LaunchFileTracker m_launchFileTracker;
+    private LaunchFileTracker m_launchFileTracker;
     
     /**
      * Variable for the number of hosts we've connected to and are actively
      * downloading from.
      */
-    private volatile int m_numConnections;
+    private volatile int m_numConnections = 0;
     
     /**
      * The current state of this downloader.
      */
-    private volatile MsDState m_state;
+    private volatile MsDState m_state = MsDState.IDLE;
     
-    private volatile boolean m_cancelled;
+    private volatile boolean m_cancelled = false;
 
     private final CommonsHttpClient m_httpClient =
         new CommonsHttpClientImpl();
@@ -153,7 +153,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     private Collection<URI> m_sources = Collections.emptyList();
 
     private volatile boolean m_failed = false;
-    
+
     /**
      * Constructs a new downloader.
      * 
@@ -176,9 +176,9 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         m_size = size;
         m_contentType = mimeType;
         m_uriResolver = uriResolver;
-        m_connectionsPerHost = connectionsPerHost;        
+        m_connectionsPerHost = connectionsPerHost;    
         final HttpMethodRetryHandler retryHandler = 
-            new DefaultHttpMethodRetryHandler(0, false);
+            new DefaultHttpMethodRetryHandler(1, false);
         this.m_httpClient.getParams().setParameter(
             HttpMethodParams.RETRY_HANDLER, retryHandler);
         
@@ -200,15 +200,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         try
             {
             m_randomAccessFile = new RandomAccessFile (file, "rw");
-            m_rangeTracker = new RangeTrackerImpl (size);
-            final int numChunks = m_rangeTracker.getNumChunks ();
-            m_launchFileTracker = 
-                new LaunchFileDispatcher (file, m_randomAccessFile, numChunks,
-                    expectedSha1);
-            
-            m_numConnections = 0;
-            m_state = MsDState.IDLE;
-            m_cancelled = false;
             }
         catch (final FileNotFoundException e)
             {
@@ -217,6 +208,65 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             }
 
         m_completeFile = new File (downloadsDir, m_finalName);
+        
+        m_log.debug ("Resolving download sources...");
+        setState (MsDState.GETTING_SOURCES);
+        
+        try
+            {
+            this.m_sources = m_uriResolver.resolve (m_uri);
+            m_rangeTracker = 
+                new RangeTrackerImpl (size, this.m_sources.size());
+            final int numChunks = m_rangeTracker.getNumChunks ();
+            m_launchFileTracker = 
+                new LaunchFileDispatcher (file, m_randomAccessFile, 
+                    numChunks, expectedSha1);
+            }
+        catch (final IOException e)
+            {
+            // There was a problem resolving download sources.
+            m_log.warn("Error during download", e);
+            setState (MsDState.COULD_NOT_DETERMINE_SOURCES);
+            return;
+            }
+        catch (final Throwable t)
+            {
+            m_log.warn ("Unexpected throwable during download", t);
+            setState (MsDState.FAILED);
+            }
+        }
+ 
+    public void start ()
+        {
+        if (this.m_started)
+            {
+            m_log.warn("Already started...");
+            return;
+            }     
+        m_started = true;
+        
+        try
+            {
+            download (m_sources);
+            }
+        catch (final Throwable t)
+            {
+            m_log.warn ("Unexpected throwable during download", t);
+            setState (MsDState.FAILED);
+            return;
+            }
+        finally 
+            {
+            // Make sure we close the file.
+            try
+                {
+                m_randomAccessFile.close ();
+                }
+            catch (final IOException e)
+                {
+                m_log.warn ("Could not close file: " + m_randomAccessFile, e);
+                }
+            }
         }
     
     /**
@@ -232,6 +282,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         final MsDState.Visitor<Boolean> visitor =
             new MsDState.VisitorAdapter<Boolean> (false)
             {
+            @Override
             public Boolean visitDownloading (final MsDState.Downloading state)
                 {
                 return true;
@@ -453,49 +504,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         return m_state;
         }
 
-    public void start ()
-        {
-        if (this.m_started)
-            {
-            m_log.warn("Already started...");
-            return;
-            }     
-        m_started = true;
-        m_log.debug ("Resolving download sources...");
-        setState (MsDState.GETTING_SOURCES);
-        
-        try
-            {
-            this.m_sources = m_uriResolver.resolve (m_uri);
-            download (m_sources);
-            }
-        catch (final IOException e)
-            {
-            // There was a problem resolving download sources.
-            m_log.warn("Error during download", e);
-            setState (MsDState.COULD_NOT_DETERMINE_SOURCES);
-            return;
-            }
-        catch (final Throwable t)
-            {
-            m_log.warn ("Unexpected throwable during download", t);
-            setState (MsDState.FAILED);
-            return;
-            }
-        finally 
-            {
-            // Make sure we close the file.
-            try
-                {
-                m_randomAccessFile.close ();
-                }
-            catch (final IOException e)
-                {
-                m_log.warn ("Could not close file: " + m_randomAccessFile, e);
-                }
-            }
-        }
-    
     public boolean isStarted()
         {
         return this.m_started;

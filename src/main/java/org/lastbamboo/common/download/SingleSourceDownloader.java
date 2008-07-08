@@ -299,7 +299,8 @@ public class SingleSourceDownloader implements RangeDownloader,
         final int expectedBytes = (int) ((max - min) + 1);
 
         // The copy method handles synchronizing the RAF.
-        IoUtils.copy(is, this.m_randomAccessFile, min, expectedBytes);
+        IoUtils.copy(is, this.m_randomAccessFile, min, expectedBytes, 
+            this.m_launchFileTracker);
         } 
 
     public void onContentLength(final long contentLength)
@@ -347,7 +348,7 @@ public class SingleSourceDownloader implements RangeDownloader,
         m_log.debug("Read message body!!");
         this.m_completedTime = System.currentTimeMillis();
         m_log.info ("Completed time recorded as: " + m_completedTime);
-        this.m_launchFileTracker.onRangeComplete(this.m_assignedRange);
+        //this.m_launchFileTracker.onRangeComplete(this.m_assignedRange);
         this.m_rangeTracker.onRangeComplete(this.m_assignedRange);
         
         this.m_completedRanges++;

@@ -3,13 +3,13 @@ package org.lastbamboo.common.download;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.apache.commons.lang.math.LongRange;
+import org.lastbamboo.common.util.LongRangeListener;
 
 
 /**
  * Tracker for the file to launch for immediate viewing.
  */
-public interface LaunchFileTracker
+public interface LaunchFileTracker extends LongRangeListener
     {
 
     /**
@@ -21,13 +21,6 @@ public interface LaunchFileTracker
      */
     void write(OutputStream os, boolean cancelOnStreamClose) throws IOException;
 
-    /**
-     * Called when a specific range is complete.
-     * 
-     * @param range The completed range.
-     */
-    void onRangeComplete(LongRange range);
-    
     /**
      * Called when the file download has completed.
      */

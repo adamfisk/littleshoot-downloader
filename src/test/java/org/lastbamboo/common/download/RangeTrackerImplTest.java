@@ -127,15 +127,14 @@ public class RangeTrackerImplTest extends TestCase
         final long size = 41021L;
         final File testFile = new File("testFile");
         testFile.deleteOnExit();
-        final RangeTracker rt = new RangeTrackerImpl(size);
+        final RangeTracker rt = new RangeTrackerImpl(size, 1);
         
         final Optional<LongRange> oRange = rt.getNextRange();
         
         final OptionalVisitor<Void,LongRange> visitor =
                 new OptionalVisitor<Void,LongRange> ()
             {
-            public Void visitNone
-                    (final None<LongRange> none)
+            public Void visitNone (final None<LongRange> none)
                 {
                 return null;
                 }

@@ -7,14 +7,13 @@ import java.io.RandomAccessFile;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.DigestOutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.concurrent.PriorityBlockingQueue;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.math.LongRange;
 import org.lastbamboo.common.util.Base32;
+import org.lastbamboo.common.util.Sha1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +78,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
     
     public void onRangeComplete(final LongRange range)
         {
+        m_log.debug("Got range complete: {}", range);
         synchronized (this.m_completedRanges)
             {   
             //m_log.debug("Adding completed range: "+range);
@@ -109,17 +109,8 @@ public class DownloadingFileLauncher implements LaunchFileTracker
     public void write(final OutputStream os, final boolean cancelOnStreamClose) 
         throws IOException
         {
-        MessageDigest digest = null;
-        try
-            {
-            digest = MessageDigest.getInstance("SHA-1");
-            }
-        catch (final NoSuchAlgorithmException e)
-            {
-            m_log.error("No SHA-1??", e);
-            throw new IllegalStateException("Need a message digest");
-            }
-        this.m_digestOutputStream = new DigestOutputStream(os, digest);
+        // Our SHA-1 implementation is much faster than Sun's.
+        this.m_digestOutputStream = new DigestOutputStream(os, new Sha1());
         try
             {
             writeAllRanges(this.m_digestOutputStream);
@@ -287,6 +278,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                     m_log.warn("Unexpected number of bytes read.  Expected "+
                         curChunkSize+" but was "+numBytesRead);
                     }
+                //m_log.debug("Writing bytes...");
                 os.write(bytesToCopy);
                 index += numBytesRead;
                 }
