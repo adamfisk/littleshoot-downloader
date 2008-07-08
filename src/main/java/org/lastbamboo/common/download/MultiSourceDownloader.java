@@ -178,7 +178,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         m_uriResolver = uriResolver;
         m_connectionsPerHost = connectionsPerHost;    
         final HttpMethodRetryHandler retryHandler = 
-            new DefaultHttpMethodRetryHandler(1, false);
+            new DefaultHttpMethodRetryHandler(0, false);
         this.m_httpClient.getParams().setParameter(
             HttpMethodParams.RETRY_HANDLER, retryHandler);
         
