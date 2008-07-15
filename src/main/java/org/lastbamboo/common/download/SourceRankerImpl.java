@@ -1,9 +1,7 @@
 package org.lastbamboo.common.download;
 
 import java.net.URI;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.concurrent.PriorityBlockingQueue;
 
 import org.apache.commons.lang.math.LongRange;
@@ -21,9 +19,6 @@ public class SourceRankerImpl implements SourceRanker
     private final Logger m_log = LoggerFactory.getLogger(getClass()); 
     
     private final PriorityBlockingQueue<RangeDownloader> m_sources;
-    
-    private final Collection<RangeDownloader> m_uniqueDownloaders =
-        new HashSet<RangeDownloader>();
     
     /**
      * Creates a new ranker.
@@ -44,12 +39,7 @@ public class SourceRankerImpl implements SourceRanker
         {
         try
             {
-            final RangeDownloader rd = this.m_sources.take();
-            if (rd != null)
-                {
-                this.m_uniqueDownloaders.remove(rd);
-                }
-            return rd;
+            return this.m_sources.take();
             }
         catch (final InterruptedException e)
             {
@@ -62,21 +52,6 @@ public class SourceRankerImpl implements SourceRanker
         {
         m_log.debug("New source available: {}", downloader);
         this.m_sources.add(downloader);
-        
-        /*
-        synchronized (this.m_uniqueDownloaders)
-            {
-            if (this.m_uniqueDownloaders.contains(downloader))
-                {
-                m_log.warn("We already have the downloader!! {}", downloader);
-                }
-            else
-                {
-                this.m_uniqueDownloaders.add(downloader);
-                this.m_sources.add(downloader);
-                }
-            }
-            */
         }
 
     public void onFailed()

@@ -27,7 +27,6 @@ import org.lastbamboo.common.util.None;
 import org.lastbamboo.common.util.Optional;
 import org.lastbamboo.common.util.OptionalVisitor;
 import org.lastbamboo.common.util.Some;
-import org.lastbamboo.common.util.ThreadUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
