@@ -19,9 +19,16 @@ import org.slf4j.LoggerFactory;
 public class RangeTrackerImpl implements RangeTracker
     {
     
+    
+    /**
+     * The logger for this class.
+     */
+    private final Logger m_log = 
+        LoggerFactory.getLogger (RangeTrackerImpl.class);
+    
     private static final int MAX_CHUNK_SIZE = 1024 * 512;
     
-    private static final int MIN_CHUNK_SIZE = 1024 * 50;
+    private static final int MIN_CHUNK_SIZE = 1024 * 100;
 
     /**
      * The set of active ranges.  These are ranges that are currently active but
@@ -33,12 +40,6 @@ public class RangeTrackerImpl implements RangeTracker
      * The queue of inactive ranges.
      */
     private final Queue<LongRange> m_inactive;
-    
-    /**
-     * The logger for this class.
-     */
-    private final Logger m_log = 
-        LoggerFactory.getLogger (RangeTrackerImpl.class);
 
     /**
      * The total number of chunks being tracked.
@@ -168,6 +169,7 @@ public class RangeTrackerImpl implements RangeTracker
      */
     public void onRangeComplete (final LongRange range)
         {
+        m_log.debug ("Range complete: {}", range);
         synchronized (this)
             {
             if (m_active.contains (range))
@@ -179,9 +181,13 @@ public class RangeTrackerImpl implements RangeTracker
                 }
             else
                 {
-                m_log.error("Nothing known about range!!");
-                throw new RuntimeException
-                        ("Range '" + range + "' is unknown to this tracker");
+                //m_log.error("Nothing known about range: "+range+
+                  //  "  Actively downloading: {}", this.m_active);
+                m_log.error("Nothing known about range: "+range+
+                    "\nActively downloading: " + this.m_active + 
+                    "\nWaiting:              " + this.m_inactive);
+                throw new RuntimeException("Range '" + range + 
+                    "' is unknown to this tracker");
                 }
             }
         }
@@ -191,7 +197,7 @@ public class RangeTrackerImpl implements RangeTracker
      */
     public void onRangeFailed (final LongRange range)
         {
-        m_log.debug ("Range ' " + range + "' failed");
+        m_log.debug ("Range failed: {}", range);
         
         synchronized (this)
             {
@@ -204,9 +210,11 @@ public class RangeTrackerImpl implements RangeTracker
                 }
             else
                 {
-                m_log.error("Nothing known about range!!");
-                throw new RuntimeException
-                        ("Range '" + range + "' is unknown to this tracker");
+                m_log.error("Nothing known about range: "+range+
+                    "\nActively downloading: " + this.m_active + 
+                    "\nWaiting:              " + this.m_inactive);
+                throw new RuntimeException("Range '" + range + 
+                    "' is unknown to this tracker");
                 }
             }
         }

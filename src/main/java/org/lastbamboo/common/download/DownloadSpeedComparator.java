@@ -9,7 +9,7 @@ import org.lastbamboo.common.util.Some;
 
 /**
  * Comparator that compares downloaders based on their speed.  Faster 
- * downloaders are preferenced over slower ones.
+ * downloaders are preferred over slower ones.
  */
 public class DownloadSpeedComparator implements Comparator<RangeDownloader>
     {
@@ -17,26 +17,21 @@ public class DownloadSpeedComparator implements Comparator<RangeDownloader>
      * Returns a canonical integer for comparison from an optional kilobytes
      * per second value.
      * 
-     * @param kbs
-     *      The optional kilobytes per second value.
+     * @param kbs The optional kilobytes per second value.
      *      
-     * @return
-     *      A canonical integer for comparison.
+     * @return A canonical integer for comparison.
      */
-    private static int canonicalize
-            (final Optional<Integer> kbs)
+    private static int canonicalize (final Optional<Integer> kbs)
         {
         final OptionalVisitor<Integer,Integer> visitor =
-                new OptionalVisitor<Integer,Integer> ()
+            new OptionalVisitor<Integer,Integer> ()
             {
-            public Integer visitSome
-                    (final Some<Integer> some)
+            public Integer visitSome (final Some<Integer> some)
                 {
                 return some.object ();
                 }
             
-            public Integer visitNone
-                    (final None<Integer> none)
+            public Integer visitNone (final None<Integer> none)
                 {
                 // We use -1 for unknown values to make sure that they are less
                 // than all real values.  All real values are >= 0.
@@ -50,9 +45,7 @@ public class DownloadSpeedComparator implements Comparator<RangeDownloader>
     /**
      * {@inheritDoc}
      */
-    public int compare
-            (final RangeDownloader dl0,
-             final RangeDownloader dl1)
+    public int compare (final RangeDownloader dl0, final RangeDownloader dl1)
         {
         // The ordering goes from faster to slower.
         

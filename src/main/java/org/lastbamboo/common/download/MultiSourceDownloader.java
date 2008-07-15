@@ -27,6 +27,7 @@ import org.lastbamboo.common.util.None;
 import org.lastbamboo.common.util.Optional;
 import org.lastbamboo.common.util.OptionalVisitor;
 import org.lastbamboo.common.util.Some;
+import org.lastbamboo.common.util.ThreadUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -269,43 +270,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             }
         }
     
-    /**
-     * Returns whether a given state indicates that we are downloading.
-     * 
-     * @param state The state.
-     *      
-     * @return True if the state indicates that we are downloading, false
-     *  otherwise.
-     */
-    private static boolean isDownloading (final MsDState state)
-        {
-        final MsDState.Visitor<Boolean> visitor =
-            new MsDState.VisitorAdapter<Boolean> (false)
-            {
-            @Override
-            public Boolean visitDownloading (final MsDState.Downloading state)
-                {
-                return true;
-                }
-            };
-            
-        return state.accept (visitor);
-        }
-    
-    private void fail ()
-        {
-        m_failed = true;
-        m_downloadingRanker.onFailed();
-        setState (MsDState.FAILED);
-        m_launchFileTracker.onFailure();
-        }
-    
-    private void cancel ()
-        {
-        m_cancelled = true;
-        setState (MsDState.CANCELED);
-        }
-    
     private void connect (final Collection<URI> sources, 
         final SourceRanker downloadSpeedRanker, final int connectionsPerHost)
         {
@@ -523,6 +487,44 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 }
             }
         }
+    
+    
+    /**
+     * Returns whether a given state indicates that we are downloading.
+     * 
+     * @param state The state.
+     *      
+     * @return True if the state indicates that we are downloading, false
+     *  otherwise.
+     */
+    private static boolean isDownloading (final MsDState state)
+        {
+        final MsDState.Visitor<Boolean> visitor =
+            new MsDState.VisitorAdapter<Boolean> (false)
+            {
+            @Override
+            public Boolean visitDownloading (final MsDState.Downloading state)
+                {
+                return true;
+                }
+            };
+            
+        return state.accept (visitor);
+        }
+    
+    private void fail ()
+        {
+        m_failed = true;
+        m_downloadingRanker.onFailed();
+        setState (MsDState.FAILED);
+        m_launchFileTracker.onFailure();
+        }
+    
+    private void cancel ()
+        {
+        m_cancelled = true;
+        setState (MsDState.CANCELED);
+        }
 
     public String getFinalName()
         {
@@ -570,10 +572,14 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         
         public void onDownloadFinished (final RangeDownloader downloader)
             {
-            Assert.notNull (downloader, "Downloader is null");
+            //Assert.notNull (downloader, "Downloader is null");
+            if (downloader == null)
+                {
+                throw new NullPointerException("Null downloader!!!");
+                }
             synchronized (m_startTimes)
                 {
-                final long start = m_startTimes.remove (downloader);
+                final Long start = m_startTimes.remove (downloader);
                 final long end = System.currentTimeMillis ();
                 final long size = downloader.getNumBytesDownloaded ();
             

@@ -6,6 +6,7 @@ import java.io.RandomAccessFile;
 import java.net.URI;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpStatus;
@@ -16,6 +17,7 @@ import org.apache.commons.lang.math.LongRange;
 import org.lastbamboo.common.http.client.CommonsHttpClient;
 import org.lastbamboo.common.http.client.HttpClientRunner;
 import org.lastbamboo.common.http.client.HttpListener;
+import org.lastbamboo.common.http.client.NoContentRangeException;
 import org.lastbamboo.common.http.client.RuntimeHttpException;
 import org.lastbamboo.common.util.InputStreamHandler;
 import org.lastbamboo.common.util.IoUtils;
@@ -176,8 +178,11 @@ public class SingleSourceDownloader implements RangeDownloader,
 
     private void sendHeadRequest()
         {
+        // Note for HTTP requests we can often see duplicate
+        // requests/downloaders for the same URI.  That's because we maintain
+        // 2 connection to the same host to speed things up.
         final String uri = this.m_uri.toString();
-        m_log.debug("Sending request to URI: "+uri);
+        m_log.debug("Sending request to URI: {}", uri);
         final HeadMethod method = new HeadMethod(uri);
         try
             {
@@ -191,7 +196,11 @@ public class SingleSourceDownloader implements RangeDownloader,
             else if (statusCode == HttpStatus.SC_PARTIAL_CONTENT)
                 {
                 method.releaseConnection();
-                this.m_rangeDownloadListener.onConnect(this);
+                final Header range = method.getResponseHeader ("Content-Range");
+                if (range != null)
+                    {
+                    this.m_rangeDownloadListener.onConnect(this);
+                    }
                 }
             else
                 {
@@ -246,7 +255,7 @@ public class SingleSourceDownloader implements RangeDownloader,
             // completed time to be at least one millisecond greater than the
             // connected time to make sure we do not get this infinity.
             final long safeCompletedTime =
-                    Math.max (m_completedTime, m_startedTime + 1);
+                Math.max (m_completedTime, m_startedTime + 1);
             
             final long downloadMs = safeCompletedTime - m_startedTime;
             
@@ -287,9 +296,12 @@ public class SingleSourceDownloader implements RangeDownloader,
         // It's possible the server never provided a content range.
         if (this.m_contentRange == null)
             {
-            m_log.error("No content range provided");
-            onFailure();
-            return;
+            m_log.error("No Content-Range header from: {} ...expecting: " + 
+                this.m_assignedRange, this.m_uri);
+            
+            // We don't notify of failure because the exception eventually
+            // triggers the failure notification.
+            throw new NoContentRangeException("No content range");
             }
         final long min = m_contentRange.getMinimumLong();
         final long max = m_contentRange.getMaximumLong();
@@ -322,13 +334,19 @@ public class SingleSourceDownloader implements RangeDownloader,
 
     public void onFailure()
         {
-        m_log.debug("Received download failure");
+        m_log.debug("Received download failure number: "+this.m_numFailures+
+            " for: "+this);
         this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
         this.m_numFailures++;
         if (this.m_numFailures < 4)
             {
             this.m_sourceRanker.onAvailable(this);
             }
+        }
+    
+    public void onPermanentFailure()
+        {
+        this.m_rangeTracker.onRangeFailed(this.m_assignedRange);
         }
     
     public void onHttpException(final HttpException httpException)
@@ -370,14 +388,15 @@ public class SingleSourceDownloader implements RangeDownloader,
         onFailure();
         }
 
-    public void onContentRange(final LongRange range)
+    public void onContentRange(final LongRange range) throws IOException
         {
         m_log.debug("Received Content-Range: "+range);
         if (!range.equals (m_assignedRange))
             {
-            m_log.error("Bad range -- expected: " +this.m_assignedRange+
-                " but was: "+range);
-            onFailure();
+            final String msg = "Bad range -- expected: " +this.m_assignedRange+
+                " but was: "+range; 
+            m_log.error(msg);
+            throw new IOException(msg);
             }
         this.m_contentRange = range;
         }
@@ -404,6 +423,11 @@ public class SingleSourceDownloader implements RangeDownloader,
     public String toString()
         {
         return getClass().getSimpleName() + " with "+this.m_completedRanges + 
-            " completed ranges for: "+this.m_uri;
+            " completed ranges for: "+this.m_uri+"-"+hashCode();
         }
+
+    // We don't override hashCode and equals here because we can have multiple
+    // downloaders for a single URI to optimize HTTP connections.  Since some
+    // of our data structures are sets, overriding hashCode and equals would
+    // cause problems with those "duplicate" downloaders.
     }
