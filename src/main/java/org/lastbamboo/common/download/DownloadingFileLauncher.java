@@ -352,7 +352,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             if (this.m_expectedSha1 == null)
                 {
                 // This can happen during tests.
-                m_log.warn("Null expected SHA-1.  Testing?");
+                m_log.debug("Null expected SHA-1.  Testing?");
                 }
             else if (!this.m_expectedSha1.equals(sha1))
                 {

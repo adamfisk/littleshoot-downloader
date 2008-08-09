@@ -1,12 +1,9 @@
 package org.lastbamboo.common.download;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URI;
 
 import org.lastbamboo.common.download.Sha1DState.Downloading;
-import org.lastbamboo.common.util.Sha1Hasher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,11 +13,10 @@ import org.slf4j.LoggerFactory;
  * 
  * @param <DsT> The state type of the delegate downloader.
  */
-public final class Sha1Downloader<DsT extends DownloaderState>
-        extends AbstractDownloader<Sha1DState<DsT>>
-        implements Downloader<Sha1DState<DsT>>
+public final class DummySha1Downloader<DsT extends DownloaderState>
+    extends AbstractDownloader<Sha1DState<DsT>>
+    implements Downloader<Sha1DState<DsT>>
     {
-    
     /**
      * The logger for this class.
      */
@@ -30,11 +26,6 @@ public final class Sha1Downloader<DsT extends DownloaderState>
      * The delegate downloader whose download product's SHA-1 is checked.
      */
     private final Downloader<DsT> m_delegate;
-    
-    /**
-     * The expected SHA-1 of the resource downloaded by the delegate downloader.
-     */
-    private final URI m_expectedSha1;
 
     /**
      * The current state of this downloader.
@@ -69,15 +60,12 @@ public final class Sha1Downloader<DsT extends DownloaderState>
      * Constructs a new downloader.
      * 
      * @param delegate The delegate downloader.
-     * @param expectedSha1 The expected SHA-1 of the resource downloaded by the 
-     *  delegate downloader.
      * @param expectedSize The expected size of the file.
      */
-    public Sha1Downloader (final Downloader<DsT> delegate,
-        final URI expectedSha1, final long expectedSize)
+    public DummySha1Downloader (final Downloader<DsT> delegate,
+        final long expectedSize)
         {
         m_delegate = delegate;
-        m_expectedSha1 = expectedSha1;
         m_expectedSize = expectedSize;
         m_state = new Sha1DState.DownloadingImpl<DsT> (m_delegate.getState ());
         m_delegate.addListener (new DelegateListener ());
@@ -151,10 +139,7 @@ public final class Sha1Downloader<DsT extends DownloaderState>
      */
     private class DelegateListener implements DownloaderListener<DsT>
         {        
-        
-        /**
-         * {@inheritDoc}
-         */
+
         public void stateChanged (final DsT state)
             {
             m_log.debug ("(state, type) == (" + state + ", " + state.getType () +
@@ -190,7 +175,6 @@ public final class Sha1Downloader<DsT extends DownloaderState>
          */
         private void downloadComplete ()
             {
-            setState (new Sha1DState.VerifyingSha1Impl<DsT> ());
             final File file = m_delegate.getIncompleteFile ();
 
             // First just make sure the size is correct.
@@ -203,28 +187,7 @@ public final class Sha1Downloader<DsT extends DownloaderState>
                 }
             else
                 {
-                try
-                    {
-                    final URI sha1 = Sha1Hasher.createSha1Urn(file);
-                    
-                    if (sha1.equals(m_expectedSha1))
-                        {
-                        setState (new Sha1DState.VerifiedSha1Impl<DsT> ());
-                        }
-                    else
-                        {
-                        m_log.warn ("The downloaded file is corrupt.  Expected: "+
-                                     m_expectedSha1 + " but was: " + sha1);
-                        
-                        setState (new Sha1DState.Sha1MismatchImpl<DsT> ());
-                        }
-                    }
-                catch (final IOException e)
-                    {
-                    m_log.warn ("Could not create SHA-1 for file: " + file);
-                        
-                    setState (new Sha1DState.Sha1MismatchImpl<DsT> ());
-                    }
+                setState (new Sha1DState.VerifiedSha1Impl<DsT> ());
                 }
             }
         }
