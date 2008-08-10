@@ -423,7 +423,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         final Optional<LongRange> oRange = m_rangeTracker.getNextRange ();
         
         final OptionalVisitor<Boolean,LongRange> visitor =
-                new OptionalVisitor<Boolean,LongRange> ()
+            new OptionalVisitor<Boolean,LongRange> ()
             {
             public Boolean visitNone (final None<LongRange> none)
                 {
@@ -436,14 +436,14 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 synchronized (m_startTimes)
                     {
                     m_startTimes.put (downloader, System.currentTimeMillis ());
-                    m_log.debug ("Downloading from downloader: " + downloader);
+                    m_log.debug ("Downloading from downloader: {}", downloader);
                     downloader.download (range);
                     }
                 return Boolean.FALSE;
                 }
             };
             
-        return oRange.accept (visitor);
+        return oRange.accept (visitor).booleanValue();
         }
     
     public String getContentType ()
@@ -499,16 +499,16 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     private static boolean isDownloading (final MsDState state)
         {
         final MsDState.Visitor<Boolean> visitor =
-            new MsDState.VisitorAdapter<Boolean> (false)
+            new MsDState.VisitorAdapter<Boolean> (Boolean.FALSE)
             {
             @Override
             public Boolean visitDownloading (final MsDState.Downloading state)
                 {
-                return true;
+                return Boolean.TRUE;
                 }
             };
             
-        return state.accept (visitor);
+        return state.accept (visitor).booleanValue();
         }
     
     private void fail ()
