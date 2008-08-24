@@ -47,6 +47,11 @@ public class DownloadingFileLauncher implements LaunchFileTracker
     private volatile boolean m_streamClosed = false;
 
     private volatile boolean m_failed = false;
+
+    /**
+     * Flag for whether or not the not download is stopped.
+     */
+    private volatile boolean m_stopped;
     
     
     /**
@@ -106,7 +111,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
         }
     
     public void write(final OutputStream os, final boolean cancelOnStreamClose) 
-        throws IOException
+        throws IOException 
         {
         // Our SHA-1 implementation is much faster than Sun's.
         this.m_digestOutputStream = new DigestOutputStream(os, new Sha1());
@@ -126,6 +131,10 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             {
             m_log.warn("Throwable streaming file: " + 
                 this.m_incompleteFile.getName(), t);
+            }
+        finally
+            {
+            IOUtils.closeQuietly(this.m_digestOutputStream);
             }
         }
 
@@ -195,7 +204,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                         //m_log.debug("Ranges: {}", this.m_completedRanges);
                         this.m_completedRanges.wait();
                         
-                        if (this.m_failed)
+                        if (this.m_failed || this.m_stopped)
                             {
                             m_log.debug("Download failed...");
                             os.flush();
@@ -317,16 +326,16 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                     }
                 }
             }
-        m_log.debug("Returning from file complete notification...");
         
         verifySha1();
+        m_log.debug("Returning from file complete notification...");
         }
 
     private void verifySha1()
         {
         synchronized (m_completedRanges)
             {
-            while (!m_writtenAll)
+            while (!m_writtenAll && !m_stopped)
                 {
                 try
                     {
@@ -339,6 +348,11 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                 }
             }
         
+        if (m_stopped)
+            {
+            m_log.debug("Download stopped!");
+            return;
+            }
         final byte[] sha1Bytes = 
             this.m_digestOutputStream.getMessageDigest().digest();
 
@@ -381,6 +395,26 @@ public class DownloadingFileLauncher implements LaunchFileTracker
     public void waitForLaunchersToComplete()
         {
         // Effectively a NO-OP in this case.
+        }
+
+    public void onDownloadStopped()
+        {
+        if (done())
+            {
+            m_log.debug("Already finished.");
+            return;
+            }
+        this.m_streamClosed = true;
+        synchronized (this.m_completedRanges)
+            {
+            this.m_completedRanges.notifyAll();
+            }
+        
+        this.m_stopped = true;
+        if (this.m_digestOutputStream != null)
+            {
+            IOUtils.closeQuietly(this.m_digestOutputStream);
+            }
         }
 
     }

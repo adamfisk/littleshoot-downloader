@@ -92,4 +92,9 @@ public interface Downloader<StateT>
      * @return The final name for the file.
      */
     String getFinalName();
+
+    /**
+     * Stops the download.
+     */
+    void stop();
     }

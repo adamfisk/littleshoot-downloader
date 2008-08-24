@@ -179,12 +179,15 @@ public class LaunchFileDispatcher implements LaunchFileTracker
         {
         final PriorityBlockingQueue<LongRange> completedRanges = createQueue();
         final LaunchFileTracker tracker;
-        synchronized (this.m_completedRanges)
+        synchronized (this.m_trackers)
             {
-            completedRanges.addAll(this.m_completedRanges);
-            tracker = new DownloadingFileLauncher(this.m_randomAccessFile, 
-                completedRanges, this.m_expectedSha1, this.m_incompleteFile);
-            this.m_trackers.add(tracker);
+            synchronized (this.m_completedRanges)
+                {
+                completedRanges.addAll(this.m_completedRanges);
+                tracker = new DownloadingFileLauncher(this.m_randomAccessFile, 
+                    completedRanges, this.m_expectedSha1, this.m_incompleteFile);
+                this.m_trackers.add(tracker);
+                }
             }
 
         tracker.write(os, cancelOnStreamClose);
@@ -238,5 +241,16 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                 tracker.onFailure();
                 }
             }
+        }
+
+    public void onDownloadStopped()
+        {
+        synchronized (this.m_trackers)
+        {
+        for (final LaunchFileTracker tracker : this.m_trackers)
+            {
+            tracker.onDownloadStopped();
+            }
+        }
         }
     }

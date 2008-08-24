@@ -139,7 +139,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
      */
     private volatile MsDState m_state = MsDState.IDLE;
     
-    private volatile boolean m_cancelled = false;
+    private volatile boolean m_stopped = false;
 
     private final CommonsHttpClient m_httpClient =
         new CommonsHttpClientImpl();
@@ -323,7 +323,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             
             boolean done = false;
             
-            while (m_rangeTracker.hasMoreRanges () && !m_cancelled && !m_failed && !done)
+            while (m_rangeTracker.hasMoreRanges () && !m_stopped && !m_failed && !done)
                 {
                 m_log.debug ("Accessing next source...");
                 
@@ -331,7 +331,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             
                 m_log.debug ("Accessed source...downloading...");
                     
-                if (m_cancelled)
+                if (m_stopped)
                     {
                     done = true;
                     }
@@ -352,7 +352,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 m_log.debug ("The download failed");
                 }
             
-            else if (m_cancelled)
+            else if (m_stopped)
                 {
                 setState (MsDState.CANCELED);
                 m_log.debug ("The download was cancelled");
@@ -482,7 +482,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             {
             if (m_launchFileTracker.getActiveWriteCalls() == 1)
                 {
-                cancel ();
+                stop ();
                 }
             }
         }
@@ -519,10 +519,22 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         m_launchFileTracker.onFailure();
         }
     
-    private void cancel ()
+    public void stop ()
         {
-        m_cancelled = true;
+        m_stopped = true;
         setState (MsDState.CANCELED);
+
+        // Note we don't manually clean up the single source downloaders here
+        // because they just complete their current operation and stop.  They
+        // don't really hold on to resources.
+        try
+            {
+            this.m_randomAccessFile.close();
+            }
+        catch (final IOException e)
+            {
+            m_log.debug("Error closing file.  Already closed?", e);
+            }
         }
 
     public String getFinalName()

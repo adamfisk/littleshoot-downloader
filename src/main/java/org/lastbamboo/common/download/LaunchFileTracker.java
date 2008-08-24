@@ -44,4 +44,9 @@ public interface LaunchFileTracker extends LongRangeListener
      */
     void onFailure();
 
+    /**
+     * Called when a download is stopped.
+     */
+    void onDownloadStopped();
+
     }

@@ -201,6 +201,10 @@ public class SingleSourceDownloader implements RangeDownloader,
                     {
                     this.m_rangeDownloadListener.onConnect(this);
                     }
+                else
+                    {
+                    this.m_rangeDownloadListener.onFail(this);
+                    }
                 }
             else
                 {

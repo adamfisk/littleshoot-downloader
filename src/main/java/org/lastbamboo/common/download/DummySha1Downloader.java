@@ -114,6 +114,11 @@ public final class DummySha1Downloader<DsT extends DownloaderState>
         m_delegate.start ();
         }
  
+    public void stop()
+        {
+        this.m_delegate.stop();
+        }
+    
     public boolean isStarted ()
         {
         return m_delegate.isStarted();
