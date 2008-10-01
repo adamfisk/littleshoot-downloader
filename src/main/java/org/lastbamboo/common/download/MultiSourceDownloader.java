@@ -167,7 +167,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         Assert.notBlank (sessionId, "Null session ID");
         Assert.notNull (file, "Null file");
         Assert.notNull (uri, "Null URI");
-        Assert.notBlank (mimeType, "Null MIME type");
         
         m_sessionId = sessionId;
         m_file = file;
