@@ -48,6 +48,28 @@
                         </excludes>
                     </configuration>
                 </plugin>
+            <plugin>
+                <groupId>org.lastbamboo</groupId>
+                <artifactId>lastbamboo-maven-plugin</artifactId>
+                <!--
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>osxapp</goal>
+                            </goals>
+                        </execution>
+                    </executions> -->
+                <configuration>
+                    <bundleName>LittleShoot</bundleName>
+                    <mainClass>
+                        org.lastbamboo.common.download.LaunchFileDispatcher
+                        </mainClass>
+                    <javaArgs>
+			<param>-XX:+HeapDumpOnOutOfMemoryError</param>
+			</javaArgs>
+                    </configuration>
+                </plugin>
             </plugins>
         </build>
     </project>
