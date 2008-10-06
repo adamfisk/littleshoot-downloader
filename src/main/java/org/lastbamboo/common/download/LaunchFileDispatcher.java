@@ -292,9 +292,20 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                 this.m_completedRanges.add(range);
                 }
             }
+        //System.out.println("All: "+this.m_completedRanges);
         notifyTrackers(range);
         }
 
+    /**
+     * Used for testing.
+     * 
+     * @return The available ranges.
+     */
+    public Collection<LongRange> getRanges()
+        {
+        return this.m_completedRanges;
+        }
+    
     private void notifyTrackers(final LongRange range)
         {
         synchronized (this.m_trackers)

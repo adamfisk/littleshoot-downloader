@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.net.URI;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang.math.LongRange;
@@ -27,10 +28,10 @@ public class LaunchFileDispatcherTest
             new LaunchFileDispatcher (file, raf, numChunks, sha1);
 
         final long oneMillion = 1000000;
-        final long limit = oneMillion * 10;
+        final long limit = oneMillion * 1;
         
         
-        final boolean[] bits = new boolean[10000000];
+        final boolean[] bits = new boolean[(int) limit];
         for (final boolean bit : bits)
             {
             // dummy check.
@@ -82,5 +83,9 @@ public class LaunchFileDispatcherTest
             {
             assertTrue(bit);
             }
+        
+        final Collection<LongRange> completedRanges = launchFileTracker.getRanges();
+        
+        assertEquals("Should only be 1 range", 1, completedRanges.size());
         }
     }
