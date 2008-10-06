@@ -209,30 +209,34 @@ public class LaunchFileDispatcher implements LaunchFileTracker
 
     public void onRangeComplete(final LongRange range)
         {
-        
-        /*
-        synchronized (this.m_trackers)
+        //onRangeCompleteVanilla(range);
+        onRangeCompleteOptimized(range);
+        }
+    
+    private void onRangeCompleteVanilla(LongRange range)
         {
-             
-        
-        for (final LaunchFileTracker tracker : this.m_trackers)
+        synchronized (this.m_trackers)
             {
-            //m_log.debug("Notifying all trackers of completed range...");
-                 
-                 // We need to add a range to the global dispatcher range queue
-                 // because new writers might come along and need to know 
-                 // what has already been written.  Note this is just the ranges
-                 // and doesn't take much memory.
-                 synchronized (m_completedRanges)
-                     {
-                     this.m_completedRanges.add(range);
-                     }
-            tracker.onRangeComplete(range);
-            //m_log.debug("Finished range notify...");
+            for (final LaunchFileTracker tracker : this.m_trackers)
+                {
+                //m_log.debug("Notifying all trackers of completed range...");
+                     
+                     // We need to add a range to the global dispatcher range queue
+                     // because new writers might come along and need to know 
+                     // what has already been written.  Note this is just the ranges
+                     // and doesn't take much memory.
+                     synchronized (m_completedRanges)
+                         {
+                         this.m_completedRanges.add(range);
+                         }
+                tracker.onRangeComplete(range);
+                //m_log.debug("Finished range notify...");
+                }
             }
         }
-        */
-
+    
+    private void onRangeCompleteOptimized(final LongRange range)
+        {
         // We need to add a range to the global dispatcher range queue
         // because new writers might come along and need to know 
         // what has already been written.  Note this is just the ranges
@@ -266,7 +270,6 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                     {
                     final LongRange nextRange = iter.next();
                     //System.out.println("Comparing "+nextRange.getMinimumLong()+" to "+this.m_rangeIndex);
-                    //System.out.println("All: "+this.m_completedRanges);
                     if (nextRange.getMinimumLong() == this.m_rangeIndex)
                         {
                         //System.out.println("Match---removing...");
@@ -281,6 +284,7 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                     }
                 
                 // Now add back the larger start range.
+                
                 this.m_completedRanges.add(new LongRange(0L, this.m_rangeIndex - 1));
                 }
             else
@@ -288,11 +292,9 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                 this.m_completedRanges.add(range);
                 }
             }
-        
         notifyTrackers(range);
-        
         }
-    
+
     private void notifyTrackers(final LongRange range)
         {
         synchronized (this.m_trackers)
