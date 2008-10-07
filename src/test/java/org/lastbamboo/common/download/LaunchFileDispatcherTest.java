@@ -28,7 +28,7 @@ public class LaunchFileDispatcherTest
             new LaunchFileDispatcher (file, raf, numChunks, sha1);
 
         final long oneMillion = 1000000;
-        final long limit = oneMillion * 1;
+        final long limit = oneMillion * 10;
         
         
         final boolean[] bits = new boolean[(int) limit];
@@ -62,7 +62,7 @@ public class LaunchFileDispatcherTest
             {
             final LongRange lr = new LongRange(i*1000, i*1000 + 999);
             
-            if (i % 1000 == 0)
+            if (i % 100 == 0)
                 {
                 if (missingLink != null)
                     {

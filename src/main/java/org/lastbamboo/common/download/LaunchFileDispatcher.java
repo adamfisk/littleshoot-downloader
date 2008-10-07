@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.math.LongRange;
@@ -243,6 +244,7 @@ public class LaunchFileDispatcher implements LaunchFileTracker
         // and doesn't take much memory.
         synchronized (m_completedRanges)
             {
+            
             // This is an optimization to avoid OutOfMemoryErrors, which 
             // we've seen with very large files.  We basically do a cheap
             // consolidation of contiguous blocks at the beginning of the queue.
@@ -257,53 +259,36 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                 
                 // We don't do it the first time because then it's a
                 // legitimate range, not one of our consolidated ones.
-                if (this.m_rangeIndex != 0)
+                if (this.m_rangeIndex != 0L)
                     {
                     m_completedRanges.poll();
-                    //notifyTrackers(first);
                     }
                 
-                this.m_rangeIndex = range.getMaximumLong() + 1;
-                for (final Iterator<LongRange> iter = 
-                    this.m_completedRanges.iterator(); 
-                    iter.hasNext();)
+                this.m_rangeIndex = range.getMaximumLong() + 1L;
+                while (!this.m_completedRanges.isEmpty())
                     {
-                    final LongRange nextRange = iter.next();
-                    //System.out.println("Comparing "+nextRange.getMinimumLong()+" to "+this.m_rangeIndex);
+                    final LongRange nextRange = this.m_completedRanges.peek();
                     if (nextRange.getMinimumLong() == this.m_rangeIndex)
                         {
-                        //System.out.println("Match---removing...");
-                        this.m_rangeIndex = nextRange.getMaximumLong() + 1;
-                        iter.remove();
+                        this.m_rangeIndex = nextRange.getMaximumLong() + 1L;
+                        this.m_completedRanges.remove();
                         }
                     else
                         {
-                        //System.out.println("Breaking....");
                         break;
                         }
                     }
-                
                 // Now add back the larger start range.
-                
-                this.m_completedRanges.add(new LongRange(0L, this.m_rangeIndex - 1));
+                final LongRange startRange = 
+                    new LongRange(0L, this.m_rangeIndex - 1L);
+                this.m_completedRanges.add(startRange);
                 }
             else
                 {
                 this.m_completedRanges.add(range);
                 }
             }
-        //System.out.println("All: "+this.m_completedRanges);
         notifyTrackers(range);
-        }
-
-    /**
-     * Used for testing.
-     * 
-     * @return The available ranges.
-     */
-    public Collection<LongRange> getRanges()
-        {
-        return this.m_completedRanges;
         }
     
     private void notifyTrackers(final LongRange range)
@@ -320,6 +305,16 @@ public class LaunchFileDispatcher implements LaunchFileTracker
             }
         }
 
+
+    /**
+     * Used for testing.
+     * 
+     * @return The available ranges.
+     */
+    public Collection<LongRange> getRanges()
+        {
+        return this.m_completedRanges;
+        }
     /**
      * For testing.
      * 
