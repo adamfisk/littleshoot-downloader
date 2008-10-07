@@ -281,16 +281,16 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                     new LongRange(0L, this.m_rangeIndex - 1L);
                 this.m_completedRanges.add(startRange);
                 
-                final LongRange newRange = new LongRange(range.getMinimumLong(), 
-                    startRange.getMaximumLong());
-                notifyTrackers(newRange);
+                //final LongRange newRange = new LongRange(range.getMinimumLong(), 
+                  //  startRange.getMaximumLong());
+                //notifyTrackers(newRange);
                 }
             else
                 {
                 this.m_completedRanges.add(range);
                 }
             }
-        //notifyTrackers(range);
+        notifyTrackers(range);
         }
     
     private void notifyTrackers(final LongRange range)
