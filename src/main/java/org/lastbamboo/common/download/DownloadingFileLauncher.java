@@ -151,16 +151,14 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             // First, determine how much we can write now.
             synchronized (this.m_completedRanges)
                 {
-                for (final Iterator<LongRange> iter = 
-                    this.m_completedRanges.iterator(); 
-                    iter.hasNext();)
+                while (!this.m_completedRanges.isEmpty())
                     {
                     //LOG.debug("Incrementing index for range...");
-                    final LongRange nextRange = iter.next();
+                    final LongRange nextRange = this.m_completedRanges.peek();
                     if (nextRange.getMinimumLong() == this.m_rangeIndex)
                         {
                         this.m_rangeIndex = nextRange.getMaximumLong() + 1;
-                        iter.remove();
+                        this.m_completedRanges.remove();
                         }
                     else
                         {

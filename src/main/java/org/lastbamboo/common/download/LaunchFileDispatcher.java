@@ -10,10 +10,8 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.math.LongRange;
@@ -282,13 +280,17 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                 final LongRange startRange = 
                     new LongRange(0L, this.m_rangeIndex - 1L);
                 this.m_completedRanges.add(startRange);
+                
+                final LongRange newRange = new LongRange(range.getMinimumLong(), 
+                    startRange.getMaximumLong());
+                notifyTrackers(newRange);
                 }
             else
                 {
                 this.m_completedRanges.add(range);
                 }
             }
-        notifyTrackers(range);
+        //notifyTrackers(range);
         }
     
     private void notifyTrackers(final LongRange range)
