@@ -24,6 +24,7 @@ public class LaunchFileDispatcherTest
         {
         final File file = 
             File.createTempFile(getClass().getSimpleName(), ".tmp");
+        file.deleteOnExit();
         final RandomAccessFile raf = new RandomAccessFile (file, "rw");
         final URI sha1 = new URI("urn:sha1:42930jIRU08r0820");
         final int numChunks = 10000000;
