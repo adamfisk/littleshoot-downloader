@@ -202,7 +202,7 @@ public class LaunchFileDispatcher implements LaunchFileTracker
                 this.m_trackers.add(tracker);
                 }
             }
-
+        
         tracker.write(os, cancelOnStreamClose);
         }
 
@@ -212,7 +212,7 @@ public class LaunchFileDispatcher implements LaunchFileTracker
         onRangeCompleteOptimized(range);
         }
     
-    private void onRangeCompleteVanilla(LongRange range)
+    private void onRangeCompleteVanilla(final LongRange range)
         {
         synchronized (this.m_trackers)
             {
