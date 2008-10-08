@@ -479,10 +479,27 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             }
         catch (final IOException e)
             {
-            if (m_launchFileTracker.getActiveWriteCalls() == 1)
+            // This will typically be an exception from the servlet 
+            // container indicating the user has closed the browser window, 
+            // such as a  Jetty EofException.  Other cases can also 
+            // cause this however.  A great example is Safari QuickTime 
+            // files where Safari hands off downloading to QuickTime when
+            // it gets a Content Type header for a file type QuickTime 
+            // handles.  QuickTime will then send another HTTP request, 
+            // and Safari will close the initial connection.  
+            //
+            // The key here is we should only propagate the exception
+            // (indicating we should cancel the download) when this is the 
+            // last active writer.  If it's not, we just swallow this 
+            // exception.
+            if (m_launchFileTracker.getActiveWriteCalls() == 0)
                 {
                 stop ();
                 }
+            }
+        catch (final Throwable t)
+            {
+            m_log.error("Throwable writing file.", t);
             }
         }
     
