@@ -55,10 +55,15 @@ public class SingleSourceTest extends TestCase
         
         final UriResolver resolver = new UriResolver ()
             {
-            public Collection<URI> resolve
-                    (final URI uri) throws IOException
+            public Collection<URI> resolve (final URI uri) throws IOException
                 {
                 return uris;
+                }
+
+            public URI getSha1()
+                {
+                // TODO Auto-generated method stub
+                return null;
                 }
             };
         

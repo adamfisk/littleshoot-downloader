@@ -7,7 +7,6 @@ import java.io.RandomAccessFile;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.DigestOutputStream;
-import java.util.Iterator;
 import java.util.concurrent.PriorityBlockingQueue;
 
 import org.apache.commons.io.IOUtils;

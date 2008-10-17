@@ -22,4 +22,11 @@ public interface UriResolver
      */
     Collection<URI> resolve(final URI uri) throws IOException;
 
+    /**
+     * Accesses the SHA-1 for the resource this resolved just looked up.
+     * 
+     * @return The SHA-1 for the resource.
+     */
+    URI getSha1();
+
     }

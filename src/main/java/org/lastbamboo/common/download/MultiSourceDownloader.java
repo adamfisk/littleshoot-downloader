@@ -214,12 +214,21 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         try
             {
             this.m_sources = m_uriResolver.resolve (m_uri);
+            final URI expectedSha1ToUse;
+            if (expectedSha1 ==  null)
+                {
+                expectedSha1ToUse = expectedSha1;
+                }
+            else
+                {
+                expectedSha1ToUse = this.m_uriResolver.getSha1();
+                }
             m_rangeTracker = 
                 new RangeTrackerImpl (size, this.m_sources.size());
             final int numChunks = m_rangeTracker.getNumChunks ();
             m_launchFileTracker = 
                 new LaunchFileDispatcher (file, m_randomAccessFile, 
-                    numChunks, expectedSha1);
+                    numChunks, expectedSha1ToUse);
             }
         catch (final IOException e)
             {
