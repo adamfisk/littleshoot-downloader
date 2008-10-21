@@ -527,7 +527,8 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             new MsDState.VisitorAdapter<Boolean> (Boolean.FALSE)
             {
             @Override
-            public Boolean visitDownloading (final MsDState.Downloading state)
+            public Boolean visitDownloading (
+                final MsDState.Downloading downloadingState)
                 {
                 return Boolean.TRUE;
                 }
@@ -615,7 +616,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 }
             synchronized (m_startTimes)
                 {
-                final Long start = m_startTimes.remove (downloader);
+                final long start = m_startTimes.remove (downloader).longValue();
                 final long end = System.currentTimeMillis ();
                 final long size = downloader.getNumBytesDownloaded ();
             
