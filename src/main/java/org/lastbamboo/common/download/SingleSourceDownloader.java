@@ -107,6 +107,13 @@ public class SingleSourceDownloader implements RangeDownloader,
         this.m_launchFileTracker = launchTracker;
         this.m_randomAccessFile = randomAccessFile;
         this.m_httpClient = httpClient;
+        if (!this.m_uri.toString().startsWith("http://"))
+            {
+            final HttpMethodRetryHandler retryHandler = 
+                new DefaultHttpMethodRetryHandler(0, false);
+            this.m_httpClient.getParams().setParameter(
+                HttpMethodParams.RETRY_HANDLER, retryHandler);
+            }
         this.m_numBytesDownloaded = 0L;
         }
     
@@ -120,16 +127,6 @@ public class SingleSourceDownloader implements RangeDownloader,
         final GetMethod method = new GetMethod(this.m_uri.toString());
         method.getParams().setBooleanParameter(
             HttpMethodParams.WARN_EXTRA_INPUT, true);
-        
-        // Revert to default config if it's a public web server.
-        if (this.m_uri.toString().startsWith("http://"))
-            {
-            // Override the default of attempting to connect 3 times.
-            final HttpMethodRetryHandler retryHandler = 
-                new DefaultHttpMethodRetryHandler();
-            method.getParams().setParameter(
-                HttpMethodParams.RETRY_HANDLER, retryHandler);
-            }
         
         // See RFC 2616 section 14.35.1 - "Byte Ranges"
         final String rangesSpecifier = 
