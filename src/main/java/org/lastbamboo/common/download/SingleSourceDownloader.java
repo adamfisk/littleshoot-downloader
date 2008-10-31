@@ -164,6 +164,7 @@ public class SingleSourceDownloader implements RangeDownloader,
                 catch (final Throwable t)
                     {
                     m_log.error("Unexpected throwable.", t);
+                    m_rangeDownloadListener.onFail(SingleSourceDownloader.this);
                     }
                 }
             };
