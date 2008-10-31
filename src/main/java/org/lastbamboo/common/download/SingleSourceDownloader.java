@@ -185,6 +185,7 @@ public class SingleSourceDownloader implements RangeDownloader,
         try
             {
             this.m_httpClient.executeMethod(method);
+            m_log.debug("Finished executing method for HEAD request...");
             final int statusCode = method.getStatusCode ();
             if (statusCode == HttpStatus.SC_OK)
                 {
