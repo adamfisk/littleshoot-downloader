@@ -23,10 +23,17 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
          * Visits a downloading state.
          * 
          * @param state The state.
-         *      
          * @return The result of the visitation.
          */
         T visitDownloading (Downloading<DelegateStateT> state);
+        
+        /**
+         * Visits a failed state.
+         * 
+         * @param state The state.
+         * @return The result of the visitation.
+         */
+        T visitFailed (Failed<DelegateStateT> state);
         
         /**
          * Visits a moving state.
@@ -82,6 +89,11 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
             {
             return m_defaultValue;
             }
+        
+        public T visitFailed (final Failed<DelegateStateT> state)
+            {
+            return m_defaultValue;
+            }
 
         public T visitMoving (final Moving<DelegateStateT> state)
             {
@@ -105,6 +117,20 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
      * @param <T> The delegate state type.
      */
     public interface Downloading<T> extends MoverDState<T>
+        {
+        /**
+         * Returns the delegate downloader state.
+         * @return The delegate downloader state.
+         */
+        T getDelegateState ();
+        }
+    
+    /**
+     * A state that indicates that the delegate downloader has failed.
+     * 
+     * @param <T> The delegate state type.
+     */
+    public interface Failed<T> extends MoverDState<T>
         {
         /**
          * Returns the delegate downloader state.
@@ -179,6 +205,59 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
             if (otherObject instanceof Downloading)
                 {
                 final Downloading other = (Downloading) otherObject;
+                
+                return other.getDelegateState ().equals (m_delegateState);
+                }
+            else
+                {
+                return false;
+                }
+            }
+        }
+    
+    /**
+     * An implementation of the failed state.
+     * 
+     * @param <T> The delegate state type.
+     */
+    public class FailedImpl<T>
+            extends DownloaderState.AbstractFailed implements Failed<T>
+        {
+        /**
+         * The delegate state.
+         */
+        private final T m_delegateState;
+        
+        /**
+         * Constructs a new state.
+         * 
+         * @param delegateState The delegate state.
+         */
+        public FailedImpl (final T delegateState)
+            {
+            m_delegateState = delegateState;
+            }
+        
+        public <ReturnT> ReturnT accept (final Visitor<ReturnT,T> visitor)
+            {
+            return visitor.visitFailed (this);
+            }
+        
+        public T getDelegateState ()
+            {
+            return m_delegateState;
+            }
+        
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        @SuppressWarnings("unchecked")
+        public boolean equals (final Object otherObject)
+            {
+            if (otherObject instanceof Failed)
+                {
+                final Failed other = (Failed) otherObject;
                 
                 return other.getDelegateState ().equals (m_delegateState);
                 }

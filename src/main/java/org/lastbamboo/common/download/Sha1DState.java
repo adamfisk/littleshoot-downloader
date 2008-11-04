@@ -1,5 +1,6 @@
 package org.lastbamboo.common.download;
 
+
 /**
  * The state for the SHA-1 verifying downloader.  This downloader delegates to
  * a delegate downloader and verifies that the SHA-1 hash of the file downloaded
@@ -20,6 +21,7 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
      */
     public interface Visitor<T,DelegateStateT>
         {
+        
         /**
          * Visits a downloading state.
          * 
@@ -28,6 +30,15 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
          * @return The result of the visitation.
          */
         T visitDownloading (Downloading<DelegateStateT> state);
+        
+        /**
+         * Visits a downloading state.
+         * 
+         * @param state The state.
+         *      
+         * @return The result of the visitation.
+         */
+        T visitFailed (Failed<DelegateStateT> state);
         
         /**
          * Visits a verifying SHA-1 state.
@@ -86,6 +97,11 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
             {
             return m_defaultValue;
             }
+        
+        public T visitFailed (final Failed<DelegateStateT> state)
+            {
+            return m_defaultValue;
+            }
 
         public T visitSha1Mismatch (final Sha1Mismatch<DelegateStateT> state)
             {
@@ -119,6 +135,21 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
         }
     
     /**
+     * A state that indicates that the delegate downloader has failed.
+     * 
+     * @param <T> The delegate state type.
+     */
+    public interface Failed<T> extends Sha1DState<T>
+        {
+        /**
+         * Returns the delegate downloader state.
+         * 
+         * @return The delegate downloader state.
+         */
+        T getDelegateState ();
+        }
+    
+    /**
      * A state that indicates the SHA-1 is in the process of being verified.
      * 
      * @param <T> The delegate state type.
@@ -139,6 +170,59 @@ public interface Sha1DState<DelegateStateT> extends DownloaderState
      */
     public interface Sha1Mismatch<T> extends Sha1DState<T> {}
 
+    /**
+     * An implementation of the failed state.
+     * 
+     * @param <T> The delegate state type.
+     */
+    public class FailedImpl<T>
+        extends DownloaderState.AbstractFailed implements Failed<T>
+        {
+        /**
+         * The delegate state.
+         */
+        private final T m_delegateState;
+        
+        /**
+         * Constructs a new state.
+         * 
+         * @param delegateState The delegate state.
+         */
+        public FailedImpl (final T delegateState)
+            {
+            m_delegateState = delegateState;
+            }
+        
+        public <ReturnT> ReturnT accept (final Visitor<ReturnT,T> visitor)
+            {
+            return visitor.visitFailed(this);
+            }
+        
+        public T getDelegateState ()
+            {
+            return m_delegateState;
+            }
+        
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        @SuppressWarnings("unchecked")
+        public boolean equals (final Object otherObject)
+            {
+            if (otherObject instanceof Failed)
+                {
+                final Failed other = (Failed) otherObject;
+                
+                return other.getDelegateState ().equals (m_delegateState);
+                }
+            else
+                {
+                return false;
+                }
+            }
+        }
+    
     /**
      * An implementation of the downloading state.
      * 
