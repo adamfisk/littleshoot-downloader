@@ -12,7 +12,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
@@ -114,7 +116,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
      * The collection of rate segments that we use to calculate our download
      * rate.
      */
-    private final Collection<RateSegment> m_rateSegments =
+    private final List<RateSegment> m_rateSegments =
         Collections.synchronizedList(new LinkedList<RateSegment> ());
     
     /**
@@ -623,7 +625,14 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 final RateSegment segment = 
                     new RateSegmentImpl (start, end - start, size);
                 
-                m_rateSegments.add (segment);
+                synchronized (m_rateSegments)
+                    {
+                    if (m_rateSegments.size() > 200)
+                        {
+                        m_rateSegments.remove(0);
+                        }
+                    m_rateSegments.add (segment);
+                    }
                 }
             
             if (isDownloading (m_state))
