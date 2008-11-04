@@ -280,9 +280,8 @@ public class SingleSourceDownloader implements RangeDownloader,
 
     public void handleInputStream(final InputStream is) throws IOException
         {
+        m_log.debug("Handling input stream -- copying to file and stream.");
         copy(is);
-        
-        m_numBytesDownloaded = m_contentLength;
         }
     
     /**
@@ -368,8 +367,11 @@ public class SingleSourceDownloader implements RangeDownloader,
         {
         m_log.debug("Read message body!!");
         this.m_completedTime = System.currentTimeMillis();
+        m_numBytesDownloaded = m_contentLength;
         m_log.info ("Completed time recorded as: " + m_completedTime);
-        //this.m_launchFileTracker.onRangeComplete(this.m_assignedRange);
+        
+        // This is notifying the class that just keeps track of ranges we 
+        // need. This is NOT the class that streams the file to the browser.
         this.m_rangeTracker.onRangeComplete(this.m_assignedRange);
         
         this.m_completedRanges++;
