@@ -25,6 +25,7 @@ import org.lastbamboo.common.util.NoneImpl;
 import org.lastbamboo.common.util.Optional;
 import org.lastbamboo.common.util.RuntimeIoException;
 import org.lastbamboo.common.util.SomeImpl;
+import org.lastbamboo.common.util.WriteListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -281,6 +282,9 @@ public class SingleSourceDownloader implements RangeDownloader,
     public void handleInputStream(final InputStream is) throws IOException
         {
         m_log.debug("Handling input stream -- copying to file and stream.");
+        
+        // We reset the bytes downloaded with each new HTTP method body read.
+        m_numBytesDownloaded = 0;
         copy(is);
         }
     
@@ -312,9 +316,20 @@ public class SingleSourceDownloader implements RangeDownloader,
         // simply the number of bytes in the range for which we are responsible.
         final int expectedBytes = (int) ((max - min) + 1);
 
+        // We create an anonymous class here because there's a method naming
+        // class with HttpClientListener.
+        final WriteListener writeListener = new WriteListener()
+            {
+            public void onBytesRead(final int bytesRead)
+                {
+                m_log.debug("Adding bytes read...");
+                m_numBytesDownloaded +=bytesRead;
+                }
+            
+            };
         // The copy method handles synchronizing the RAF.
         IoUtils.copy(is, this.m_randomAccessFile, min, expectedBytes, 
-            this.m_launchFileTracker);
+            this.m_launchFileTracker, writeListener);
         } 
 
     public void onContentLength(final long contentLength)
