@@ -1,11 +1,15 @@
 package org.lastbamboo.common.download;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * The state for the multi-source downloader.
  */
 public interface MsDState extends DownloaderState
     {
+        
     /**
      * A visitor for a multi-source downloader state.
      * 
@@ -248,30 +252,26 @@ public interface MsDState extends DownloaderState
     public class DownloadingImpl
         extends DownloaderState.AbstractRunning implements Downloading
         {
-        /**
-         * The speed of the downloading in kilobytes per second.
-         */
-        private final double m_kbs;
         
         /**
          * The number of sources used by the download.
          */
         private final int m_numSources;
 
-        private final long m_bytesRead;
+        private final RateCalculator m_rateCalculator;
 
         /**
          * Constructs a new downloading state.
          * 
-         * @param kbs The speed of the downloading n kilobytes per second.
+         * @param rateCalculator The class that calculates the download rate
+         * and bytes read.
          * @param numSources The number of sources used by the download.
          */
-        public DownloadingImpl (final double kbs, final int numSources,
-            final long bytesRead)
+        public DownloadingImpl (final RateCalculator rateCalculator, 
+            final int numSources)
             {
-            m_kbs = kbs;
-            m_numSources = numSources;
-            this.m_bytesRead = bytesRead;
+            this.m_rateCalculator = rateCalculator;
+            this.m_numSources = numSources;
             }
         
         public <T> T accept (final Visitor<T> visitor)
@@ -281,7 +281,7 @@ public interface MsDState extends DownloaderState
         
         public double getKbs ()
             {
-            return m_kbs;
+            return this.m_rateCalculator.getRate();
             }
         
         public int getNumSources ()
@@ -291,22 +291,45 @@ public interface MsDState extends DownloaderState
         
         public long getBytesRead()
             {
-            return this.m_bytesRead;
+            return this.m_rateCalculator.getBytesRead();
             }
-        
+
         @Override
-        public boolean equals (final Object otherObject)
+        public int hashCode()
             {
-            if (otherObject instanceof Downloading)
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + this.m_numSources;
+            result = prime
+                    * result
+                    + ((this.m_rateCalculator == null) ? 0
+                            : this.m_rateCalculator.hashCode());
+            return result;
+            }
+
+        @Override
+        public boolean equals(Object obj)
+            {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            DownloadingImpl other = (DownloadingImpl) obj;
+            if (this.m_numSources != other.m_numSources)
+                return false;
+            if (this.m_rateCalculator == null)
                 {
-                final Downloading other = (Downloading) otherObject;
-                return other.getKbs () == m_kbs;
+                if (other.m_rateCalculator != null)
+                    return false;
                 }
             else
-                {
-                return false;
-                }
+                if (!this.m_rateCalculator.equals(other.m_rateCalculator))
+                    return false;
+            return true;
             }
+
         }
 
     /**
@@ -315,6 +338,7 @@ public interface MsDState extends DownloaderState
     public class CompleteImpl
             extends DownloaderState.AbstractSucceeded implements Complete
         {
+
         public <T> T accept (final Visitor<T> visitor)
             {
             return visitor.visitComplete (this);

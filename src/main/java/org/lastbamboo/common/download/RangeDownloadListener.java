@@ -32,4 +32,11 @@ public interface RangeDownloadListener
      * @param downloader The downloader.
      */
     void onFail(RangeDownloader downloader);
+    
+    /**
+     * Called when a set of bytes are read for a given range.
+     * 
+     * @param downloader The downloader.
+     */
+    void onBytesRead(RangeDownloader downloader);
     }

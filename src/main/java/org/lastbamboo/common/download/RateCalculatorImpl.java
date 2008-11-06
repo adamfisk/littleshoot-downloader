@@ -1,6 +1,10 @@
 package org.lastbamboo.common.download;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
 import org.lastbamboo.common.util.CollectionUtils;
 import org.lastbamboo.common.util.CollectionUtilsImpl;
@@ -10,12 +14,17 @@ import org.lastbamboo.common.util.Optional;
 import org.lastbamboo.common.util.OptionalUtils;
 import org.lastbamboo.common.util.OptionalUtilsImpl;
 import org.lastbamboo.common.util.SomeImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An implementation of the rate calculator interface.
  */
 public class RateCalculatorImpl implements RateCalculator
     {
+    
+    private final Logger m_log = LoggerFactory.getLogger(getClass());
+    
     /**
      * Collection utilities.
      */
@@ -26,6 +35,23 @@ public class RateCalculatorImpl implements RateCalculator
      */
     private final OptionalUtils m_optionalUtils;
     
+    private final Map<Long, RateSegment> m_rateSegments = 
+        Collections.synchronizedMap(new LinkedHashMap<Long, RateSegment>()
+            {
+
+            private static final long serialVersionUID = -243416056459048328L;
+
+            @Override
+            protected boolean removeEldestEntry(
+                final Map.Entry<Long, RateSegment> eldest) 
+                {
+                // This makes the map automatically purge the least used
+                // entry.  
+                final boolean remove = size() > 100;
+                return remove;
+                }
+            });
+    
     /**
      * Returns the size calculated from a partial rate segment.
      * 
@@ -35,10 +61,8 @@ public class RateCalculatorImpl implements RateCalculator
      *      
      * @return The partial size.
      */
-    private static long getPartialSize
-            (final long partialDuration,
-             final long duration,
-             final long size)
+    private static long getPartialSize (final long partialDuration,
+        final long duration, final long size)
         {
         return duration == 0 ?
                 size :
@@ -57,9 +81,13 @@ public class RateCalculatorImpl implements RateCalculator
     /**
      * {@inheritDoc}
      */
-    public double getRate (final Collection<RateSegment> segments,
-        final long since)
+    public double getRate ()
         {
+        if (m_log.isDebugEnabled())
+            {
+            //m_log.debug("Accessing the download rate...");
+            }
+        final long since = System.currentTimeMillis () - 5000;
         final F1<RateSegment,Optional<RateSegment>> f =
                 new F1<RateSegment,Optional<RateSegment>> ()
             {
@@ -98,6 +126,13 @@ public class RateCalculatorImpl implements RateCalculator
             };
             
         final Collection<RateSegment> valid;
+        
+        final Collection<RateSegment> segments;
+        synchronized (this.m_rateSegments)
+            {
+            segments = 
+                new LinkedList<RateSegment>(this.m_rateSegments.values());
+            }
         synchronized (segments)
             {
             valid = m_optionalUtils.filterNones
@@ -129,6 +164,38 @@ public class RateCalculatorImpl implements RateCalculator
         final long totalDuration = m_collectionUtils.sum (durations);
         final long totalSize = m_collectionUtils.sum (sizes);
         
-        return totalDuration > 0 ? totalSize / (double) totalDuration : 0.0;
+        final double rate =
+            totalDuration > 0 ? totalSize / (double) totalDuration : 0.0;
+            
+        //m_log.debug("Returning rate: {}", rate);
+        return rate > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) rate;
+        }
+
+    public void addData(final RangeDownloader downloader)
+        {
+        //m_log.debug("Adding data...");
+        final long start = downloader.getRangeStartTime();
+        final long end = System.currentTimeMillis ();
+        final long size = downloader.getNumBytesDownloaded ();
+        
+        final RateSegment segment = 
+            new RateSegmentImpl (start, end - start, size);
+        
+        final long rangeIndex = downloader.getRangeIndex();
+        
+        m_rateSegments.put(new Long(rangeIndex), segment);
+        }
+
+    public long getBytesRead()
+        {
+        long bytesRead = 0;
+        synchronized (this.m_rateSegments)
+            {
+            for (final RateSegment segment : this.m_rateSegments.values())
+                {
+                bytesRead += segment.getSize();
+                }
+            }
+        return bytesRead;
         }
     }

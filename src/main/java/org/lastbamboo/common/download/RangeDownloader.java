@@ -42,4 +42,19 @@ public interface RangeDownloader
      */
     URI getSourceUri ();
 
+    /**
+     * Accessor for the time the downloader started downloading the current
+     * range.
+     * 
+     * @return The time the downloader started downloading the current range.
+     */
+    long getRangeStartTime();
+
+    /**
+     * Accessor for the byte index of the current range.
+     * 
+     * @return The byte index for the current range.
+     */
+    long getRangeIndex();
+
     }

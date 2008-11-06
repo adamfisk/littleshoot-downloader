@@ -324,6 +324,7 @@ public class SingleSourceDownloader implements RangeDownloader,
                 {
                 m_log.debug("Adding bytes read...");
                 m_numBytesDownloaded +=bytesRead;
+                m_rangeDownloadListener.onBytesRead(SingleSourceDownloader.this);
                 }
             
             };
@@ -437,6 +438,16 @@ public class SingleSourceDownloader implements RangeDownloader,
     public void onBytesRead(final int bytesRead)
         {
         // Ignored for now.
+        }
+
+    public long getRangeStartTime()
+        {
+        return this.m_startedTime;
+        }
+    
+    public long getRangeIndex()
+        {
+        return this.m_assignedRange.getMinimumLong();
         }
     
     @Override

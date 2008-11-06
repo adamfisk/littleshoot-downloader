@@ -8,12 +8,8 @@ import java.io.RandomAccessFile;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
@@ -103,20 +99,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
      */
     private final Set<URI> m_uniqueFailedSourceUris =
         Collections.synchronizedSet (new HashSet<URI> ());
-    
-    /**
-     * The map that we use to track the start times for downloaders.  We use 
-     * this to calculate our download rate.
-     */
-    private final Map<RangeDownloader,Long> m_startTimes =
-        new HashMap<RangeDownloader, Long> ();
-    
-    /**
-     * The collection of rate segments that we use to calculate our download
-     * rate.
-     */
-    private final List<RateSegment> m_rateSegments =
-        Collections.synchronizedList(new LinkedList<RateSegment> ());
     
     /**
      * The random access file that we use to write the file we are downloading.
@@ -325,8 +307,8 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             }
         else
             {
-            setState (new MsDState.DownloadingImpl (getKbs (),
-                getNumUniqueHosts (), m_rangeTracker.getBytesRead()));
+            setState (new MsDState.DownloadingImpl (m_rateCalculator,
+                getNumUniqueHosts ()));
             
             connect (sources, this.m_downloadingRanker, m_connectionsPerHost);
             
@@ -369,18 +351,9 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             }
         }
     
-    private double getKbs()
-        {
-        final long since = System.currentTimeMillis () - 5000;
-        
-        // The rate comes back in bytes/ms which is the same as kilobytes/s.
-        final double rate = m_rateCalculator.getRate (m_rateSegments, since);
-        
-        return rate > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) rate;
-        }
-    
     private int getNumUniqueHosts ()
         {
+        m_log.debug("Getting numSources: "+m_uniqueSourceUris.size ());
         return m_uniqueSourceUris.size ();
         }
     
@@ -442,12 +415,8 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             public Boolean visitSome (final Some<LongRange> some)
                 {
                 final LongRange range = some.object ();
-                synchronized (m_startTimes)
-                    {
-                    m_startTimes.put (downloader, System.currentTimeMillis ());
-                    m_log.debug ("Downloading from downloader: {}", downloader);
-                    downloader.download (range);
-                    }
+                m_log.debug ("Downloading from downloader: {}", downloader);
+                downloader.download (range);
                 return Boolean.FALSE;
                 }
             };
@@ -607,37 +576,18 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                     }
                 }
             }
+
+        public void onBytesRead (final RangeDownloader downloader)
+            {
+            m_rateCalculator.addData(downloader);
+            }
         
         public void onDownloadFinished (final RangeDownloader downloader)
             {
-            //Assert.notNull (downloader, "Downloader is null");
-            if (downloader == null)
-                {
-                throw new NullPointerException("Null downloader!!!");
-                }
-            synchronized (m_startTimes)
-                {
-                final long start = m_startTimes.remove (downloader).longValue();
-                final long end = System.currentTimeMillis ();
-                final long size = downloader.getNumBytesDownloaded ();
-            
-                final RateSegment segment = 
-                    new RateSegmentImpl (start, end - start, size);
-                
-                synchronized (m_rateSegments)
-                    {
-                    if (m_rateSegments.size() > 200)
-                        {
-                        m_rateSegments.remove(0);
-                        }
-                    m_rateSegments.add (segment);
-                    }
-                }
-            
             if (isDownloading (m_state))
                 {
-                setState (new MsDState.DownloadingImpl (getKbs (),
-                    getNumUniqueHosts (), m_rangeTracker.getBytesRead()));
+                setState (new MsDState.DownloadingImpl (m_rateCalculator,
+                    getNumUniqueHosts ()));
                 }
             else
                 {
