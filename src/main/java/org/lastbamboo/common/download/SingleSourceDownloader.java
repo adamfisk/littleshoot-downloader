@@ -322,7 +322,7 @@ public class SingleSourceDownloader implements RangeDownloader,
             {
             public void onBytesRead(final int bytesRead)
                 {
-                m_log.debug("Adding bytes read...");
+                //m_log.debug("Adding bytes read...");
                 m_numBytesDownloaded +=bytesRead;
                 m_rangeDownloadListener.onBytesRead(SingleSourceDownloader.this);
                 }
