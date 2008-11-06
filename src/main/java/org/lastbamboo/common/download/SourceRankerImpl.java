@@ -87,5 +87,15 @@ public class SourceRankerImpl implements SourceRanker
         public void issueHeadRequest()
             {
             }
+
+        public long getRangeIndex()
+            {
+            return 0;
+            }
+
+        public long getRangeStartTime()
+            {
+            return 0;
+            }
         }
     }

@@ -245,6 +245,97 @@ public interface MsDState extends DownloaderState
             return otherObject instanceof GettingSources;
             }
         }
+    
+    /**
+     * An implementation of the downloading state.
+     */
+    public class LimeWireDownloadingImpl
+        extends DownloaderState.AbstractRunning implements Downloading
+        {
+        
+        /**
+         * The speed of the downloading in kilobytes per second.
+         */
+        private final double m_kbs;
+
+        /**
+         * The number of sources used by the download.
+         */
+        private final int m_numSources;
+
+        private final long m_bytesRead;
+
+        /**
+         * Constructs a new downloading state.
+         *
+         * @param kbs The speed of the downloading n kilobytes per second.
+         * @param numSources The number of sources used by the download.
+         * @param bytesRead The number of bytes read.
+         */
+        public LimeWireDownloadingImpl (final double kbs, final int numSources,
+            final long bytesRead)
+            {
+            m_kbs = kbs;
+            m_numSources = numSources;
+            this.m_bytesRead = bytesRead;
+            }
+        
+        public <T> T accept (final Visitor<T> visitor)
+            {
+            return visitor.visitDownloading (this);
+            }
+        
+        public double getKbs ()
+            {
+            return m_kbs;
+            }
+
+        public int getNumSources ()
+            {
+            return m_numSources;
+            }
+
+        public long getBytesRead()
+            {
+            return this.m_bytesRead;
+            }
+
+        @Override
+        public int hashCode()
+            {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result
+                    + (int) (this.m_bytesRead ^ (this.m_bytesRead >>> 32));
+            long temp;
+            temp = Double.doubleToLongBits(this.m_kbs);
+            result = prime * result + (int) (temp ^ (temp >>> 32));
+            result = prime * result + this.m_numSources;
+            return result;
+            }
+
+        @Override
+        public boolean equals(Object obj)
+            {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            LimeWireDownloadingImpl other = (LimeWireDownloadingImpl) obj;
+            if (this.m_bytesRead != other.m_bytesRead)
+                return false;
+            if (Double.doubleToLongBits(this.m_kbs) != Double
+                    .doubleToLongBits(other.m_kbs))
+                return false;
+            if (this.m_numSources != other.m_numSources)
+                return false;
+            return true;
+            }
+
+
+        }
 
     /**
      * An implementation of the downloading state.
@@ -264,7 +355,7 @@ public interface MsDState extends DownloaderState
          * Constructs a new downloading state.
          * 
          * @param rateCalculator The class that calculates the download rate
-         * and bytes read.
+         * and bytes read. 
          * @param numSources The number of sources used by the download.
          */
         public DownloadingImpl (final RateCalculator rateCalculator, 
