@@ -48,10 +48,10 @@
                         </excludes>
                     </configuration>
                 </plugin>
+                <!--
             <plugin>
                 <groupId>org.lastbamboo</groupId>
                 <artifactId>lastbamboo-maven-plugin</artifactId>
-                <!--
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -59,7 +59,7 @@
                             <goal>osxapp</goal>
                             </goals>
                         </execution>
-                    </executions> -->
+                    </executions> 
                 <configuration>
                     <bundleName>LittleShoot</bundleName>
                     <mainClass>
@@ -70,6 +70,7 @@
 			</javaArgs>
                     </configuration>
                 </plugin>
+-->
             </plugins>
         </build>
     </project>
