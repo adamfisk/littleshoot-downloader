@@ -14,7 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Class for keeping track of ranges for a single download.
+ * Class for keeping track of ranges for a single download.  The algorithm
+ * for choosing a range size is important for making downloads as efficient
+ * as possible.  A base
  */
 public class RangeTrackerImpl implements RangeTracker
     {
@@ -26,10 +28,6 @@ public class RangeTrackerImpl implements RangeTracker
     private final Logger m_log = 
         LoggerFactory.getLogger (RangeTrackerImpl.class);
     
-    private static final int MAX_CHUNK_SIZE = 1024 * 512;
-    
-    private static final int MIN_CHUNK_SIZE = 1024 * 30;
-
     /**
      * The set of active ranges.  These are ranges that are currently active but
      * may be returned to the inactive queue if they fail.
@@ -51,7 +49,7 @@ public class RangeTrackerImpl implements RangeTracker
      */
     private volatile long m_bytesRead;
 
-    private final int m_chunkSize;
+    private final long m_chunkSize;
 
     /**
      * Creates a new range tracker for a file of the specified size.
@@ -60,28 +58,21 @@ public class RangeTrackerImpl implements RangeTracker
      */
     public RangeTrackerImpl(final long fileSize, final int numSources)
         {
+        this(fileSize, numSources, new DefaultRangeSizeSelector());
+        }
+    
+    /**
+     * Creates a new range tracker for a file of the specified size.
+     * @param fileSize The size of the file we're downloading.
+     * @param numSources The number of sources for the download.
+     * @param rangeSizeSelector The class for selecting the size of ranges.
+     */
+    public RangeTrackerImpl(final long fileSize, final int numSources,
+        final RangeSizeSelector rangeSizeSelector)
+        {
         m_log.debug("Creating queue for file size: " + fileSize);
         
-        // The logic here is to give each source a chunk but then to take
-        // into account that sources download at difference rates.  We 
-        // take a shot in the dark and say this could be a significant
-        // differential, and we just take a stab at it.  It's
-        // generally better to have too many chunks than too few, however,
-        // because a slow downloader can screw up the works more with larger
-        // chunks.  The ideal is to always dynamically determine the chunk 
-        // size, but we'll save that for later.
-        final int theoreticalChunkSize = 
-            (int) Math.ceil((fileSize/numSources)/10);
-        
-        // Make sure the chunk size isn't way too big...
-        final int upperCapChunkSize = 
-            Math.min(MAX_CHUNK_SIZE, theoreticalChunkSize);
-        // ..and make sure the chunk size isn't way too small.
-        final int lowerCapChunkSize = 
-            Math.max(upperCapChunkSize, MIN_CHUNK_SIZE);
-        
-        // Finally, make sure it's not bigger than the file.
-        this.m_chunkSize = (int) Math.min(fileSize, lowerCapChunkSize);
+        this.m_chunkSize = rangeSizeSelector.selectSize(fileSize, numSources);
         m_log.debug("Chunk size is: {}", this.m_chunkSize);
         
         m_numChunks = (int) Math.ceil(fileSize/m_chunkSize);
@@ -107,7 +98,7 @@ public class RangeTrackerImpl implements RangeTracker
             index = max + 1;
             }
         }
-    
+
     public Optional<LongRange> getNextRange ()
         {
         synchronized (this)
