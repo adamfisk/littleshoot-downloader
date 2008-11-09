@@ -28,7 +28,7 @@ public class RangeTrackerImpl implements RangeTracker
     
     private static final int MAX_CHUNK_SIZE = 1024 * 512;
     
-    private static final int MIN_CHUNK_SIZE = 1024 * 100;
+    private static final int MIN_CHUNK_SIZE = 1024 * 30;
 
     /**
      * The set of active ranges.  These are ranges that are currently active but

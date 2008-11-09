@@ -8,9 +8,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.DigestOutputStream;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.math.LongRange;
+import org.apache.commons.lang.time.DateUtils;
 import org.lastbamboo.common.util.Base32;
 import org.lastbamboo.common.util.Sha1;
 import org.slf4j.Logger;
@@ -28,9 +30,9 @@ public class DownloadingFileLauncher implements LaunchFileTracker
     private final PriorityBlockingQueue<LongRange> m_completedRanges;
     private final RandomAccessFile m_randomAccessFile;
     
-    private long m_rangeIndex = 0L;
+    private volatile long m_rangeIndex = 0L;
 
-    private boolean m_complete = false;
+    private volatile boolean m_completeFlag = false;
 
     private final URI m_expectedSha1;
 
@@ -91,7 +93,8 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             // one we're waiting for.
             if (range.getMinimumLong() == this.m_rangeIndex)
                 {
-                //m_log.debug("Found range we need -- notifying...");
+                m_log.debug("Found range we need -- notifying: {}",
+                   this.m_rangeIndex);
                 this.m_completedRanges.notifyAll();
                 }
             }
@@ -146,10 +149,11 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             }
         while (true)
             {
-            long startIndex = this.m_rangeIndex;
             // First, determine how much we can write now.
+            final long startIndex;
             synchronized (this.m_completedRanges)
                 {
+                startIndex = this.m_rangeIndex;
                 while (!this.m_completedRanges.isEmpty())
                     {
                     //LOG.debug("Incrementing index for range...");
@@ -197,9 +201,10 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                         {
                         //m_log.debug("Waiting on completed range. Complete: {}",
                           //  this.m_complete);
-                        //m_log.debug("Next range min is: {}", this.m_rangeIndex);
+                        //m_log.debug("Waiting on next range min: {}", 
+                        //    this.m_rangeIndex);
                         //m_log.debug("Ranges: {}", this.m_completedRanges);
-                        this.m_completedRanges.wait();
+                        timedWait();
                         
                         if (this.m_failed || this.m_stopped)
                             {
@@ -232,6 +237,23 @@ public class DownloadingFileLauncher implements LaunchFileTracker
         }
 
     /**
+     * We want to make sure we never wait forever. 
+     * 
+     * @throws InterruptedException If we're interrupted for any reason.
+     */
+    private void timedWait() throws InterruptedException
+        {
+        final long waitStart = System.currentTimeMillis();
+        this.m_completedRanges.wait(DateUtils.MILLIS_PER_DAY);
+        final long waitTime = System.currentTimeMillis() - waitStart;
+        if (waitTime > DateUtils.MILLIS_PER_HOUR)
+            {
+            m_log.warn("Waited for download for more " +
+                "than an hour: "+waitTime/1000/60);
+            }
+        }
+
+    /**
      * Checks if we're done.  Note that this relies on the downloader notifying
      * this class of all completed ranges prior to the uber-downloader 
      * thinking we're done.  Otherwise, we'd get the onFileComplete notification
@@ -244,7 +266,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
      */
     private boolean done()
         {
-        return this.m_completedRanges.isEmpty() && this.m_complete;
+        return this.m_completedRanges.isEmpty() && this.m_completeFlag;
         }
 
     private void writeRange(final long startIndex, 
@@ -295,9 +317,10 @@ public class DownloadingFileLauncher implements LaunchFileTracker
     public void onFileComplete()
         {
         m_log.debug("Received notification file is complete");
-        this.m_complete = true;
+        
         synchronized (this.m_completedRanges)
             {
+            this.m_completeFlag = true;
             //m_log.debug("Got lock with remaining ranges: {}",m_completedRanges);
             this.m_completedRanges.notifyAll();
             
@@ -312,10 +335,12 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             // though.
             while (!this.m_completedRanges.isEmpty())
                 {
-                m_log.debug("Waiting to write remaining bytes...");
+                m_log.debug("Waiting to write remaining bytes...next range: {}", 
+                    this.m_rangeIndex);
+                
                 try
                     {
-                    this.m_completedRanges.wait();
+                    timedWait();
                     }
                 catch (final InterruptedException e)
                     {
@@ -336,7 +361,7 @@ public class DownloadingFileLauncher implements LaunchFileTracker
                 {
                 try
                     {
-                    this.m_completedRanges.wait();
+                    timedWait();
                     }
                 catch (final InterruptedException e)
                     {
