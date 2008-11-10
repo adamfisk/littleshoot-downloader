@@ -92,8 +92,8 @@ public class DownloadingFileLauncher implements LaunchFileTracker
             // one we're waiting for.
             if (range.getMinimumLong() == this.m_rangeIndex)
                 {
-                m_log.debug("Found range we need -- notifying: {}",
-                   this.m_rangeIndex);
+                //m_log.debug("Found range we need -- notifying: {}",
+                //   this.m_rangeIndex);
                 this.m_completedRanges.notifyAll();
                 }
             }
