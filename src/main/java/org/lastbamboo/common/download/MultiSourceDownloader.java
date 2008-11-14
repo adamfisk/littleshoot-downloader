@@ -56,7 +56,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     /**
      * The file path to which to write the resource we are downloading.
      */
-    private final File m_file;
+    private final File m_incompleteFile;
     
     /**
      * The identifier for the resource we are downloading.
@@ -73,9 +73,9 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     private final UriResolver m_uriResolver;
     
     /**
-     * The number of connections to allow per host.
+     * The number of connections to allow per HTTP server.
      */
-    private final int m_connectionsPerHost;
+    private final int m_connectionsPerHttpServer;
     
     /**
      * The listener used to listen to each single range downloader.  We only 
@@ -140,25 +140,39 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     /**
      * Constructs a new downloader.
      * 
+     * @param sessionId The ID of the browser session we're downloading in, if
+     * any. 
+     * @param incompleteFile The path for the incomplete file we're downloading
+     * to.  This will of course be complete when we're done. 
+     * @param uri The URI for the file.
+     * @param size The size of the file in bytes. 
+     * @param mimeType The file's mime type.
+     * @param uriResolver The class we'll use to resolve all initial locations
+     * for the file.
+     * @param connectionsPerHost The number of connections to allow to each
+     * HTTP server.  Multiple connections to HTTP servers can speed up 
+     * transfers.
      * @param expectedSha1 The expected SHA-1 URN.
+     * @param downloadsDir The directory we're ultimately downloading to.
      */
-    public MultiSourceDownloader (final String sessionId, final File file,
-        final URI uri, final long size, final String mimeType,
-        final UriResolver uriResolver, final int connectionsPerHost, 
-        final URI expectedSha1, final File downloadsDir)
+    public MultiSourceDownloader (final String sessionId, 
+        final File incompleteFile, final URI uri, final long size, 
+        final String mimeType, final UriResolver uriResolver, 
+        final int connectionsPerHost, final URI expectedSha1, 
+        final File downloadsDir)
         {
         Assert.notBlank (sessionId, "Null session ID");
-        Assert.notNull (file, "Null file");
+        Assert.notNull (incompleteFile, "Null file");
         Assert.notNull (uri, "Null URI");
         
         m_sessionId = sessionId;
-        m_file = file;
-        m_finalName = file.getName();
+        m_incompleteFile = incompleteFile;
+        m_finalName = incompleteFile.getName();
         m_uri = uri;
         m_size = size;
         m_contentType = mimeType;
         m_uriResolver = uriResolver;
-        m_connectionsPerHost = connectionsPerHost;    
+        m_connectionsPerHttpServer = connectionsPerHost;    
         final HttpMethodRetryHandler retryHandler = 
             new DefaultHttpMethodRetryHandler(0, false);
         this.m_httpClient.getParams().setParameter(
@@ -181,12 +195,12 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         
         try
             {
-            m_randomAccessFile = new RandomAccessFile (file, "rw");
+            m_randomAccessFile = new RandomAccessFile (incompleteFile, "rw");
             }
         catch (final FileNotFoundException e)
             {
-            m_log.error ("Could not create file: " + file, e);
-            throw new IllegalArgumentException ("Cannot create file: "+file);
+            m_log.error ("Could not create file: " + incompleteFile, e);
+            throw new IllegalArgumentException ("Cannot create file: "+incompleteFile);
             }
 
         m_completeFile = new File (downloadsDir, m_finalName);
@@ -210,7 +224,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 new RangeTrackerImpl (size, this.m_sources.size());
             final int numChunks = m_rangeTracker.getNumChunks ();
             m_launchFileTracker = 
-                new LaunchFileDispatcher (file, m_randomAccessFile, 
+                new LaunchFileDispatcher (incompleteFile, m_randomAccessFile, 
                     numChunks, expectedSha1ToUse);
             }
         catch (final IOException e)
@@ -310,7 +324,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             setState (new MsDState.DownloadingImpl (m_rateCalculator,
                 getNumUniqueHosts ()));
             
-            connect (sources, this.m_downloadingRanker, m_connectionsPerHost);
+            connect (sources, this.m_downloadingRanker, m_connectionsPerHttpServer);
             
             boolean done = false;
             
@@ -431,7 +445,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     
     public File getIncompleteFile ()
         {
-        return m_file;
+        return m_incompleteFile;
         }
     
     public int getSize ()
