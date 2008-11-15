@@ -78,7 +78,7 @@ public class SingleSourceTest extends TestCase
 //                testFile, uri, 6509767L, "video/mpeg");
             
             final Downloader<MsDState> dl = 
-                new MultiSourceDownloader ("sessionId", testFile, uri,
+                new MultiSourceDownloader (testFile, uri,
                     6509767L, "video/mpeg", resolver, i, null, tempDownloadDir);
                                         
             final long start = System.currentTimeMillis();
