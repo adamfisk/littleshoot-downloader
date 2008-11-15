@@ -51,8 +51,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     
     private final RateCalculator m_rateCalculator = new RateCalculatorImpl ();
     
-    private final String m_sessionId;
-    
     /**
      * The file path to which to write the resource we are downloading.
      */
@@ -140,13 +138,11 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     /**
      * Constructs a new downloader.
      * 
-     * @param sessionId The ID of the browser session we're downloading in, if
-     * any. 
      * @param incompleteFile The path for the incomplete file we're downloading
      * to.  This will of course be complete when we're done. 
      * @param uri The URI for the file.
      * @param size The size of the file in bytes. 
-     * @param mimeType The file's mime type.
+     * @param mimeType The file's MIME type.
      * @param uriResolver The class we'll use to resolve all initial locations
      * for the file.
      * @param connectionsPerHost The number of connections to allow to each
@@ -155,17 +151,15 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
      * @param expectedSha1 The expected SHA-1 URN.
      * @param downloadsDir The directory we're ultimately downloading to.
      */
-    public MultiSourceDownloader (final String sessionId, 
-        final File incompleteFile, final URI uri, final long size, 
+    public MultiSourceDownloader (final File incompleteFile, 
+        final URI uri, final long size, 
         final String mimeType, final UriResolver uriResolver, 
         final int connectionsPerHost, final URI expectedSha1, 
         final File downloadsDir)
         {
-        Assert.notBlank (sessionId, "Null session ID");
         Assert.notNull (incompleteFile, "Null file");
         Assert.notNull (uri, "Null URI");
         
-        m_sessionId = sessionId;
         m_incompleteFile = incompleteFile;
         m_finalName = incompleteFile.getName();
         m_uri = uri;
