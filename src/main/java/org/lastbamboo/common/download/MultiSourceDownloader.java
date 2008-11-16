@@ -475,12 +475,16 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             // handles.  QuickTime will then send another HTTP request, 
             // and Safari will close the initial connection.  
             //
-            // The key here is we should only propagate the exception
-            // (indicating we should cancel the download) when this is the 
-            // last active writer.  If it's not, we just swallow this 
-            // exception.
-            if (m_launchFileTracker.getActiveWriteCalls() == 0)
+            // The key here is we should only cancel the download when 
+            // this is the last active writer *and* the caller has specified
+            // we should cancel the entire download when we've lost the
+            // stream.  This is important to keep in mind -- an IO error
+            // on the stream to the browser or whatever is very different
+            // from a concrete indication we should cancel the download!!
+            if (m_launchFileTracker.getActiveWriteCalls() == 0 &&
+                cancelOnStreamClose)
                 {
+                m_log.debug("Canceling stream...");
                 stop ();
                 }
             }
