@@ -147,8 +147,8 @@ public final class DummySha1Downloader<DsT extends DownloaderState>
 
         public void stateChanged (final DsT state)
             {
-            m_log.debug ("(state, type) == (" + state + ", " + state.getType () +
-                           ")");
+            //m_log.debug ("(state, type) == (" + state + ", " + state.getType () +
+            //               ")");
             
             if (state.getType () == DownloaderStateType.SUCCEEDED)
                 {

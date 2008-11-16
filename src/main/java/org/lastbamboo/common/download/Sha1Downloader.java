@@ -162,8 +162,8 @@ public final class Sha1Downloader<DsT extends DownloaderState>
          */
         public void stateChanged (final DsT state)
             {
-            m_log.debug ("(state, type) == (" + state + ", " + state.getType () +
-                           ")");
+            //m_log.debug ("(state, type) == (" + state + ", " + state.getType () +
+            //               ")");
             
             if (state.getType () == DownloaderStateType.SUCCEEDED)
                 {
@@ -178,7 +178,7 @@ public final class Sha1Downloader<DsT extends DownloaderState>
                 {
                 if (isDownloading (m_state))
                     {
-                    m_log.debug ("Is downloading");
+                    //m_log.debug ("Is downloading");
                     setState (new Sha1DState.DownloadingImpl<DsT> (state));
                     }
                 else
