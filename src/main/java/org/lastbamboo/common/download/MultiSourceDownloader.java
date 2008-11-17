@@ -205,6 +205,12 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         try
             {
             this.m_sources = m_uriResolver.resolve (m_uri);
+            if (this.m_sources.isEmpty())
+                {
+                m_log.warn("No sources available for: "+m_completeFile);
+                setState (MsDState.NO_SOURCES_AVAILABLE);
+                return;
+                }
             final URI expectedSha1ToUse;
             if (expectedSha1 ==  null)
                 {
