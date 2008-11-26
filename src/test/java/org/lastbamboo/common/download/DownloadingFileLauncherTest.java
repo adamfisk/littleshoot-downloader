@@ -113,7 +113,7 @@ public class DownloadingFileLauncherTest
                 launcher.onFileComplete();
                 }
             };
-        final Thread thread = new Thread(runner, "test-thread");
+        final Thread thread = new Thread(runner, "test-thread"+hashCode());
         thread.setDaemon(true);
         thread.start();
         
@@ -135,7 +135,7 @@ public class DownloadingFileLauncherTest
         final File file = new File(getClass().getSimpleName());
         file.deleteOnExit();
         final OutputStream os = new FileOutputStream(file);
-        final byte[] bytes = new byte[40000000];
+        final byte[] bytes = new byte[4000000];
         for (int i = 0; i < bytes.length; i++)
             {
             bytes[i] = (byte)i;
@@ -222,7 +222,7 @@ public class DownloadingFileLauncherTest
             
             // We'll run it on a bunch of threads to really confuse things...
             final Thread thread = 
-                new DaemonThread(runner, "test-thread-"+i);
+                new DaemonThread(runner, "test-thread-"+i+" - "+hashCode());
             threads.add(thread);
             }
         
