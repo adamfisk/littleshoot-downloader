@@ -35,28 +35,6 @@ public final class DummySha1Downloader<DsT extends DownloaderState>
     private final long m_expectedSize;
     
     /**
-     * Returns whether a given state is the downloading state.
-     * 
-     * @param <DsT> The type of the underlying delegate downloading state.
-     * @param state The state.
-     * @return True if the state is the downloading state, false otherwise.
-     */
-    private static <DsT> boolean isDownloading (final Sha1DState<DsT> state)
-        {
-        final Sha1DState.VisitorAdapter<Boolean,DsT> visitor =
-            new Sha1DState.VisitorAdapter<Boolean,DsT> (false)
-            {
-            @Override
-            public Boolean visitDownloading (final Downloading<DsT> downloading)
-                {
-                return Boolean.TRUE;
-                }
-            };
-            
-        return state.accept (visitor);
-        }
-    
-    /**
      * Constructs a new downloader.
      * 
      * @param delegate The delegate downloader.
@@ -195,5 +173,28 @@ public final class DummySha1Downloader<DsT extends DownloaderState>
                 setState (new Sha1DState.VerifiedSha1Impl<DsT> ());
                 }
             }
+        }
+    
+    
+    /**
+     * Returns whether a given state is the downloading state.
+     * 
+     * @param <DsT> The type of the underlying delegate downloading state.
+     * @param state The state.
+     * @return True if the state is the downloading state, false otherwise.
+     */
+    private static <DsT> boolean isDownloading (final Sha1DState<DsT> state)
+        {
+        final Sha1DState.VisitorAdapter<Boolean,DsT> visitor =
+            new Sha1DState.VisitorAdapter<Boolean,DsT> (Boolean.FALSE)
+            {
+            @Override
+            public Boolean visitDownloading (final Downloading<DsT> downloading)
+                {
+                return Boolean.TRUE;
+                }
+            };
+            
+        return state.accept (visitor).booleanValue();
         }
     }
