@@ -50,7 +50,7 @@ public interface Downloader<StateT>
      * 
      * @return The size of the resource that is downloaded by this downloader.
      */
-    int getSize ();
+    long getSize ();
     
     /**
      * Writes the resource that this downloader downloads to a given stream.

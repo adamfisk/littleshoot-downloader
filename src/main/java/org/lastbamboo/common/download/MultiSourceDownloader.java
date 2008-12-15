@@ -448,10 +448,9 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         return m_incompleteFile;
         }
     
-    public int getSize ()
+    public long getSize ()
         {
-        assert (m_size <= Integer.MAX_VALUE);
-        return (int) m_size;
+        return m_size;
         }
     
     public MsDState getState ()

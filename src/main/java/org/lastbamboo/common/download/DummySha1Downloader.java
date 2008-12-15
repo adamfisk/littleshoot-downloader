@@ -77,7 +77,7 @@ public final class DummySha1Downloader<DsT extends DownloaderState>
         return m_delegate.getIncompleteFile ();
         }
     
-    public int getSize ()
+    public long getSize ()
         {
         return m_delegate.getSize ();
         }
