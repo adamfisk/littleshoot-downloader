@@ -1,8 +1,5 @@
 package org.lastbamboo.common.download;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 /**
  * The state for the multi-source downloader.
@@ -249,7 +246,7 @@ public interface MsDState extends DownloaderState
     /**
      * An implementation of the downloading state.
      */
-    public class LimeWireDownloadingImpl
+    public class PreComputedDownloadingState
         extends DownloaderState.AbstractRunning implements Downloading
         {
         
@@ -272,8 +269,8 @@ public interface MsDState extends DownloaderState
          * @param numSources The number of sources used by the download.
          * @param bytesRead The number of bytes read.
          */
-        public LimeWireDownloadingImpl (final double kbs, final int numSources,
-            final long bytesRead)
+        public PreComputedDownloadingState (final double kbs, 
+            final int numSources, final long bytesRead)
             {
             m_kbs = kbs;
             m_numSources = numSources;
@@ -323,7 +320,7 @@ public interface MsDState extends DownloaderState
                 return false;
             if (getClass() != obj.getClass())
                 return false;
-            LimeWireDownloadingImpl other = (LimeWireDownloadingImpl) obj;
+            PreComputedDownloadingState other = (PreComputedDownloadingState) obj;
             if (this.m_bytesRead != other.m_bytesRead)
                 return false;
             if (Double.doubleToLongBits(this.m_kbs) != Double
