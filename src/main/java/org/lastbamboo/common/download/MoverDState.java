@@ -50,6 +50,14 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
          * @return The result of the visitation.
          */
         T visitMoved (Moved<DelegateStateT> state);
+ 
+        /**
+         * Visits a moved to iTunes state.
+         * 
+         * @param state The state.
+         * @return The result of the visitation.
+         */
+        T visitMovedToITunes (MovedToITunes<DelegateStateT> state);
         
         /**
          * Visits a move failed state.
@@ -104,6 +112,11 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
             {
             return m_defaultValue;
             }
+        
+        public T visitMovedToITunes (final MovedToITunes<DelegateStateT> state)
+            {
+            return m_defaultValue;
+            }
 
         public T visitMoveFailed (final MoveFailed<DelegateStateT> state)
             {
@@ -153,6 +166,13 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
      * @param <T> The delegate state type.
      */
     public interface Moved<T> extends MoverDState<T> {}
+    
+    /**
+     * A state that indicates that the file has been added to iTunes.
+     * 
+     * @param <T> The delegate state type.
+     */
+    public interface MovedToITunes<T> extends MoverDState<T> {}
         
     /**
      * A state that indicates that the attempt to move the temporary file
@@ -168,7 +188,7 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
      * @param <T> The delegate state type.
      */
     public class DownloadingImpl<T>
-            extends DownloaderState.AbstractRunning implements Downloading<T>
+        extends DownloaderState.AbstractRunning implements Downloading<T>
         {
         /**
          * The delegate state.
@@ -195,9 +215,6 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
             return m_delegateState;
             }
         
-        /**
-         * {@inheritDoc}
-         */
         @Override
         @SuppressWarnings("unchecked")
         public boolean equals (final Object otherObject)
@@ -221,7 +238,7 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
      * @param <T> The delegate state type.
      */
     public class FailedImpl<T>
-            extends DownloaderState.AbstractFailed implements Failed<T>
+        extends DownloaderState.AbstractFailed implements Failed<T>
         {
         /**
          * The delegate state.
@@ -274,7 +291,7 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
      * @param <T> The delegate state type.
      */
     public class MovingImpl<T>
-            extends DownloaderState.AbstractRunning implements Moving<T>
+        extends DownloaderState.AbstractRunning implements Moving<T>
         {
 
         public <ReturnT> ReturnT accept (final Visitor<ReturnT,T> visitor)
@@ -295,7 +312,7 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
      * @param <T> The delegate state type.
      */
     public class MovedImpl<T>
-            extends DownloaderState.AbstractSucceeded implements Moved<T>
+        extends DownloaderState.AbstractSucceeded implements Moved<T>
         {
 
         public <ReturnT> ReturnT accept (final Visitor<ReturnT,T> visitor)
@@ -309,6 +326,28 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
             return otherObject instanceof Moved;
             }
         }
+    
+    /**
+     * An implementation of the moved state.
+     * 
+     * @param <T> The delegate state type.
+     */
+    public class MovedToITunesImpl<T>
+        extends DownloaderState.AbstractSucceeded implements MovedToITunes<T>
+        {
+
+        public <ReturnT> ReturnT accept (final Visitor<ReturnT,T> visitor)
+            {
+            //return visitor.visitMovedToITunes (this);
+            return visitor.visitMovedToITunes(this);
+            }
+        
+        @Override
+        public boolean equals (final Object otherObject)
+            {
+            return otherObject instanceof MovedToITunes;
+            }
+        }
 
     /**
      * An implementation of the move failed state.
@@ -316,7 +355,7 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
      * @param <T> The delegate state type.
      */
     public class MoveFailedImpl<T>
-            extends DownloaderState.AbstractFailed implements MoveFailed<T>
+        extends DownloaderState.AbstractFailed implements MoveFailed<T>
         {
         public <ReturnT> ReturnT accept (final Visitor<ReturnT,T> visitor)
             {

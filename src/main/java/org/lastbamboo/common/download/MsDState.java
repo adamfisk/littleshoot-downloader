@@ -76,7 +76,7 @@ public interface MsDState extends DownloaderState
          * @param state The state.
          * @return The result of the visitation.
          */
-        T visitFailed(Failed failed);
+        T visitFailed(Failed state);
         }
     
     /**
