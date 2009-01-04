@@ -125,9 +125,6 @@ public final class DummySha1Downloader<DsT extends DownloaderState>
 
         public void stateChanged (final DsT state)
             {
-            //m_log.debug ("(state, type) == (" + state + ", " + state.getType () +
-            //               ")");
-            
             if (state.getType () == DownloaderStateType.SUCCEEDED)
                 {
                 downloadComplete ();
@@ -159,18 +156,27 @@ public final class DummySha1Downloader<DsT extends DownloaderState>
         private void downloadComplete ()
             {
             final File file = m_delegate.getIncompleteFile ();
-
-            // First just make sure the size is correct.
-            if (file.length() != m_expectedSize)
+            
+            if (file == null)
                 {
-                m_log.warn ("The downloaded file has an unexpected size.  " +
-                    "Expected: "+ m_expectedSize + " but was: " + file.length());
-           
-                setState (new Sha1DState.Sha1MismatchImpl<DsT> ());
+                // The file can be null if we're doing a BitTorrent download
+                // for multiple files, for example.
+                setState (new Sha1DState.VerifiedSha1Impl<DsT> ());
                 }
             else
                 {
-                setState (new Sha1DState.VerifiedSha1Impl<DsT> ());
+                // First just make sure the size is correct.
+                if (file.length() != m_expectedSize)
+                    {
+                    m_log.warn ("The downloaded file has an unexpected size.  " +
+                        "Expected: "+ m_expectedSize + " but was: " + file.length());
+               
+                    setState (new Sha1DState.Sha1MismatchImpl<DsT> ());
+                    }
+                else
+                    {
+                    setState (new Sha1DState.VerifiedSha1Impl<DsT> ());
+                    }
                 }
             }
         }
