@@ -79,11 +79,6 @@ public final class Sha1Downloader<DsT extends DownloaderState>
             }
         }
     
-    public String getContentType ()
-        {
-        return m_delegate.getContentType ();
-        }
-    
     public File getIncompleteFile ()
         {
         return m_delegate.getIncompleteFile ();

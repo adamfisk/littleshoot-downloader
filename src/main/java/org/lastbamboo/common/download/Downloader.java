@@ -37,15 +37,6 @@ public interface Downloader<StateT>
     File getCompleteFile ();
     
     /**
-     * Returns the content type of the resource that is downloaded by this
-     * downloader.
-     * 
-     * @return The content type of the resource that is downloaded by this
-     *  downloader.
-     */
-    String getContentType ();
-    
-    /**
      * Returns the size of the resource that is downloaded by this downloader.
      * 
      * @return The size of the resource that is downloaded by this downloader.
