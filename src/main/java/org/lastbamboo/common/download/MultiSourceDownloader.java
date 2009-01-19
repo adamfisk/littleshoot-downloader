@@ -321,7 +321,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             }
         else
             {
-            setState (new MsDState.DownloadingImpl (m_rateCalculator,
+            setState (new MsDState.LittleShootDownloadingState (m_rateCalculator,
                 getNumUniqueHosts ()));
             
             connect (sources, this.m_downloadingRanker, m_connectionsPerHttpServer);
@@ -514,8 +514,8 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             new MsDState.VisitorAdapter<Boolean> (Boolean.FALSE)
             {
             @Override
-            public Boolean visitDownloading (
-                final MsDState.Downloading downloadingState)
+            public Boolean visitLittleShootDownloading (
+                final MsDState.LittleShootDownloading downloadingState)
                 {
                 return Boolean.TRUE;
                 }
@@ -603,7 +603,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             {
             if (isDownloading (m_state))
                 {
-                setState (new MsDState.DownloadingImpl (m_rateCalculator,
+                setState (new MsDState.LittleShootDownloadingState (m_rateCalculator,
                     getNumUniqueHosts ()));
                 }
             else

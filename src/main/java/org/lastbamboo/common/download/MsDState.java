@@ -8,7 +8,7 @@ public interface MsDState extends DownloaderState
     {
         
     /**
-     * A visitor for a multi-source downloader state.
+     * A visitor for a downloader state.
      * 
      * @param <T> The type of this visitor's return value.
      */
@@ -29,14 +29,6 @@ public interface MsDState extends DownloaderState
          * @return The result of the visitation.
          */
         T visitGettingSources (GettingSources state);
-
-        /**
-         * Visits a downloading state.
-         * 
-         * @param state The state.
-         * @return The result of the visitation.
-         */
-        T visitDownloading (Downloading state);
 
         /**
          * Visits a complete state.
@@ -77,6 +69,36 @@ public interface MsDState extends DownloaderState
          * @return The result of the visitation.
          */
         T visitFailed(Failed state);
+
+        /**
+         * Visits a downloading state for a LittleShoot download.
+         * 
+         * @param littleShootDownloadingState The LittleShoot downloading state
+         * to visit.
+         * @return The result of the visitation.
+         */
+        T visitLittleShootDownloading(
+            LittleShootDownloading littleShootDownloadingState);
+        
+        /**
+         * Visits a downloading state for a LimeWire download.
+         * 
+         * @param limeWireDownloadingState The LimeWire downloading state
+         * to visit.
+         * @return The result of the visitation.
+         */
+        T visitLimeWireDownloading(
+            LimeWireDownloading limeWireDownloadingState);
+        
+        /**
+         * Visits a downloading state for a LibTorrent download.
+         * 
+         * @param libTorrentDownloadingState The LibTorrent downloading state
+         * to visit.
+         * @return The result of the visitation.
+         */
+        T visitLibTorrentDownloading(
+            LibTorrentDownloading libTorrentDownloadingState);
         }
     
     /**
@@ -122,14 +144,6 @@ public interface MsDState extends DownloaderState
             return m_defaultValue;
             }
         
-        /**
-         * {@inheritDoc}
-         */
-        public T visitDownloading (final Downloading state)
-            {
-            return m_defaultValue;
-            }
-
         public T visitGettingSources (final GettingSources state)
             {
             return m_defaultValue;
@@ -141,6 +155,24 @@ public interface MsDState extends DownloaderState
             }
 
         public T visitNoSourcesAvailable (final NoSourcesAvailable state)
+            {
+            return m_defaultValue;
+            }
+        
+        public T visitLittleShootDownloading(
+            final LittleShootDownloading littleShootDownloadingState)
+            {
+            return m_defaultValue;
+            }
+        
+        public T visitLimeWireDownloading(
+            final LimeWireDownloading limeWireDownloadingState)
+            {
+            return m_defaultValue;
+            }
+        
+        public T visitLibTorrentDownloading(
+            final LibTorrentDownloading libTorrentDownloadingState)
             {
             return m_defaultValue;
             }
@@ -178,6 +210,43 @@ public interface MsDState extends DownloaderState
          * @return The number of bytes read.
          */
         long getBytesRead();
+        }
+
+    /**
+     * A state for LittleShoot downloading.
+     */
+    public interface LittleShootDownloading extends Downloading
+        {
+    
+        }
+    
+    /**
+     * A state for LimeWire downloading.
+     */
+    public interface LimeWireDownloading extends Downloading
+        {
+    
+        }
+    
+    /**
+     * A state for LibTorrent downloading.
+     */
+    public interface LibTorrentDownloading extends Downloading
+        {
+        /**
+         * Returns the maximum contiguous byte we've read for this download.
+         * This is the maximum byte starting from the beginning of the file 
+         * with no gaps.
+         * @return The maximum contiguous byte we've read for this download.
+         */
+        long getMaxContiguousByte();
+        
+        /**
+         * Gets the number of files in this torrent.
+         * 
+         * @return The number of files in this torrent.
+         */
+        int getNumFiles();
         }
 
     /**
@@ -242,12 +311,127 @@ public interface MsDState extends DownloaderState
             return otherObject instanceof GettingSources;
             }
         }
+
+    /**
+     * An implementation of the LibTorrent downloading state.
+     */
+    public class LibTorrentDownloadingState
+        extends DownloaderState.AbstractRunning implements LibTorrentDownloading
+        {
+        
+        /**
+         * The speed of the downloading in kilobytes per second.
+         */
+        private final double m_kbs;
+
+        /**
+         * The number of sources used by the download.
+         */
+        private final int m_numSources;
+
+        private final long m_bytesRead;
+
+        private final int m_numFiles;
+
+        private final long m_maxByte;
+
+        /**
+         * Constructs a new downloading state.
+         *
+         * @param kbs The speed of the downloading n kilobytes per second.
+         * @param numSources The number of sources used by the download.
+         * @param bytesRead The number of bytes read.
+         * @param maxByte The maximum contiguous byte we've read.
+         * @param numFiles The number of files in the torrent.
+         */
+        public LibTorrentDownloadingState (final double kbs, 
+            final int numSources, final long bytesRead, final int numFiles, 
+            final long maxByte)
+            {
+            this.m_kbs = kbs;
+            this.m_numSources = numSources;
+            this.m_bytesRead = bytesRead;
+            this.m_numFiles = numFiles;
+            this.m_maxByte = maxByte;
+            }
+        
+        public <T> T accept (final Visitor<T> visitor)
+            {
+            return visitor.visitLibTorrentDownloading (this);
+            }
+        
+        public double getKbs ()
+            {
+            return m_kbs;
+            }
+
+        public int getNumSources ()
+            {
+            return m_numSources;
+            }
+
+        public long getBytesRead()
+            {
+            return this.m_bytesRead;
+            }
+
+        public long getMaxContiguousByte()
+            {
+            return this.m_maxByte;
+            }
+
+        public int getNumFiles()
+            {
+            return this.m_numFiles;
+            }
+
+        @Override
+        public int hashCode()
+            {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result
+                    + (int) (this.m_bytesRead ^ (this.m_bytesRead >>> 32));
+            long temp;
+            temp = Double.doubleToLongBits(this.m_kbs);
+            result = prime * result + (int) (temp ^ (temp >>> 32));
+            result = prime * result
+                    + (int) (this.m_maxByte ^ (this.m_maxByte >>> 32));
+            result = prime * result + this.m_numFiles;
+            result = prime * result + this.m_numSources;
+            return result;
+            }
+
+        @Override
+        public boolean equals(Object obj)
+            {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            LibTorrentDownloadingState other = (LibTorrentDownloadingState) obj;
+            if (this.m_bytesRead != other.m_bytesRead)
+                return false;
+            if (Double.doubleToLongBits(this.m_kbs) != Double
+                    .doubleToLongBits(other.m_kbs))
+                return false;
+            if (this.m_maxByte != other.m_maxByte)
+                return false;
+            if (this.m_numFiles != other.m_numFiles)
+                return false;
+            if (this.m_numSources != other.m_numSources)
+                return false;
+            return true;
+            }
+        }
     
     /**
-     * An implementation of the downloading state.
+     * An implementation of the LimeWire downloading state.
      */
-    public class PreComputedDownloadingState
-        extends DownloaderState.AbstractRunning implements Downloading
+    public class LimeWireDownloadingState
+        extends DownloaderState.AbstractRunning implements LimeWireDownloading
         {
         
         /**
@@ -269,7 +453,7 @@ public interface MsDState extends DownloaderState
          * @param numSources The number of sources used by the download.
          * @param bytesRead The number of bytes read.
          */
-        public PreComputedDownloadingState (final double kbs, 
+        public LimeWireDownloadingState (final double kbs, 
             final int numSources, final long bytesRead)
             {
             m_kbs = kbs;
@@ -279,7 +463,7 @@ public interface MsDState extends DownloaderState
         
         public <T> T accept (final Visitor<T> visitor)
             {
-            return visitor.visitDownloading (this);
+            return visitor.visitLimeWireDownloading (this);
             }
         
         public double getKbs ()
@@ -320,7 +504,7 @@ public interface MsDState extends DownloaderState
                 return false;
             if (getClass() != obj.getClass())
                 return false;
-            PreComputedDownloadingState other = (PreComputedDownloadingState) obj;
+            LimeWireDownloadingState other = (LimeWireDownloadingState) obj;
             if (this.m_bytesRead != other.m_bytesRead)
                 return false;
             if (Double.doubleToLongBits(this.m_kbs) != Double
@@ -330,15 +514,13 @@ public interface MsDState extends DownloaderState
                 return false;
             return true;
             }
-
-
         }
 
     /**
      * An implementation of the downloading state.
      */
-    public class DownloadingImpl
-        extends DownloaderState.AbstractRunning implements Downloading
+    public class LittleShootDownloadingState
+        extends DownloaderState.AbstractRunning implements LittleShootDownloading
         {
         
         /**
@@ -355,7 +537,7 @@ public interface MsDState extends DownloaderState
          * and bytes read. 
          * @param numSources The number of sources used by the download.
          */
-        public DownloadingImpl (final RateCalculator rateCalculator, 
+        public LittleShootDownloadingState (final RateCalculator rateCalculator, 
             final int numSources)
             {
             this.m_rateCalculator = rateCalculator;
@@ -364,7 +546,7 @@ public interface MsDState extends DownloaderState
         
         public <T> T accept (final Visitor<T> visitor)
             {
-            return visitor.visitDownloading (this);
+            return visitor.visitLittleShootDownloading(this);
             }
         
         public double getKbs ()
@@ -404,7 +586,7 @@ public interface MsDState extends DownloaderState
                 return false;
             if (getClass() != obj.getClass())
                 return false;
-            DownloadingImpl other = (DownloadingImpl) obj;
+            LittleShootDownloadingState other = (LittleShootDownloadingState) obj;
             if (this.m_numSources != other.m_numSources)
                 return false;
             if (this.m_rateCalculator == null)
