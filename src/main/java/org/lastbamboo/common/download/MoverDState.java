@@ -10,6 +10,7 @@ package org.lastbamboo.common.download;
  */
 public interface MoverDState<DelegateStateT> extends DownloaderState
     {
+    
     /**
      * A visitor for a mover downloader state.
      * 
@@ -315,6 +316,20 @@ public interface MoverDState<DelegateStateT> extends DownloaderState
         extends DownloaderState.AbstractSucceeded implements Moved<T>
         {
 
+        /*
+        private final MsDState m_downloader;
+
+        public MovedImpl(final MsDState downloader) 
+            {
+            this.m_downloader = downloader;
+            }
+
+        public MsDState getDownloader()
+            {
+            return m_downloader;
+            }
+            */
+        
         public <ReturnT> ReturnT accept (final Visitor<ReturnT,T> visitor)
             {
             return visitor.visitMoved (this);

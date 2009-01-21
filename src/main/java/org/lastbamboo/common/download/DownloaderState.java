@@ -1,7 +1,7 @@
 package org.lastbamboo.common.download;
 
 /**
- * A downloader state.  Most downloaders should
+ * A downloader state.  
  */
 public interface DownloaderState
     {

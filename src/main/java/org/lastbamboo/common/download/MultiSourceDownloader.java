@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * A downloader that can download from multiple sources simultaneously.
  */
 public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
-    implements Downloader<MsDState>
+    implements Downloader<MsDState>, VisitableDownloader, LittleShootDownloader
     {
     
     /**
@@ -62,8 +62,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     private final URI m_uri;
     
     private final long m_size;
-    
-    private final String m_contentType;
     
     /**
      * The resolver used to find sources for the resource we are downloading.
@@ -142,7 +140,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
      * to.  This will of course be complete when we're done. 
      * @param uri The URI for the file.
      * @param size The size of the file in bytes. 
-     * @param mimeType The file's MIME type.
      * @param uriResolver The class we'll use to resolve all initial locations
      * for the file.
      * @param connectionsPerHost The number of connections to allow to each
@@ -152,8 +149,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
      * @param downloadsDir The directory we're ultimately downloading to.
      */
     public MultiSourceDownloader (final File incompleteFile, 
-        final URI uri, final long size, 
-        final String mimeType, final UriResolver uriResolver, 
+        final URI uri, final long size, final UriResolver uriResolver, 
         final int connectionsPerHost, final URI expectedSha1, 
         final File downloadsDir)
         {
@@ -164,7 +160,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         m_finalName = incompleteFile.getName();
         m_uri = uri;
         m_size = size;
-        m_contentType = mimeType;
         m_uriResolver = uriResolver;
         m_connectionsPerHttpServer = connectionsPerHost;    
         final HttpMethodRetryHandler retryHandler = 
@@ -438,11 +433,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         return oRange.accept (visitor).booleanValue();
         }
     
-    public String getContentType ()
-        {
-        return m_contentType;
-        }
-    
     public File getIncompleteFile ()
         {
         return m_incompleteFile;
@@ -634,5 +624,11 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                     m_sources.size());
                 }
             }
+        }
+
+
+    public <T> T accept(final DownloadVisitor<T> visitor)
+        {
+        return visitor.visitLittleShootDownloader(this);
         }
     }

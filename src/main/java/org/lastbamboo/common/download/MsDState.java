@@ -99,6 +99,7 @@ public interface MsDState extends DownloaderState
          */
         T visitLibTorrentDownloading(
             LibTorrentDownloading libTorrentDownloadingState);
+
         }
     
     /**
@@ -128,7 +129,7 @@ public interface MsDState extends DownloaderState
             {
             return m_defaultValue;
             }
-
+        
         public T visitComplete (final Complete state)
             {
             return m_defaultValue;
@@ -606,9 +607,9 @@ public interface MsDState extends DownloaderState
      * An implementation of the complete state.
      */
     public class CompleteImpl
-            extends DownloaderState.AbstractSucceeded implements Complete
+        extends DownloaderState.AbstractSucceeded implements Complete
         {
-
+        
         public <T> T accept (final Visitor<T> visitor)
             {
             return visitor.visitComplete (this);

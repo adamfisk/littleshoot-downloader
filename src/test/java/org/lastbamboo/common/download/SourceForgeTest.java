@@ -86,7 +86,7 @@ public class SourceForgeTest
         downloadDir.deleteOnExit();
         final Downloader<MsDState> downloader =
             new MultiSourceDownloader (file, uri, size,
-                "video/mpeg", resolver, 2, expectedSha1, downloadDir);
+                resolver, 2, expectedSha1, downloadDir);
         
         return downloader;
         }
