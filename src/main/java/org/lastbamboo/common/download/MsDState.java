@@ -37,6 +37,14 @@ public interface MsDState extends DownloaderState
          * @return The result of the visitation.
          */
         T visitComplete (Complete state);
+        
+        /**
+         * Visits a paused state.
+         * 
+         * @param paused The paused state.
+         * @return The result of the visitation.
+         */
+        T visitPaused(Paused paused);
 
         /**
          * Visits a canceled state.
@@ -100,6 +108,7 @@ public interface MsDState extends DownloaderState
         T visitLibTorrentDownloading(
             LibTorrentDownloading libTorrentDownloadingState);
 
+
         }
     
     /**
@@ -131,6 +140,11 @@ public interface MsDState extends DownloaderState
             }
         
         public T visitComplete (final Complete state)
+            {
+            return m_defaultValue;
+            }
+        
+        public T visitPaused (final Paused state)
             {
             return m_defaultValue;
             }
@@ -189,6 +203,20 @@ public interface MsDState extends DownloaderState
      */
     public interface GettingSources extends MsDState {}
 
+
+    /**
+     * A state that indicates that the downloader is paused.
+     */
+    public interface Paused extends MsDState 
+        {
+        
+        /**
+         * Accessor for the underlying downloading state.
+         * @return The underlying downloading state.
+         */
+        Downloading getDownloadingState();
+        }
+    
     /**
      * A state that indicates that the downloader is downloading.
      */
@@ -212,7 +240,7 @@ public interface MsDState extends DownloaderState
          */
         long getBytesRead();
         }
-
+    
     /**
      * A state for LittleShoot downloading.
      */
@@ -603,6 +631,44 @@ public interface MsDState extends DownloaderState
 
         }
 
+    
+    /**
+     * An implementation of the paused state.
+     */
+    public class PausedImpl
+        extends DownloaderState.AbstractRunning implements Paused
+        {
+        
+        private final Downloading m_downloading;
+
+        /**
+         * Creates a new paused state.
+         * 
+         * @param downloading The downloading state at the moment the pause
+         * was initiated.
+         */
+        public PausedImpl(final Downloading downloading)
+            {
+            this.m_downloading = downloading;
+            }
+        
+        public <T> T accept (final Visitor<T> visitor)
+            {
+            return visitor.visitPaused (this);
+            }
+        
+        @Override
+        public boolean equals (final Object otherObject)
+            {
+            return otherObject instanceof Canceled;
+            }
+
+        public Downloading getDownloadingState()
+            {
+            return m_downloading;
+            }
+        }
+    
     /**
      * An implementation of the complete state.
      */
@@ -743,4 +809,5 @@ public interface MsDState extends DownloaderState
      * Failed state.
      */
     public static final MsDState FAILED = new FailedImpl();
+
     }

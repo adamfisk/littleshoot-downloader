@@ -494,7 +494,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
      * Returns whether a given state indicates that we are downloading.
      * 
      * @param state The state.
-     *      
      * @return True if the state indicates that we are downloading, false
      *  otherwise.
      */
@@ -538,6 +537,16 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             {
             m_log.debug("Error closing file.  Already closed?", e);
             }
+        }
+    
+    public void pause()
+        {
+        m_log.error("LittleShoot downloads don't yet support pause.");
+        }
+    
+    public void resume()
+        {
+        m_log.error("LittleShoot downloads don't yet support resume.");
         }
 
     public String getFinalName()

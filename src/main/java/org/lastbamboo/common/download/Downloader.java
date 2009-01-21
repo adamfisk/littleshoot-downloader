@@ -87,4 +87,15 @@ public interface Downloader<StateT>
      * Stops the download.
      */
     void stop();
+
+    /**
+     * Pauses the download.
+     */
+    void pause();
+    
+
+    /**
+     * Resumes the download.
+     */
+    void resume();
     }

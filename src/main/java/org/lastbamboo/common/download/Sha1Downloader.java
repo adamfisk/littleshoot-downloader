@@ -104,6 +104,16 @@ public final class Sha1Downloader<DsT extends DownloaderState>
         m_delegate.stop();
         }
     
+    public void pause()
+        {
+        this.m_delegate.pause();
+        }
+    
+    public void resume()
+        {
+        this.m_delegate.resume();
+        }
+    
     public boolean isStarted ()
         {
         return m_delegate.isStarted();
