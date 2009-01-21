@@ -124,6 +124,11 @@ public final class DummySha1Downloader<DsT extends DownloaderState>
                 {
                 downloadComplete ();
                 }
+            else if (state.getType() == DownloaderStateType.FAILED)
+                {
+                m_log.debug("Download failed...");
+                setState(new Sha1DState.FailedImpl<DsT> (state));
+                }
             else
                 {
                 if (isDownloading (m_state))

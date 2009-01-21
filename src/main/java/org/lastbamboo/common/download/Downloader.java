@@ -57,7 +57,6 @@ public interface Downloader<StateT>
     
     /**
      * Adds a listener to be notified of events of this downloader.
-     * 
      * @param listener The listener to be notified.
      */
     void addListener (DownloaderListener<StateT> listener);

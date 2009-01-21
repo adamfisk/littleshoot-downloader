@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * A downloader that can download from multiple sources simultaneously.
  */
 public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
-    implements Downloader<MsDState>, VisitableDownloader, LittleShootDownloader
+    implements Downloader<MsDState>, VisitableDownloader<MsDState>, LittleShootDownloader
     {
     
     /**
@@ -631,4 +631,5 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         {
         return visitor.visitLittleShootDownloader(this);
         }
+
     }

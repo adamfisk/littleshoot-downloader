@@ -1,9 +1,12 @@
 package org.lastbamboo.common.download;
 
+
 /**
  * Interface for downloaders that are visitable by visitors.
+ * 
+ * @param <StateT> The type of object that maintains the state.
  */
-public interface VisitableDownloader
+public interface VisitableDownloader<StateT> extends Downloader<StateT>
     {
 
     /**
@@ -14,5 +17,5 @@ public interface VisitableDownloader
      * @return The return value of the visitor. 
      */
     <T> T accept(DownloadVisitor<T> visitor);
-    
+
     }
