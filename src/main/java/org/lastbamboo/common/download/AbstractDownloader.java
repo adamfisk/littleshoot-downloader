@@ -31,19 +31,28 @@ public abstract class AbstractDownloader<T extends DownloaderState>
      */
     protected final void fireStateChanged (final T state)
         {
-        for (final DownloaderListener<T> listener : m_listeners)
+        synchronized (this.m_listeners)
             {
-            listener.stateChanged (state);
+            for (final DownloaderListener<T> listener : m_listeners)
+                {
+                listener.stateChanged (state);
+                }
             }
         }
     
     public final void addListener (final DownloaderListener<T> listener)
         {
-        m_listeners.add (listener);
+        synchronized (this.m_listeners)
+            {
+            m_listeners.add (listener);
+            }
         }
 
     public void removeListener (final DownloaderListener<T> listener)
         {
-        m_listeners.remove (listener);
+        synchronized (this.m_listeners)
+            {
+            m_listeners.remove (listener);
+            }
         }
     }
