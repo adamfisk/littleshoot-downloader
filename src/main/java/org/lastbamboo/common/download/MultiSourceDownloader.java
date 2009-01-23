@@ -44,7 +44,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
      * Limit on the number of connections to maintain.  We could set this higher
      * in the future and more aggressively purge slow sources.
      */
-    private static final int CONNECTION_LIMIT = 25;
+    private static final int CONNECTION_LIMIT = 30;
 
     private final SourceRanker m_downloadingRanker = 
         new SourceRankerImpl (new DownloadSpeedComparator ());
@@ -103,9 +103,9 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
      */
     private final RandomAccessFile m_randomAccessFile;
     
-    private RangeTracker m_rangeTracker;
+    private final RangeTracker m_rangeTracker;
     
-    private LaunchFileTracker m_launchFileTracker;
+    private final LaunchFileTracker m_launchFileTracker;
     
     /**
      * Variable for the number of hosts we've connected to and are actively
@@ -202,10 +202,24 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             this.m_sources = m_uriResolver.resolve (m_uri);
             if (this.m_sources.isEmpty())
                 {
-                m_log.warn("No sources available for: "+m_completeFile);
                 setState (MsDState.NO_SOURCES_AVAILABLE);
-                return;
                 }
+            }
+        catch (final IOException e)
+            {
+            m_log.warn("Could not access sources for download", e);
+            this.m_sources = Collections.emptyList();
+            setState (MsDState.COULD_NOT_DETERMINE_SOURCES);
+            }
+        if (this.m_sources.isEmpty())
+            {
+            m_log.warn("No sources available for uri: "+m_uri);
+            m_rangeTracker = new RangeTrackerAdapter();
+            m_launchFileTracker = new LaunchFileTrackerAdapter();
+            return;
+            }
+        else
+            {
             final URI expectedSha1ToUse;
             if (expectedSha1 ==  null)
                 {
@@ -221,18 +235,6 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             m_launchFileTracker = 
                 new LaunchFileDispatcher (incompleteFile, m_randomAccessFile, 
                     numChunks, expectedSha1ToUse);
-            }
-        catch (final IOException e)
-            {
-            // There was a problem resolving download sources.
-            m_log.warn("Error during download", e);
-            setState (MsDState.COULD_NOT_DETERMINE_SOURCES);
-            return;
-            }
-        catch (final Throwable t)
-            {
-            m_log.warn ("Unexpected throwable during download", t);
-            setState (MsDState.FAILED);
             }
         }
  
