@@ -133,6 +133,8 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
 
     private volatile boolean m_failed = false;
 
+    private final boolean m_streamable;
+
     /**
      * Constructs a new downloader.
      * 
@@ -147,12 +149,14 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
      * transfers.
      * @param expectedSha1 The expected SHA-1 URN.
      * @param downloadsDir The directory we're ultimately downloading to.
+     * @param streamable Whether or not this download can be streamed.
      */
     public MultiSourceDownloader (final File incompleteFile, 
         final URI uri, final long size, final UriResolver uriResolver, 
         final int connectionsPerHost, final URI expectedSha1, 
-        final File downloadsDir)
+        final File downloadsDir, final boolean streamable)
         {
+        this.m_streamable = streamable;
         Assert.notNull (incompleteFile, "Null file");
         Assert.notNull (uri, "Null URI");
         
@@ -641,6 +645,11 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     public <T> T accept(final DownloadVisitor<T> visitor)
         {
         return visitor.visitLittleShootDownloader(this);
+        }
+
+    public boolean isStreamable()
+        {
+        return m_streamable;
         }
 
     }

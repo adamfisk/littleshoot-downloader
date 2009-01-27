@@ -1,6 +1,6 @@
 package org.lastbamboo.common.download;
 
-public interface GnutellaDownloader
+public interface GnutellaDownloader extends StreamableDownloader
     {
 
     }

@@ -3,7 +3,7 @@ package org.lastbamboo.common.download;
 /**
  * Interface for torrent downloads.
  */
-public interface TorrentDownloader
+public interface TorrentDownloader extends StreamableDownloader
     {
 
     long getMaxContiguousByte();

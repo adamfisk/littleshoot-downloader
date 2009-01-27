@@ -1,6 +1,6 @@
 package org.lastbamboo.common.download;
 
-public interface LittleShootDownloader
+public interface LittleShootDownloader extends StreamableDownloader
     {
 
     }
