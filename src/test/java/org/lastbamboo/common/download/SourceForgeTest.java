@@ -86,7 +86,7 @@ public class SourceForgeTest
         downloadDir.deleteOnExit();
         final Downloader<MsDState> downloader =
             new MultiSourceDownloader (file, uri, size,
-                resolver, 2, expectedSha1, downloadDir);
+                resolver, 2, expectedSha1, downloadDir, true);
         
         return downloader;
         }
