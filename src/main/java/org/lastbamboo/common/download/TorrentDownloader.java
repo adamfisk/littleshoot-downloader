@@ -10,4 +10,6 @@ public interface TorrentDownloader extends StreamableDownloader
 
     int getNumFiles();
 
+    int getTorrentState();
+
     }
