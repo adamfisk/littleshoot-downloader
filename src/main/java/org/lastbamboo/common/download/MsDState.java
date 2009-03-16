@@ -239,6 +239,12 @@ public interface MsDState extends DownloaderState
          * @return The number of bytes read.
          */
         long getBytesRead();
+
+        /**
+         * Accessor for the time remaining.
+         * @return
+         */
+        String getTimeRemaining();
         }
     
     /**
@@ -364,6 +370,8 @@ public interface MsDState extends DownloaderState
 
         private final long m_maxByte;
 
+        private final long m_size;
+
         /**
          * Constructs a new downloading state.
          *
@@ -375,13 +383,14 @@ public interface MsDState extends DownloaderState
          */
         public LibTorrentDownloadingState (final double kbs, 
             final int numSources, final long bytesRead, final int numFiles, 
-            final long maxByte)
+            final long maxByte, final long size)
             {
             this.m_kbs = kbs;
             this.m_numSources = numSources;
             this.m_bytesRead = bytesRead;
             this.m_numFiles = numFiles;
             this.m_maxByte = maxByte;
+            this.m_size = size;
             }
         
         public <T> T accept (final Visitor<T> visitor)
@@ -412,6 +421,11 @@ public interface MsDState extends DownloaderState
         public int getNumFiles()
             {
             return this.m_numFiles;
+            }
+        
+        public String getTimeRemaining()
+            {
+            return calculateTimeRemaining(this.m_bytesRead, this.m_size, this.m_kbs);
             }
 
         @Override
@@ -475,6 +489,8 @@ public interface MsDState extends DownloaderState
 
         private final long m_bytesRead;
 
+        private final long m_size;
+
         /**
          * Constructs a new downloading state.
          *
@@ -483,11 +499,12 @@ public interface MsDState extends DownloaderState
          * @param bytesRead The number of bytes read.
          */
         public LimeWireDownloadingState (final double kbs, 
-            final int numSources, final long bytesRead)
+            final int numSources, final long bytesRead, final long size)
             {
             m_kbs = kbs;
             m_numSources = numSources;
             this.m_bytesRead = bytesRead;
+            this.m_size = size;
             }
         
         public <T> T accept (final Visitor<T> visitor)
@@ -508,6 +525,11 @@ public interface MsDState extends DownloaderState
         public long getBytesRead()
             {
             return this.m_bytesRead;
+            }
+        
+        public String getTimeRemaining()
+            {
+            return calculateTimeRemaining(this.m_bytesRead, this.m_size, this.m_kbs);
             }
 
         @Override
@@ -559,6 +581,8 @@ public interface MsDState extends DownloaderState
 
         private final RateCalculator m_rateCalculator;
 
+        private final long m_size;
+
         /**
          * Constructs a new downloading state.
          * 
@@ -567,10 +591,11 @@ public interface MsDState extends DownloaderState
          * @param numSources The number of sources used by the download.
          */
         public LittleShootDownloadingState (final RateCalculator rateCalculator, 
-            final int numSources)
+            final int numSources, final long size)
             {
             this.m_rateCalculator = rateCalculator;
             this.m_numSources = numSources;
+            this.m_size = size;
             }
         
         public <T> T accept (final Visitor<T> visitor)
@@ -591,6 +616,11 @@ public interface MsDState extends DownloaderState
         public long getBytesRead()
             {
             return this.m_rateCalculator.getBytesRead();
+            }
+        
+        public String getTimeRemaining()
+            {
+            return calculateTimeRemaining(getBytesRead(), this.m_size, getKbs());
             }
 
         @Override

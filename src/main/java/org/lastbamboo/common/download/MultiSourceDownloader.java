@@ -323,7 +323,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         else
             {
             setState (new MsDState.LittleShootDownloadingState (m_rateCalculator,
-                getNumUniqueHosts ()));
+                getNumUniqueHosts (), getSize()));
             
             connect (sources, this.m_downloadingRanker, m_connectionsPerHttpServer);
             
@@ -609,7 +609,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
             if (isDownloading (m_state))
                 {
                 setState (new MsDState.LittleShootDownloadingState (m_rateCalculator,
-                    getNumUniqueHosts ()));
+                    getNumUniqueHosts (), getSize()));
                 }
             else
                 {
@@ -650,6 +650,11 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     public boolean isStreamable()
         {
         return m_streamable;
+        }
+
+    public long getBytesRead()
+        {
+        return this.m_rateCalculator.getBytesRead();
         }
 
     }

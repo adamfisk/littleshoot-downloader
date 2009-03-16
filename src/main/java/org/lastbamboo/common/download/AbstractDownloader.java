@@ -1,6 +1,7 @@
 package org.lastbamboo.common.download;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedList;
 
 /**
@@ -15,6 +16,7 @@ public abstract class AbstractDownloader<T extends DownloaderState>
      * The listeners to be notified of events involving this downloader.
      */
     private final Collection<DownloaderListener<T>> m_listeners;
+    private final long m_startTime;
     
     /**
      * Initializes this abstract base class.
@@ -22,6 +24,7 @@ public abstract class AbstractDownloader<T extends DownloaderState>
     public AbstractDownloader()
         {
         m_listeners = new LinkedList<DownloaderListener<T>> ();
+        m_startTime = new Date().getTime();
         }
     
     /**
@@ -54,5 +57,10 @@ public abstract class AbstractDownloader<T extends DownloaderState>
             {
             m_listeners.remove (listener);
             }
+        }
+
+    public long getStartTime()
+        {
+        return m_startTime;
         }
     }

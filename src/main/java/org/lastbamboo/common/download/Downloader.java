@@ -98,4 +98,12 @@ public interface Downloader<StateT>
      * Resumes the download.
      */
     void resume();
+
+    /**
+     * Accessor the time the download started.
+     * 
+     * @return The time the download started.
+     */
+    long getStartTime();
+    
     }

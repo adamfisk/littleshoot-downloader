@@ -1,5 +1,10 @@
 package org.lastbamboo.common.download;
 
+import java.util.concurrent.TimeUnit;
+
+import org.lastbamboo.common.util.DateUtils;
+import org.lastbamboo.common.util.TimeUtils;
+
 /**
  * A downloader state.  
  */
@@ -14,6 +19,18 @@ public interface DownloaderState
             {
             return DownloaderStateType.RUNNING;
             }
+        
+        public String calculateTimeRemaining(final long read, final long size,
+            final double kbs)
+            {
+            final long bytesRemaining = size - read;
+            final double bs = kbs * 1024;
+            
+            final long secondsRemaining = (long) (bytesRemaining/bs);
+            
+            return TimeUtils.secondsToHoursMinutesSeconds(secondsRemaining);
+            }
+        
         }
     
     /**

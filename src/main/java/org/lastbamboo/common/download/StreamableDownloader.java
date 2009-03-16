@@ -13,4 +13,11 @@ public interface StreamableDownloader
      * <code>false</code>.
      */
     boolean isStreamable();
+    
+    /**
+     * Accessor the time the download started.
+     * 
+     * @return The time the download started.
+     */
+    long getStartTime();
     }
