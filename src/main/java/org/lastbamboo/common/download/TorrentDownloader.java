@@ -1,5 +1,7 @@
 package org.lastbamboo.common.download;
 
+import java.io.File;
+
 /**
  * Interface for torrent downloads.
  */
@@ -11,5 +13,11 @@ public interface TorrentDownloader extends StreamableDownloader
     int getNumFiles();
 
     int getTorrentState();
+
+    File getTorrentFile();
+
+    File getIncompleteDir();
+
+    String getUri();
 
     }
