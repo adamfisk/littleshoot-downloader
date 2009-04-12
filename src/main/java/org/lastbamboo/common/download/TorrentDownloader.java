@@ -20,4 +20,6 @@ public interface TorrentDownloader extends StreamableDownloader
 
     String getUri();
 
+    void setSeeding(boolean seeding);
+
     }
