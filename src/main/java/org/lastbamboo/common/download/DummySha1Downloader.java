@@ -87,9 +87,9 @@ public final class DummySha1Downloader<DsT extends DownloaderState>
         m_delegate.start ();
         }
  
-    public void stop()
+    public void stop(final boolean removeFiles)
         {
-        this.m_delegate.stop();
+        this.m_delegate.stop(removeFiles);
         }
     
     public void pause()

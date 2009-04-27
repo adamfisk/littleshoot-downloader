@@ -85,8 +85,10 @@ public interface Downloader<StateT>
 
     /**
      * Stops the download.
+     * 
+     * @param removeFiles Whether or not to also remove all downloaded files.
      */
-    void stop();
+    void stop(boolean removeFiles);
 
     /**
      * Pauses the download.

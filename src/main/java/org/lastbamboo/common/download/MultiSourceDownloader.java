@@ -486,7 +486,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 cancelOnStreamClose)
                 {
                 m_log.debug("Canceling stream...");
-                stop ();
+                stop (false);
                 }
             }
         catch (final Throwable t)
@@ -527,7 +527,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         m_launchFileTracker.onFailure();
         }
     
-    public void stop ()
+    public void stop (final boolean removeFiles)
         {
         m_stopped = true;
         setState (MsDState.CANCELED);
@@ -542,6 +542,13 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         catch (final IOException e)
             {
             m_log.debug("Error closing file.  Already closed?", e);
+            }
+        
+        if (removeFiles)
+            {
+            m_log.debug("Deleting files");
+            this.m_incompleteFile.delete();
+            this.m_completeFile.delete();
             }
         }
     

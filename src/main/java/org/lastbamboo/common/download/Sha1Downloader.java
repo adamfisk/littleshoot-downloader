@@ -99,9 +99,9 @@ public final class Sha1Downloader<DsT extends DownloaderState>
         m_delegate.start ();
         }
  
-    public void stop()
+    public void stop(final boolean removeFiles)
         {
-        m_delegate.stop();
+        m_delegate.stop(removeFiles);
         }
     
     public void pause()
