@@ -10,8 +10,8 @@ import junit.framework.TestCase;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests downloading from a single source.
@@ -19,7 +19,7 @@ import org.apache.commons.logging.LogFactory;
 public class SingleSourceTest extends TestCase
     {
     
-    private static final Log LOG = LogFactory.getLog(SingleSourceTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SingleSourceTest.class);
 
     private static final boolean TEST_ACTIVE = false;
     

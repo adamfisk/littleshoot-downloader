@@ -13,8 +13,8 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.Test;
 import org.lastbamboo.common.util.Sha1Hasher;
 
@@ -24,7 +24,7 @@ import org.lastbamboo.common.util.Sha1Hasher;
 public class SourceForgeTest
     {
 
-    private static final Log LOG = LogFactory.getLog(SourceForgeTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SourceForgeTest.class);
     
     private static Downloader<MsDState> getBaseDownloader
             (final File file, final URI expectedSha1) throws URISyntaxException
@@ -105,7 +105,7 @@ public class SourceForgeTest
             {
             assertFalse("ByteBuffers equal!! "+buf+"  "+lastBuf, buf.equals(lastBuf));
             final URI sha1 = Sha1Hasher.createSha1Urn(buf);
-            LOG.debug(sha1);
+            //LOG.debug(sha1.toString());
             
             lastBuf = buf;
             }
