@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.prefs.Preferences;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpMethodRetryHandler;
@@ -286,11 +287,20 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         // cap it.
         int numHosts = 0;
         
+        final Preferences prefs = Preferences.userRoot();
+        final long id = prefs.getLong("LITTLESHOOT_ID", -1);
+        
         final Iterator<URI> sourcesIter = sources.iterator ();
         
         while (sourcesIter.hasNext () && (numHosts < 100))
             {
             final URI uri = sourcesIter.next ();
+            m_log.info("Creating downloader for: ", uri);
+            if (id == Long.parseLong(uri.getHost()))
+                {
+                m_log.info("Ignoring request to download from ourselves");
+                continue;
+                }
             
             // We only use multiple connections to a single host if it's a 
             // straight HTTP server on the public Internet.
