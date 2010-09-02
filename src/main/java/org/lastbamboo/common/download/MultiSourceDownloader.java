@@ -14,7 +14,9 @@ import java.util.Set;
 import java.util.prefs.Preferences;
 
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
+import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpMethodRetryHandler;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.lang.math.LongRange;
@@ -24,6 +26,7 @@ import org.lastbamboo.common.util.Assert;
 import org.lastbamboo.common.util.None;
 import org.lastbamboo.common.util.Optional;
 import org.lastbamboo.common.util.OptionalVisitor;
+import org.lastbamboo.common.util.ResettingMultiThreadedHttpConnectionManager;
 import org.lastbamboo.common.util.Some;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,8 +124,11 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
     
     private volatile boolean m_stopped = false;
 
+    private MultiThreadedHttpConnectionManager m_connectionManager =
+        new ResettingMultiThreadedHttpConnectionManager();
+    
     private final CommonsHttpClient m_httpClient =
-        new CommonsHttpClientImpl();
+        new CommonsHttpClientImpl(m_connectionManager);
 
     private volatile boolean m_started;
 
@@ -358,7 +364,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
                 else if (singleRangeDownload (dl))
                     {
                     // This means we're done, so break out of the loop.
-                    handleDownloadComplete ();
+                    onDownloadComplete ();
                     done = true;
                     }
                 }
@@ -382,7 +388,7 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         return m_uniqueSourceUris.size ();
         }
     
-    private void handleDownloadComplete()
+    private void onDownloadComplete()
         {
         m_log.debug ("Downloaded whole file...");
         
@@ -398,6 +404,9 @@ public final class MultiSourceDownloader extends AbstractDownloader<MsDState>
         // above because that's the only way the launcher ever completes it's
         // write (the launcher waits for the complete notification).
         m_launchFileTracker.waitForLaunchersToComplete ();
+        
+        this.m_connectionManager.shutdown();
+        
         
         try
             {

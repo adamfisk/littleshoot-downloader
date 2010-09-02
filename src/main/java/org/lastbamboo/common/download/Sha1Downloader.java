@@ -228,7 +228,7 @@ public final class Sha1Downloader<DsT extends DownloaderState>
                         }
                     else
                         {
-                        m_log.warn ("The downloaded file is corrupt.  Expected: "+
+                        m_log.warn ("The downloaded file is corrupt. Expected: "+
                                      m_expectedSha1 + " but was: " + sha1);
                         
                         setState (new Sha1DState.Sha1MismatchImpl<DsT> ());
