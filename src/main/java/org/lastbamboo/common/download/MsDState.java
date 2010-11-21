@@ -366,8 +366,9 @@ public interface MsDState extends DownloaderState {
             this.m_size = size;
         }
 
-        private double bsToKbs(final int bytesPerSecond) {
-            return bytesPerSecond/1024;
+        private double bsToKbs(final double bytesPerSecond) {
+            final double kbs = bytesPerSecond/1024.0;
+            return kbs;
         }
 
         public <T> T accept(final Visitor<T> visitor) {
