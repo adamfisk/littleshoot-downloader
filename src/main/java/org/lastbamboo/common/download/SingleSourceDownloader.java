@@ -36,8 +36,7 @@ public class SingleSourceDownloader implements RangeDownloader,
     InputStreamHandler, HttpListener
     {
 
-    private final Logger m_log = 
-        LoggerFactory.getLogger(SingleSourceDownloader.class);
+    private final Logger m_log = LoggerFactory.getLogger(getClass());
     
     private final URI m_uri;
     private final SourceRanker m_sourceRanker;
