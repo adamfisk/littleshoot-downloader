@@ -6,14 +6,14 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import org.lastbamboo.common.util.CollectionUtils;
-import org.lastbamboo.common.util.CollectionUtilsImpl;
-import org.lastbamboo.common.util.F1;
-import org.lastbamboo.common.util.NoneImpl;
-import org.lastbamboo.common.util.Optional;
-import org.lastbamboo.common.util.OptionalUtils;
-import org.lastbamboo.common.util.OptionalUtilsImpl;
-import org.lastbamboo.common.util.SomeImpl;
+import org.littleshoot.util.CollectionUtils;
+import org.littleshoot.util.CollectionUtilsImpl;
+import org.littleshoot.util.F1;
+import org.littleshoot.util.NoneImpl;
+import org.littleshoot.util.Optional;
+import org.littleshoot.util.OptionalUtils;
+import org.littleshoot.util.OptionalUtilsImpl;
+import org.littleshoot.util.SomeImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

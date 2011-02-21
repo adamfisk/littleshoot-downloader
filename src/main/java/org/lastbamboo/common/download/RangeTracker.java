@@ -1,7 +1,7 @@
 package org.lastbamboo.common.download;
 
 import org.apache.commons.lang.math.LongRange;
-import org.lastbamboo.common.util.Optional;
+import org.littleshoot.util.Optional;
 
 /**
  * Interface for tracking download ranges.

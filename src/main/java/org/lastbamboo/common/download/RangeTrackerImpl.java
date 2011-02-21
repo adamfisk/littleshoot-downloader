@@ -7,9 +7,9 @@ import java.util.Queue;
 import java.util.Set;
 
 import org.apache.commons.lang.math.LongRange;
-import org.lastbamboo.common.util.NoneImpl;
-import org.lastbamboo.common.util.Optional;
-import org.lastbamboo.common.util.SomeImpl;
+import org.littleshoot.util.NoneImpl;
+import org.littleshoot.util.Optional;
+import org.littleshoot.util.SomeImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

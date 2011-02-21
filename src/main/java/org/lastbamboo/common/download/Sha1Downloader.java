@@ -6,7 +6,7 @@ import java.io.OutputStream;
 import java.net.URI;
 
 import org.lastbamboo.common.download.Sha1DState.Downloading;
-import org.lastbamboo.common.util.Sha1Hasher;
+import org.littleshoot.util.Sha1Hasher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

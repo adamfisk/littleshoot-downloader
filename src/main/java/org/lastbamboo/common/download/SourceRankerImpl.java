@@ -5,7 +5,7 @@ import java.util.Comparator;
 import java.util.concurrent.PriorityBlockingQueue;
 
 import org.apache.commons.lang.math.LongRange;
-import org.lastbamboo.common.util.Optional;
+import org.littleshoot.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -2,8 +2,8 @@ package org.lastbamboo.common.download;
 
 import java.util.concurrent.TimeUnit;
 
-import org.lastbamboo.common.util.DateUtils;
-import org.lastbamboo.common.util.TimeUtils;
+import org.littleshoot.util.DateUtils;
+import org.littleshoot.util.TimeUtils;
 
 /**
  * A downloader state.  

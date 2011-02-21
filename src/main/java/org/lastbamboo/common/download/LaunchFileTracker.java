@@ -3,7 +3,7 @@ package org.lastbamboo.common.download;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.lastbamboo.common.util.LongRangeListener;
+import org.littleshoot.util.LongRangeListener;
 
 
 /**

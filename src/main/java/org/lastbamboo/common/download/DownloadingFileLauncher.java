@@ -12,8 +12,8 @@ import java.util.concurrent.PriorityBlockingQueue;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.math.LongRange;
 import org.apache.commons.lang.time.DateUtils;
-import org.lastbamboo.common.util.Base32;
-import org.lastbamboo.common.util.Sha1;
+import org.littleshoot.util.Base32;
+import org.littleshoot.util.Sha1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

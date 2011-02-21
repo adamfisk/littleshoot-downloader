@@ -18,12 +18,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang.math.LongRange;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Test;
-import org.lastbamboo.common.util.DaemonThread;
-import org.lastbamboo.common.util.None;
-import org.lastbamboo.common.util.Optional;
-import org.lastbamboo.common.util.OptionalVisitor;
-import org.lastbamboo.common.util.Sha1Hasher;
-import org.lastbamboo.common.util.Some;
+import org.littleshoot.util.DaemonThread;
+import org.littleshoot.util.None;
+import org.littleshoot.util.Optional;
+import org.littleshoot.util.OptionalVisitor;
+import org.littleshoot.util.Sha1Hasher;
+import org.littleshoot.util.Some;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

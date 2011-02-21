@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.Test;
-import org.lastbamboo.common.util.Sha1Hasher;
+import org.littleshoot.util.Sha1Hasher;
 
 /**
  * Multisource download test using multiple SourceForge mirror sites.

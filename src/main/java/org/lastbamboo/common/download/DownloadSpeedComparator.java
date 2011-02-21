@@ -2,10 +2,10 @@ package org.lastbamboo.common.download;
 
 import java.util.Comparator;
 
-import org.lastbamboo.common.util.None;
-import org.lastbamboo.common.util.Optional;
-import org.lastbamboo.common.util.OptionalVisitor;
-import org.lastbamboo.common.util.Some;
+import org.littleshoot.util.None;
+import org.littleshoot.util.Optional;
+import org.littleshoot.util.OptionalVisitor;
+import org.littleshoot.util.Some;
 
 /**
  * Comparator that compares downloaders based on their speed.  Faster 

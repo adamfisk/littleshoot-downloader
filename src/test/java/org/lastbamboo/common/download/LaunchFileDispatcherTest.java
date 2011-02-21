@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.lang.math.LongRange;
 import org.junit.Test;
 import org.lastbamboo.common.download.stubs.LaunchFileTrackerStub;
-import org.lastbamboo.common.util.Sha1;
+import org.littleshoot.util.Sha1;
 
 public class LaunchFileDispatcherTest
     {
