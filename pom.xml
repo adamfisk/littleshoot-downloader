@@ -16,10 +16,6 @@
         </parent>
 
     <dependencies>
-        <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            </dependency>
 
         <dependency>
             <groupId>commons-lang</groupId>
@@ -32,8 +28,8 @@
             </dependency>
 
         <dependency>
-            <groupId>org.lastbamboo</groupId>
-            <artifactId>lastbamboo-common-http-client</artifactId>
+            <groupId>org.littleshoot</groupId>
+            <artifactId>http-client</artifactId>
             </dependency>
         </dependencies>
 
