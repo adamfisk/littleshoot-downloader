@@ -19,6 +19,22 @@
         <url>https://adamfisk@github.com/adamfisk/littleshoot-downloader.git</url>
     </scm>
 
+<!-- 
+This is necessary to allow us to independently public this project to Maven
+repos separately from the parent.
+-->
+    <developers>
+        <developer>
+            <id>adamfisk</id>
+            <name>Adam Fisk</name>
+            <email>a@littleshoot.org</email>
+            <organization>LittleShoot</organization>
+            <organizationUrl>http://www.littleshoot.org/</organizationUrl>
+            <roles><role>Developer</role></roles>
+            <timezone>-5</timezone>
+        </developer>
+    </developers>
+
     <dependencies>
         <dependency>
             <groupId>commons-lang</groupId>
