@@ -1,0 +1,7 @@
+The LittleShoot P2P Downloader uses the LittleShoot P2P Core to download files from multiple 
+sources in parallel. The downloading algorithm itself is easily configurable, and all downloads
+use HTTP range requests for compatibility with existing web servers. Download sources can be
+peers or standard servers, and HTTP traffic flows over TCP or more commonly reliable UDP 
+connections in the case of NAT-traversed P2P sessions. The downloader itself is not concerned
+with these details, however, as they are all handled at a lower level in the LittleShoot
+P2P Core.
