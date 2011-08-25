@@ -1,0 +1,6 @@
+log.txt
+*.swp
+*.settings
+*.classpath
+*.project
+target/
