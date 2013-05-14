@@ -3,14 +3,14 @@
     <groupId>org.littleshoot</groupId>
     <artifactId>littleshoot-downloader</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.3-SNAPSHOT</version>
     <name>LittleShoot P2P Downloader</name>
     <url>http://www.littleshoot.org</url>
     <description>P2P downloading module built atop the LittleShoot P2P core.</description>
     <parent>
         <groupId>org.littleshoot</groupId>
         <artifactId>parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.3</version>
     </parent>
 
     <scm>
@@ -44,6 +44,7 @@ repos separately from the parent.
         <dependency>
             <groupId>org.littleshoot</groupId>
             <artifactId>http-client</artifactId>
+            <version>${ls.version}</version>
         </dependency>
     </dependencies>
 
